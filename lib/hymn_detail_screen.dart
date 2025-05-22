@@ -317,9 +317,15 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.hymn.title),
+        title: Text(widget.hymn.title, style: TextStyle(color: colorScheme.onSurface)),
+        backgroundColor: colorScheme.surface,
+        foregroundColor: colorScheme.onSurface,
+        elevation: 0,
       ),
       body: Column(
         children: [
@@ -403,11 +409,11 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                         onTap: _decreaseFontSize,
                         child: Container(
                           padding: const EdgeInsets.all(5.0),
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Color.fromARGB(138, 247, 229, 255),
+                            color: Theme.of(context).colorScheme.primaryContainer,
                           ),
-                          child: const Icon(Icons.remove),
+                          child: Icon(Icons.remove, color: Theme.of(context).colorScheme.onPrimaryContainer),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -417,11 +423,11 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                         onTap: _increaseFontSize,
                         child: Container(
                           padding: const EdgeInsets.all(5.0),
-                          decoration: const BoxDecoration(
+                          decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: Color.fromARGB(138, 247, 229, 255),
+                            color: Theme.of(context).colorScheme.primaryContainer,
                           ),
-                          child: const Icon(Icons.add),
+                          child: Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimaryContainer),
                         ),
                       ),
                       const Spacer(),
@@ -437,16 +443,19 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                                 heroTag: _audioButtonHeroTag,
                                 onPressed: _toggleMiniPlayerVisibility,
                                 tooltip: 'Open Audio Player',
+                                backgroundColor: colorScheme.primary,
+                                foregroundColor: colorScheme.onPrimary,
+                                elevation: 3.0,
                                 child: _isAudioLoading
                                   ? SizedBox(
                                       width: 20.0,
                                       height: 20.0,
-                                      child: const CircularProgressIndicator(
-                                        color: Colors.white,
-                                        strokeWidth: 4.0,
+                                      child: CircularProgressIndicator(
+                                        color: colorScheme.onPrimary,
+                                        strokeWidth: 3.0,
                                       ),
                                     )
-                                  : Icon(_isMiniPlayerVisible ? Icons.music_note : Icons.music_note),
+                                  : Icon(_isMiniPlayerVisible ? Icons.volume_up_rounded : Icons.music_note_rounded),
                               ),
                             ),
                           ),
@@ -459,7 +468,10 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                                 heroTag: _debugButtonHeroTag,
                                 onPressed: _showFeedbackDialog,
                                 tooltip: 'Report Lyrics Issue',
-                                child: const Icon(Icons.bug_report),
+                                backgroundColor: colorScheme.surfaceContainerHighest,
+                                foregroundColor: colorScheme.onSurfaceVariant,
+                                elevation: 3.0,
+                                child: const Icon(Icons.bug_report_rounded),
                               ),
                             ),
                           ),
@@ -492,11 +504,14 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
   }
 
   Widget _buildMiniAudioPlayer(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       decoration: BoxDecoration(
-        color: Colors.blueGrey[900],
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+        color: colorScheme.surfaceContainerHighest,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.5),
@@ -540,16 +555,14 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
             children: [
                 SliderTheme(
                     data: SliderTheme.of(context).copyWith(
-                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 5.0),
-                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 10.0),
-                        activeTrackColor: Theme.of(context).colorScheme.primary,
-                        inactiveTrackColor: Colors.grey[700],
-                        thumbColor: Theme.of(context).colorScheme.primary,
+                        thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 6.0),
+                        overlayShape: const RoundSliderOverlayShape(overlayRadius: 12.0),
+                        activeTrackColor: colorScheme.primary,
+                        inactiveTrackColor: colorScheme.surfaceVariant,
+                        thumbColor: colorScheme.primary,
+                        overlayColor: colorScheme.primary.withOpacity(0.2),
                     ),
                     child: Slider(
-                        activeColor: Theme.of(context).colorScheme.primary,
-                        inactiveColor: Colors.grey[700],
-                        thumbColor: Theme.of(context).colorScheme.primary,
                         value: sliderValue,
                         max: sliderMax,
                         min: 0.0,
@@ -564,8 +577,8 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(_formatDuration(position ?? Duration.zero), style: const TextStyle(color: Colors.white70)),
-                        Text(_formatDuration(duration ?? Duration.zero), style: const TextStyle(color: Colors.white70)),
+                        Text(_formatDuration(position ?? Duration.zero), style: TextStyle(color: colorScheme.onSurfaceVariant)),
+                        Text(_formatDuration(duration ?? Duration.zero), style: TextStyle(color: colorScheme.onSurfaceVariant)),
                       ],
                     ),
                   ),
@@ -577,7 +590,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               IconButton(
-                icon: const Icon(Icons.replay_5_rounded, color: Colors.white, size: 26),
+                icon: Icon(Icons.replay_5_rounded, color: colorScheme.onSurfaceVariant, size: 28),
                 onPressed: () {
                   Duration newPosition = _audioPlayer.position - _skipDuration;
                   if (newPosition < Duration.zero) {
@@ -587,12 +600,12 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                 },
               ),
               IconButton(
-                icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow,
-                    color: Colors.white, size: 38),
+                icon: Icon(_isPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_filled_rounded,
+                    color: colorScheme.primary, size: 42),
                 onPressed: _toggleAudioPlayback,
               ),
               IconButton(
-                icon: const Icon(Icons.forward_5_rounded, color: Colors.white, size: 26),
+                icon: Icon(Icons.forward_5_rounded, color: colorScheme.onSurfaceVariant, size: 28),
                 onPressed: () async {
                   final currentPosition = _audioPlayer.position;
                   final newPosition = currentPosition + _skipDuration;
@@ -609,15 +622,14 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
 
                     return IconButton(
                         icon: AnimatedScale(
-                            // ignore: dead_code
                             scale: _isButtonPushed ? 1.2 : 1.0,
                             duration: const Duration(milliseconds: 150),
                             child: FaIcon(
                                 FontAwesomeIcons.repeat,
                                 color: _isLooping
-                                    ? const Color.fromARGB(255, 133, 3, 255)
-                                    : Colors.white,
-                                size: 20,
+                                    ? colorScheme.primary
+                                    : colorScheme.onSurfaceVariant,
+                                size: 22,
                             ),
                         ),
                         tooltip: _isLooping ? 'Loop On' : 'Loop Off',
@@ -636,8 +648,9 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                 },
               ),
               PopupMenuButton<double>(
-                icon: const Icon(Icons.speed, color: Colors.white, size: 26),
+                icon: Icon(Icons.speed_rounded, color: colorScheme.onSurfaceVariant, size: 28),
                 onSelected: _setPlaybackSpeed,
+                color: colorScheme.surfaceContainer,
                 itemBuilder: (BuildContext context) => <PopupMenuEntry<double>>[
                   const PopupMenuItem<double>(
                     value: 0.5,
