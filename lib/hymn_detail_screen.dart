@@ -29,6 +29,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
   bool _isPlaying = false;
   bool _isMiniPlayerVisible = false;
   double _playbackSpeed = 1.0;
+  bool _isAudioLoading = false; // ADDED: Loading state for audio button
 
   final Duration _skipDuration = const Duration(seconds: 5);
   final _audioButtonHeroTag = const Symbol('audioButtonHeroTag');
@@ -59,7 +60,6 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
   void initState() {
     super.initState();
     _checkIsFavorite();
-    _init();
     _playerStateSubscription = _audioPlayer.playerStateStream.listen((playerState) {
       setState(() {
         _isPlaying = playerState.playing;
@@ -81,12 +81,19 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
     });
 
     String hymnNumber = widget.hymn.number.toString();
-    String audioUrl = 'https://raw.githubusercontent.com/reynold29/midi-files/main/Hymn_$hymnNumber.ogg';
+    String audioUrl = 'https://raw.githubusercontent.com/reynold29/midi-files/main/Hymns/Hymn_$hymnNumber.ogg';
 
     try {
       await _audioPlayer.setAudioSource(AudioSource.uri(Uri.parse(audioUrl)));
+      setState(() {
+        _isAudioLoading = false; // Set loading to false after successful load
+        _isMiniPlayerVisible = true; // Open mini player after successful load
+      });
     } catch (e) {
-      print('Error loading audio source: $e');
+      print('Error loading audio source in _init: $e');
+      setState(() {
+        _isAudioLoading = false; // Set loading to false even on error
+      });
       if (mounted) {
         showDialog(
           context: context,
@@ -96,6 +103,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
           ),
         );
       }
+      throw e;
     }
   }
 
@@ -218,43 +226,43 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
     if (hasVibrator) {
       Vibration.vibrate(duration: 30);
     }
-    if (!_isMiniPlayerVisible) {
-        if (_audioPlayer.audioSource == null) {
-            String hymnNumber = widget.hymn.number.toString();
-            String audioUrl = 'https://raw.githubusercontent.com/reynold29/midi-files/main/Hymn_$hymnNumber.ogg';
-
-            try {
-                await _audioPlayer.setAudioSource(AudioSource.uri(Uri.parse(audioUrl)));
-            } catch (e) {
-                print('Error loading audio source: $e');
-                showDialog(
-                    context: context,
-                    builder: (context) => AudioErrorDialog(
-                        itemNumber: widget.hymn.number,
-                        itemType: 'Hymn',
-                    ),
-                );
-                return;
-            }
-        }
-    } else {
-        await _audioPlayer.pause();
-    }
     setState(() {
-        _isMiniPlayerVisible = !_isMiniPlayerVisible;
+      _isAudioLoading = true;
     });
 
-    if (_isMiniPlayerVisible) {
-        _playbackSpeed = 1.0;
+    if (!_isMiniPlayerVisible) {
+      if (_audioPlayer.audioSource == null) {
         try {
-            if (_audioPlayer.audioSource != null) {
-                await _audioPlayer.setSpeed(_playbackSpeed);
-            }
+          await _init();
         } catch (e) {
-            print("Error resetting playback speed: $e");
+          return;
         }
+      } else {
+        setState(() {
+          _isAudioLoading = false;
+          _isMiniPlayerVisible = true;
+        });
+      }
+    } else {
+      await _audioPlayer.pause();
+      setState(() {
+        _isMiniPlayerVisible = false;
+        _isAudioLoading = false;
+      });
+    }
+
+    if (_isMiniPlayerVisible && !_isAudioLoading) { // Only reset speed if mini player is becoming visible and not loading
+      _playbackSpeed = 1.0;
+      try {
+        if (_audioPlayer.audioSource != null) {
+          await _audioPlayer.setSpeed(_playbackSpeed);
+        }
+      } catch (e) {
+        print("Error resetting playback speed: $e");
+      }
     }
   }
+
 
   void _onAudioCompleted() {
     print("Audio playback completed!");
@@ -429,7 +437,16 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                                 heroTag: _audioButtonHeroTag,
                                 onPressed: _toggleMiniPlayerVisibility,
                                 tooltip: 'Open Audio Player',
-                                child: Icon(_isMiniPlayerVisible ? Icons.music_note : Icons.music_note),
+                                child: _isAudioLoading
+                                  ? SizedBox(
+                                      width: 20.0,
+                                      height: 20.0,
+                                      child: const CircularProgressIndicator(
+                                        color: Colors.white,
+                                        strokeWidth: 4.0,
+                                      ),
+                                    )
+                                  : Icon(_isMiniPlayerVisible ? Icons.music_note : Icons.music_note),
                               ),
                             ),
                           ),

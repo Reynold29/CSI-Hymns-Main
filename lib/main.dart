@@ -6,6 +6,7 @@ import 'screens/hymns_screen.dart';
 import 'screens/keerthane_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/foundation.dart';
 import 'package:vibration/vibration.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:in_app_update/in_app_update.dart';
@@ -17,7 +18,21 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+
+  FirebaseOptions firebaseOptions = FirebaseOptions(
+    apiKey: "AIzaSyDxevY9bYbwnMKCCyAqCXo5emtBbE4_keY",
+    authDomain: "hymnappnoti.firebaseapp.com",
+    projectId: "hymnappnoti",
+    storageBucket: "hymnappnoti.firebasestorage.app",
+    messagingSenderId: "162340486626",
+    appId: "1:162340486626:web:6ea1b8331cdcb4b3e54dbb",
+  );
+
+  await Firebase.initializeApp(
+    options: kIsWeb ? firebaseOptions : null,
+  );
+
+  await _initOneSignal();
 
   runApp(
     ShowCaseWidget(
@@ -27,6 +42,12 @@ void main() async {
       ),
     ),
   );
+}
+
+Future<void> _initOneSignal() async {
+  OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+  OneSignal.initialize("29f2a6ba-3f56-4ffe-8075-3b70d7440b13");
+  OneSignal.Notifications.requestPermission(true);
 }
 
 class MyApp extends StatelessWidget {
