@@ -9,6 +9,7 @@ import 'package:audio_session/audio_session.dart';
 import 'package:favorite_button/favorite_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 
 class HymnDetailScreen extends StatefulWidget {
   final Hymn hymn;
@@ -36,21 +37,15 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
   final _debugButtonHeroTag = const Symbol('debugButtonHeroTag');
   late StreamSubscription<PlayerState> _playerStateSubscription;
 
-  void _increaseFontSize() async {
-    bool? hasVibrator = await Vibration.hasVibrator();
-    if (hasVibrator) {
-      Vibration.vibrate(duration: 30);
-    }
+  void _incrementFontSize() async {
+    await HapticFeedbackManager.lightClick();
     setState(() {
       _fontSize = (_fontSize + 2).clamp(16.0, 40.0);
     });
   }
 
-  void _decreaseFontSize() async {
-    bool? hasVibrator = await Vibration.hasVibrator();
-    if (hasVibrator) {
-      Vibration.vibrate(duration: 30);
-    }
+  void _decrementFontSize() async {
+    await HapticFeedbackManager.lightClick();
     setState(() {
       _fontSize = (_fontSize - 2).clamp(16.0, 40.0);
     });
@@ -121,10 +116,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
       await _saveToFavorites(widget.hymn);
     }
 
-    bool? hasVibrator = await Vibration.hasVibrator();
-    if (hasVibrator) {
-      Vibration.vibrate(duration: 100);
-    }
+    await HapticFeedbackManager.mediumClick();
 
     await _checkIsFavorite();
   }
@@ -137,10 +129,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
   }
 
   void _toggleAudioPlayback() async {
-    bool? hasVibrator = await Vibration.hasVibrator();
-    if (hasVibrator) {
-      Vibration.vibrate(duration: 30);
-    }
+    await HapticFeedbackManager.lightClick();
     setState(() {
       if (_isPlaying) {
         _audioPlayer.pause();
@@ -152,10 +141,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
   }
 
   void _showFeedbackDialog() async {
-    bool? hasVibrator = await Vibration.hasVibrator();
-    if (hasVibrator) {
-      Vibration.vibrate(duration: 30);
-    }
+    await HapticFeedbackManager.lightClick();
     showDialog(
       context: context,
       builder: (context) {
@@ -222,10 +208,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
   }
 
   void _toggleMiniPlayerVisibility() async {
-    bool? hasVibrator = await Vibration.hasVibrator();
-    if (hasVibrator) {
-      Vibration.vibrate(duration: 30);
-    }
+    await HapticFeedbackManager.lightClick();
     setState(() {
       _isAudioLoading = true;
     });
@@ -282,10 +265,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
   }
 
   void _toggleLoop() async {
-    bool? hasVibrator = await Vibration.hasVibrator();
-    if (hasVibrator) {
-      Vibration.vibrate(duration: 30);
-    }
+    await HapticFeedbackManager.lightClick();
     setState(() {
         _isLooping = !_isLooping;
     });
@@ -293,10 +273,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
   }
 
   void _setPlaybackSpeed(double speed) async {
-    bool? hasVibrator = await Vibration.hasVibrator();
-    if (hasVibrator) {
-      Vibration.vibrate(duration: 30);
-    }
+    await HapticFeedbackManager.lightClick();
     print("setPlaybackSpeed called with speed: $speed (Simplified Navigation)");
     setState(() {
         _playbackSpeed = speed;
@@ -360,10 +337,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                         label: const Text('English'),
                         selected: selectedLanguage == 'English',
                         onSelected: (bool selected) async {
-                            bool? hasVibrator = await Vibration.hasVibrator();
-                            if (hasVibrator) {
-                              Vibration.vibrate(duration: 30);
-                            }
+                          await HapticFeedbackManager.lightClick();
                           if (selected) {
                             setState(() {
                               selectedLanguage = 'English';
@@ -382,10 +356,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                         ),
                         selected: selectedLanguage == 'Kannada',
                         onSelected: (bool selected) async {
-                            bool? hasVibrator = await Vibration.hasVibrator();
-                            if (hasVibrator) {
-                              Vibration.vibrate(duration: 30);
-                            }
+                          await HapticFeedbackManager.lightClick();
                           if (selected) {
                             setState(() {
                               selectedLanguage = 'Kannada';
@@ -403,83 +374,103 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                     ),
                   ],
                   const Divider(),
+                  const SizedBox(height: 16),
                   Row(
                     children: [
-                      InkWell(
-                        onTap: _decreaseFontSize,
-                        child: Container(
-                          padding: const EdgeInsets.all(5.0),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Theme.of(context).colorScheme.primaryContainer,
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                          foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.all(8.0),
+                          minimumSize: const Size(40, 40),
+                        ).copyWith(
+                          overlayColor: MaterialStateProperty.resolveWith<Color?>(
+                            (Set<MaterialState> states) {
+                              if (states.contains(MaterialState.pressed))
+                                return Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.12);
+                              if (states.contains(MaterialState.hovered))
+                                return Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.04);
+                              return null;
+                            },
                           ),
-                          child: Icon(Icons.remove, color: Theme.of(context).colorScheme.onPrimaryContainer),
                         ),
+                        onPressed: _decrementFontSize,
+                        child: const Icon(Icons.remove, size: 20),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: 4),
                       const Text('Font', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      const SizedBox(width: 8),
-                      InkWell(
-                        onTap: _increaseFontSize,
-                        child: Container(
-                          padding: const EdgeInsets.all(5.0),
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            color: Theme.of(context).colorScheme.primaryContainer,
+                      const SizedBox(width: 4),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                          foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          padding: const EdgeInsets.all(8.0),
+                          minimumSize: const Size(40, 40),
+                        ).copyWith(
+                          overlayColor: MaterialStateProperty.resolveWith<Color?>(
+                            (Set<MaterialState> states) {
+                              if (states.contains(MaterialState.pressed))
+                                return Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.12);
+                              if (states.contains(MaterialState.hovered))
+                                return Theme.of(context).colorScheme.onPrimaryContainer.withOpacity(0.04);
+                              return null;
+                            },
                           ),
-                          child: Icon(Icons.add, color: Theme.of(context).colorScheme.onPrimaryContainer),
                         ),
+                        onPressed: _incrementFontSize,
+                        child: const Icon(Icons.add, size: 20),
                       ),
                       const Spacer(),
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
-                            child: SizedBox(
-                              width: 50.0,
-                              height: 50.0,
-                              child: FloatingActionButton(
-                                heroTag: _audioButtonHeroTag,
-                                onPressed: _toggleMiniPlayerVisibility,
-                                tooltip: 'Open Audio Player',
-                                backgroundColor: colorScheme.primary,
-                                foregroundColor: colorScheme.onPrimary,
-                                elevation: 3.0,
-                                child: _isAudioLoading
-                                  ? SizedBox(
-                                      width: 20.0,
-                                      height: 20.0,
-                                      child: CircularProgressIndicator(
-                                        color: colorScheme.onPrimary,
-                                        strokeWidth: 3.0,
-                                      ),
-                                    )
-                                  : Icon(_isMiniPlayerVisible ? Icons.volume_up_rounded : Icons.music_note_rounded),
-                              ),
+                          SizedBox(
+                            width: 50.0,
+                            height: 50.0,
+                            child: FloatingActionButton(
+                              heroTag: _audioButtonHeroTag,
+                              onPressed: _toggleMiniPlayerVisibility,
+                              tooltip: 'Open Audio Player',
+                              backgroundColor: colorScheme.secondaryContainer,
+                              foregroundColor: colorScheme.primary,
+                              elevation: 3.0,
+                              hoverColor: colorScheme.onSecondaryContainer.withOpacity(0.08),
+                              splashColor: colorScheme.onSecondaryContainer.withOpacity(0.16),
+                              child: _isAudioLoading
+                                ? SizedBox(
+                                    width: 16.0,
+                                    height: 16.0,
+                                    child: CircularProgressIndicator(
+                                      color: colorScheme.primary,
+                                      strokeWidth: 2.0,
+                                    ),
+                                  )
+                                : Icon(_isMiniPlayerVisible ? Icons.volume_up_rounded : Icons.music_note_rounded, size: 22),
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.only(top: 10.0, left: 10.0, bottom: 10.0),
-                            child: SizedBox(
-                              width: 50.0,
-                              height: 50.0,
-                              child: FloatingActionButton(
-                                heroTag: _debugButtonHeroTag,
-                                onPressed: _showFeedbackDialog,
-                                tooltip: 'Report Lyrics Issue',
-                                backgroundColor: colorScheme.surfaceContainerHighest,
-                                foregroundColor: colorScheme.onSurfaceVariant,
-                                elevation: 3.0,
-                                child: const Icon(Icons.bug_report_rounded),
-                              ),
+                          const SizedBox(width: 6.0),
+                          SizedBox(
+                            width: 50.0,
+                            height: 50.0,
+                            child: FloatingActionButton(
+                              heroTag: _debugButtonHeroTag,
+                              onPressed: _showFeedbackDialog,
+                              tooltip: 'Report Lyrics Issue',
+                              backgroundColor: colorScheme.tertiaryContainer,
+                              foregroundColor: colorScheme.onTertiaryContainer,
+                              elevation: 3.0,
+                              hoverColor: colorScheme.onTertiaryContainer.withOpacity(0.08),
+                              splashColor: colorScheme.onTertiaryContainer.withOpacity(0.16),
+                              child: const Icon(Icons.bug_report_rounded, size: 22),
                             ),
                           ),
                         ],
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
                   Center(
                     child: SingleChildScrollView(
                       child: Text(

@@ -7,6 +7,8 @@ import '../widgets/search_bar.dart' as custom;
 import 'package:showcaseview/showcaseview.dart';
 import 'package:hymns_latest/hymn_detail_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:animations/animations.dart';
+import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 
 class HymnsScreen extends StatefulWidget {
   const HymnsScreen({super.key});
@@ -284,15 +286,29 @@ class _HymnsScreenState extends State<HymnsScreen> {
     super.dispose();
   }
 
-  void _showFilterMenu(BuildContext context) {
+  void _showFilterMenu(BuildContext context, bool isCategoryFilter) {
+    final RenderBox? overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
+    final RenderBox? button = context.findRenderObject() as RenderBox?;
+    if (button == null || overlay == null) return;
+
+    final position = RelativeRect.fromRect(
+      Rect.fromPoints(
+        button.localToGlobal(Offset.zero, ancestor: overlay),
+        button.localToGlobal(button.size.bottomRight(Offset.zero), ancestor: overlay),
+      ),
+      Offset.zero & overlay.size,
+    );
+
     showMenu<String>(
       context: context,
-      position: const RelativeRect.fromLTRB(100, 100, 0, 0),
+      position: position.shift(const Offset(0, 8)),
       items: [
         const PopupMenuItem<String>(value: "number", child: Text("Order by Hymn Number")),
         const PopupMenuItem<String>(value: "title", child: Text("Order in Alphabetical Order")),
         const PopupMenuItem<String>(value: "time_signature", child: Text("Order by Tune Meter")),
       ],
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ).then((value) {
       if (value != null) {
         setState(() {
@@ -326,46 +342,86 @@ class _HymnsScreenState extends State<HymnsScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: custom.SearchBar(
-          hintText: 'Search Hymns (Number, Title, Meter)',
-          onChanged: (searchQuery) {
-            setState(() {
-              _searchQuery = searchQuery;
-              _filterHymns();
-            });
-          },
-          focusNode: _searchFocusNode,
-          onQueryCleared: () {
-            setState(() {
-              _searchQuery = null;
-              _filterHymns();
-              if (_selectedOrder == 'time_signature') _groupHymnsBySignature();
-              Future.delayed(const Duration(milliseconds: 100), () {
-                _searchFocusNode.unfocus();
-              });
-            });
-          },
-          backgroundColor: colorScheme.surfaceContainerHighest,
-          searchIconColor: colorScheme.onSurfaceVariant,
-          clearIconColor: colorScheme.onSurfaceVariant,
-          textStyle: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.filter_list),
-            tooltip: 'Filter Hymns',
-            color: colorScheme.onSurface,
-            onPressed: () => _showFilterMenu(context),
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh Lyrics',
-            color: colorScheme.onSurface,
-            onPressed: checkAndUpdateLyrics,
-          ),
-        ],
-        backgroundColor: colorScheme.surface,
+        automaticallyImplyLeading: false, 
         elevation: 0,
+        toolbarHeight: 130, // Ensuring this is 130
+        backgroundColor: colorScheme.surface,
+        flexibleSpace: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    custom.SearchBar(
+                      hintText: 'Search Hymns (Number, Title, Meter)',
+                      onChanged: (searchQuery) {
+                        setState(() {
+                          _searchQuery = searchQuery;
+                          _filterHymns();
+                        });
+                      },
+                      focusNode: _searchFocusNode,
+                      onQueryCleared: () {
+                        setState(() {
+                          _searchQuery = null;
+                          _filterHymns();
+                          if (_selectedOrder == 'time_signature') _groupHymnsBySignature();
+                          Future.delayed(const Duration(milliseconds: 100), () {
+                            _searchFocusNode.unfocus();
+                          });
+                        });
+                      },
+                      backgroundColor: colorScheme.surfaceContainerHighest,
+                      searchIconColor: colorScheme.onSurfaceVariant,
+                      clearIconColor: colorScheme.onSurfaceVariant,
+                      textStyle: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton.icon(
+                          icon: const Icon(Icons.filter_list),
+                          label: Text(
+                            'Filter',
+                            style: TextStyle(color: colorScheme.onSurface),
+                          ),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ).copyWith(
+                            overlayColor: MaterialStateProperty.resolveWith<Color?>(
+                              (Set<MaterialState> states) {
+                                if (states.contains(MaterialState.pressed))
+                                  return Theme.of(context).colorScheme.primary.withOpacity(0.12);
+                                if (states.contains(MaterialState.hovered))
+                                  return Theme.of(context).colorScheme.primary.withOpacity(0.04);
+                                return null;
+                              },
+                            ),
+                          ),
+                          onPressed: () => _showFilterMenu(context, true),
+                        ),
+                        const SizedBox(width: 8),
+                        TextButton.icon(
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Refresh Lyrics'),
+                          onPressed: checkAndUpdateLyrics,
+                          style: TextButton.styleFrom(
+                            foregroundColor: colorScheme.onSurface,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                        ),
+                      ],
+                    )
+                  ],
+                );
+              },
+            ),
+          ),
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -452,12 +508,12 @@ class _HymnsScreenState extends State<HymnsScreen> {
     final textTheme = Theme.of(context).textTheme;
 
     return Card(
-      elevation: 0, // M3 style: flat with outline
+      elevation: 0,
       shape: RoundedRectangleBorder(
         side: BorderSide(color: colorScheme.outlineVariant, width: 1),
         borderRadius: BorderRadius.circular(12.0),
       ),
-      margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 0), // Adjust margin as needed
+      margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 0),
       child: ListTile(
         leading: Padding(
           padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 0.0), // Adjust padding for image
@@ -480,7 +536,7 @@ class _HymnsScreenState extends State<HymnsScreen> {
             if (hymn.signature.isNotEmpty) ...[
               const SizedBox(height: 4.0), // Gap between title and subtitle
               Text(
-                hymn.signature, 
+                hymn.signature,
                 style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)
               ),
             ]
@@ -489,10 +545,20 @@ class _HymnsScreenState extends State<HymnsScreen> {
         // subtitle property is removed as it's now part of the title Column
         trailing: Icon(Icons.chevron_right, color: colorScheme.secondary),
         onTap: () {
+          HapticFeedbackManager.lightClick();
           Navigator.push(
             context,
-            MaterialPageRoute(
-              builder: (context) => HymnDetailScreen(hymn: hymn),
+            PageRouteBuilder(
+              transitionDuration: const Duration(milliseconds: 300),
+              pageBuilder: (context, animation, secondaryAnimation) => HymnDetailScreen(hymn: hymn),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return SharedAxisTransition(
+                  animation: animation,
+                  secondaryAnimation: secondaryAnimation,
+                  transitionType: SharedAxisTransitionType.horizontal, // Use a suitable transition type like SLIDE
+                  child: child,
+                );
+              },
             ),
           );
         },

@@ -6,9 +6,17 @@ import 'package:hymns_latest/screens/changelog_screen.dart';
 import 'package:hymns_latest/screens/about_app.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
+
+  @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _isCheckingForUpdate = false; // Added loading state for update check
 
   @override
   Widget build(BuildContext context) {
@@ -33,6 +41,7 @@ class SettingsScreen extends StatelessWidget {
             title: const Text('Dark Mode'),
             value: currentVisualIsDark, // Use the determined visual state for the toggle value
             onChanged: (bool value) {
+              HapticFeedbackManager.lightClick();
               // When toggled, explicitly set to Light or Dark
               themeState.setThemeMode(value ? ThemeMode.dark : ThemeMode.light);
             },
@@ -45,6 +54,7 @@ class SettingsScreen extends StatelessWidget {
               subtitle: const Text('Uses true black for dark theme backgrounds'),
               value: themeState.blackThemeEnabled,
               onChanged: (bool value) {
+                HapticFeedbackManager.lightClick();
                 themeState.setBlackThemeEnabled(value);
               },
               secondary: const Icon(FontAwesomeIcons.paintRoller),
@@ -65,22 +75,39 @@ class SettingsScreen extends StatelessWidget {
                 ),
               ),
             ),
-            onTap: () => _showColorPickerDialog(context, themeState),
+            onTap: () {
+              HapticFeedbackManager.lightClick();
+              _showColorPickerDialog(context, themeState);
+            },
           ),
           const SizedBox(height: 16),
           _buildSectionHeader(context, 'App Information', FontAwesomeIcons.circleInfo),
           ListTile(
             leading: const Icon(FontAwesomeIcons.cloudArrowDown),
             title: const Text('Check for Updates'),
-            onTap: () {
-              final updateManager = UpdateManager();
-              updateManager.checkForUpdates(context);
-            },
+            enabled: !_isCheckingForUpdate, // Disable button when checking for update
+            onTap: _isCheckingForUpdate
+                ? null
+                : () async {
+                    HapticFeedbackManager.lightClick();
+                    setState(() {
+                      _isCheckingForUpdate = true;
+                    });
+                    try {
+                      final updateManager = UpdateManager();
+                      await updateManager.checkForUpdates(context);
+                    } finally {
+                      setState(() {
+                        _isCheckingForUpdate = false;
+                      });
+                    }
+                  },
           ),
           ListTile(
             leading: const Icon(FontAwesomeIcons.scroll),
             title: const Text('What\'s New? (Changelog)'),
             onTap: () {
+              HapticFeedbackManager.lightClick();
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const ChangelogScreen()),
@@ -91,6 +118,7 @@ class SettingsScreen extends StatelessWidget {
             leading: const Icon(FontAwesomeIcons.book),
             title: const Text('About App'),
             onTap: () {
+              HapticFeedbackManager.lightClick();
               Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const AboutApp()),

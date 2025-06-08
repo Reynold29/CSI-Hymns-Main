@@ -15,6 +15,7 @@ import 'package:onesignal_flutter/onesignal_flutter.dart';
 import 'package:hymns_latest/widgets/gesture_control.dart';
 import 'package:hymns_latest/screens/favorites_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -38,8 +39,6 @@ void main() async {
     // Continue app initialization even if Firebase fails
   }
 
-  await _initOneSignal();
-
   runApp(
     ShowCaseWidget(
       builder: (context) => ChangeNotifierProvider(
@@ -48,12 +47,6 @@ void main() async {
       ),
     ),
   );
-}
-
-Future<void> _initOneSignal() async {
-  OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
-  OneSignal.initialize("29f2a6ba-3f56-4ffe-8075-3b70d7440b13");
-  OneSignal.Notifications.requestPermission(true);
 }
 
 class MyApp extends StatelessWidget {
@@ -72,10 +65,7 @@ class MyApp extends StatelessWidget {
               brightness: Brightness.light,
             ),
             navigationBarTheme: NavigationBarThemeData(
-              labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-              indicatorShape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
               elevation: 0,
             ),
             cardTheme: CardThemeData(
@@ -97,10 +87,7 @@ class MyApp extends StatelessWidget {
               brightness: Brightness.dark,
             ),
             navigationBarTheme: NavigationBarThemeData(
-              labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-              indicatorShape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
+              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
               elevation: 0,
             ),
             cardTheme: CardThemeData(
@@ -138,25 +125,43 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
   late PageController _pageController;
   bool _isDrawerOpen = false;
 
+  static const Duration _pageAnimationDuration = Duration(milliseconds: 300);
+  static const Curve _pageAnimationCurve = Curves.easeInOutCubic;
+
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300),);
-    _pageController = PageController();
+    _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+    _pageController = PageController(initialPage: _selectedIndex);
     checkForUpdate();
-    _initOneSignal();
+    _initOneSignalWithCount();
+    _checkFirstRunAndShowCase();
   }
 
   Future<void> checkForUpdate() async {
-    InAppUpdate.checkForUpdate().then((info) {
-      setState(() {
-        if (info.updateAvailability == UpdateAvailability.updateAvailable) {
-          update();
-        }
+    try {
+      InAppUpdate.checkForUpdate().then((info) {
+        setState(() {
+          if (info.updateAvailability == UpdateAvailability.updateAvailable) {
+            update();
+          }
+        });
+      }).catchError((e) {
+        String msg = e.toString().contains('not owned by any user')
+            ? "In-app update is only available for Play Store installs."
+            : "Error checking for update: $e";
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(msg)),
+        );
       });
-    }).catchError((e) {
-      //---print(e.toString());---//
-    });
+    } catch (e) {
+      String msg = e.toString().contains('not owned by any user')
+          ? "In-app update is only available for Play Store installs."
+          : "Error checking for update: $e";
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
+    }
   }
 
   void update() async {
@@ -167,28 +172,6 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
   void _incrementCounter() {
     setState(() {
       _counter++;
-    });
-  }
-
-  Future<void> _initOneSignal() async {
-    OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
-    OneSignal.initialize("29f2a6ba-3f56-4ffe-8075-3b70d7440b13");
-
-    // -- iOS settings --
-    OneSignal.Notifications.requestPermission(true);
-
-    // -- Android settings --
-    OneSignal.Notifications.addForegroundWillDisplayListener((event) {
-      print("FOREGROUND WILL DISPLAY LISTENER: Notification Received");
-    });
-
-    OneSignal.Notifications.addClickListener((event) {
-      print('NOTIFICATION CLICK LISTENER: ${jsonEncode(event.notification.jsonRepresentation())}');
-    });
-
-    // iOS-only event listener for notification permissions
-    OneSignal.Notifications.addPermissionObserver((state) {
-      print("Notification permission status: ${state.toString()}");
     });
   }
 
@@ -218,15 +201,13 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
   ];
 
   void _onItemTapped(int index) async {
-    bool? hasVibrator = await Vibration.hasVibrator();
-    if (hasVibrator) {
-      Vibration.vibrate(duration: 30);
-    }
-    //---print('Tapped index: $index');---//
-    setState(() {
-      _selectedIndex = index;
-    });
-    _pageController.jumpToPage(index);
+    if (_selectedIndex == index) return;
+    await HapticFeedbackManager.lightClick();
+    _pageController.animateToPage(
+      index,
+      duration: _pageAnimationDuration,
+      curve: _pageAnimationCurve,
+    );
   }
 
   Future<void> _checkFirstRunAndShowCase() async {
@@ -234,10 +215,66 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     bool isFirstRun = (prefs.getBool('isFirstRun') ?? true);
 
     if (isFirstRun) {
-      Future.delayed(const Duration(seconds: 1), () =>
-          ShowCaseWidget.of(context).startShowCase([_menuButtonKey]));
-      prefs.setBool('isFirstRun', false);
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && ShowCaseWidget.of(context) != null) {
+          ShowCaseWidget.of(context).startShowCase([_menuButtonKey]);
+          prefs.setBool('isFirstRun', false);
+        }
+      });
     }
+  }
+
+  Future<void> _initOneSignalWithCount() async {
+    OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+    OneSignal.initialize("29f2a6ba-3f56-4ffe-8075-3b70d7440b13");
+
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    int promptCount = prefs.getInt('notificationPromptCount') ?? 0;
+
+    // Get the current native notification permission status
+    OSNotificationPermission nativePermissionStatus = await OneSignal.Notifications.permissionNative();
+
+    // 1. If permission is already authorized, reset prompt count and return.
+    if (nativePermissionStatus == OSNotificationPermission.authorized) {
+      prefs.setInt('notificationPromptCount', 0);
+      return;
+    }
+
+    // 2. If permission is denied AND we've already prompted twice or more, do not prompt again.
+    if (nativePermissionStatus == OSNotificationPermission.denied && promptCount >= 2) {
+      debugPrint("User has denied notification permissions multiple times. Not prompting again.");
+      return;
+    }
+
+    // 3. Otherwise (permission not authorized, and prompt count is less than 2), request permission.
+    if (promptCount < 2) {
+      OneSignal.Notifications.requestPermission(true).then((accepted) {
+        if (!accepted) {
+          // User denied the prompt, increment the count
+          prefs.setInt('notificationPromptCount', promptCount + 1);
+        } else {
+          // User accepted, reset count (optional, but good practice)
+          prefs.setInt('notificationPromptCount', 0);
+        }
+      });
+    }
+
+    // -- iOS settings --
+    OneSignal.Notifications.addForegroundWillDisplayListener((event) {
+      print("FOREGROUND WILL DISPLAY LISTENER: Notification Received");
+    });
+
+    OneSignal.Notifications.addClickListener((event) {
+      print('NOTIFICATION CLICK LISTENER: ${jsonEncode(event.notification.jsonRepresentation())}');
+    });
+
+    // iOS-only event listener for notification permissions
+    OneSignal.Notifications.addPermissionObserver((state) {
+      print("Notification permission status: ${state.toString()}");
+    });
+
+    // -- Android settings --
+    // (Listeners are generally platform-agnostic for OneSignal, but specific platform handling can be added here if needed)
   }
 
   @override
@@ -272,46 +309,37 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
         elevation: 0,
       ),
       drawer: Sidebar(animationController: _animationController),
-      body: GestureControl(
-        child: PageView(
-          controller: _pageController,
-          onPageChanged: (int index) async {
-            setState(() => _selectedIndex = index);
-            bool? hasVibrator = await Vibration.hasVibrator();
-            if (hasVibrator) {
-              Vibration.vibrate(duration: 30);
-            }
-          },
-          children: _screens,
-        ),
-        onPageChanged: (index) {
+      body: PageView(
+        controller: _pageController,
+        physics: const NeverScrollableScrollPhysics(),
+        onPageChanged: (int index) async {
           setState(() => _selectedIndex = index);
-          _pageController.animateToPage(index, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
+          await HapticFeedbackManager.lightClick();
         },
+        children: _screens,
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
-        onDestinationSelected: _onItemTapped,
-        animationDuration: const Duration(milliseconds: 500),
+        onDestinationSelected: (int index) {
+          HapticFeedbackManager.lightClick();
+          _onItemTapped(index);
+        },
+        animationDuration: _pageAnimationDuration,
         destinations: [
           NavigationDestination(
             icon: const Icon(Icons.music_note),
-            selectedIcon: Icon(Icons.music_note, color: colorScheme.onSecondaryContainer),
             label: 'Hymns',
           ),
           NavigationDestination(
             icon: const Icon(Icons.album),
-            selectedIcon: Icon(Icons.album, color: colorScheme.onSecondaryContainer),
             label: 'Keerthane',
           ),
           NavigationDestination(
             icon: const Icon(Icons.category),
-            selectedIcon: Icon(Icons.category, color: colorScheme.onSecondaryContainer),
             label: 'Categories',
           ),
           NavigationDestination(
             icon: const Icon(Icons.favorite),
-            selectedIcon: Icon(Icons.favorite, color: colorScheme.onSecondaryContainer),
             label: 'Favorites',
           ),
         ],

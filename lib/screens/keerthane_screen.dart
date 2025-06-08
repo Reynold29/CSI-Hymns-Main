@@ -6,6 +6,8 @@ import '../widgets/search_bar.dart' as custom;
 import 'package:hymns_latest/keerthanes_def.dart';
 import 'package:hymns_latest/keerthane_detail_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:animations/animations.dart';
+import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 
 class KeerthaneScreen extends StatefulWidget {
   const KeerthaneScreen({super.key});
@@ -17,8 +19,9 @@ class KeerthaneScreen extends StatefulWidget {
 class _KeerthaneScreenState extends State<KeerthaneScreen> {
   List<Keerthane> keerthane = [];
   List<Keerthane> filteredKeerthane = [];
-  String? _selectedOrder = 'number';
+  String? _orderBy = 'number';
   String? _searchQuery;
+  String? _selectedLanguage;
   final FocusNode _searchFocusNode = FocusNode();
   bool _isLoading = true;
 
@@ -32,7 +35,7 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
       if (mounted) {
         setState(() {
           keerthane = data;
-          _sortKeerthane();
+          _sortAndFilterKeerthanes();
           _isLoading = false;
         });
       }
@@ -56,7 +59,7 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
           if (mounted) {
             setState(() {
               keerthane = updatedKeerthane;
-              _sortKeerthane();
+              _sortAndFilterKeerthanes();
             });
             await prefs.setInt('lastLyricsUpdateKeerthane', now);
             if (mounted) {
@@ -186,7 +189,7 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
         if (mounted) {
           setState(() {
             keerthane = updatedKeerthanas;
-            _sortKeerthane();
+            _sortAndFilterKeerthanes();
           });
         }
       } else {
@@ -198,39 +201,47 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
     }
   }
 
-  void _sortKeerthane() {
+  void _sortAndFilterKeerthanes() {
     if (!mounted) return;
+
+    List<Keerthane> currentKeerthane = List.from(keerthane);
+
+    // Apply ordering
+    if (_orderBy == 'number') {
+      currentKeerthane.sort((a, b) => a.number.compareTo(b.number));
+    } else if (_orderBy == 'title') {
+      currentKeerthane.sort((a, b) => a.title.compareTo(b.title));
+    }
+
+    // Apply language filter (if selected)
+    if (_selectedLanguage == 'English') {
+      currentKeerthane = currentKeerthane.where((k) => k.lyrics.isNotEmpty).toList();
+    } else if (_selectedLanguage == 'Kannada') {
+      currentKeerthane = currentKeerthane.where((k) => k.kannadaLyrics != null && k.kannadaLyrics!.isNotEmpty).toList();
+    }
+
+    // Apply search query
+    if (_searchQuery != null && _searchQuery!.isNotEmpty) {
+      final query = _searchQuery!.toLowerCase().trim();
+      currentKeerthane = currentKeerthane.where((k) =>
+        k.title.toLowerCase().contains(query) ||
+        k.number.toString().contains(query)
+      ).toList();
+    }
+
     setState(() {
-      if (_selectedOrder == 'number') {
-        keerthane.sort((a, b) => a.number.compareTo(b.number));
-      } else if (_selectedOrder == 'title') {
-        keerthane.sort((a, b) => a.title.compareTo(b.title));
-      }
-      _filterKeerthane();
+      filteredKeerthane = currentKeerthane;
     });
   }
 
-  void _filterKeerthane() {
-    if (!mounted) return;
-    setState(() {
-       if (_searchQuery == null || _searchQuery!.isEmpty) {
-        filteredKeerthane = List.from(keerthane);
-      } else {
-        final query = _searchQuery!.toLowerCase().trim();
-        filteredKeerthane = keerthane.where((k) =>
-          k.title.toLowerCase().contains(query) ||
-          k.number.toString().contains(query)
-        ).toList();
-      }
-    });
-  }
-
-  void _showFilterMenu(BuildContext context) {
+  void _showFilterMenu(BuildContext context, bool isCategory) {
     final RenderBox? overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
     final RenderBox? button = context.findRenderObject() as RenderBox?;
-    if (button == null || overlay == null) return;
+    if (overlay == null || button == null) {
+      return;
+    }
 
-    final position = RelativeRect.fromRect(
+    final RelativeRect position = RelativeRect.fromRect(
       Rect.fromPoints(
         button.localToGlobal(Offset.zero, ancestor: overlay),
         button.localToGlobal(button.size.bottomRight(Offset.zero), ancestor: overlay),
@@ -241,17 +252,27 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
     showMenu<String>(
       context: context,
       position: position.shift(const Offset(0, 8)),
+      elevation: 4, // Material 3 elevation
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), // Rounded corners
       items: [
-        const PopupMenuItem<String>(value: "number", child: Text("Order by Number")),
-        const PopupMenuItem<String>(value: "title", child: Text("Order Alphabetically")),
+        if (isCategory)
+          const PopupMenuItem<String>(value: "number", child: Text("Order by Number")),
+        if (isCategory)
+          const PopupMenuItem<String>(value: "title", child: Text("Order Alphabetically")),
+        if (!isCategory)
+          const PopupMenuItem<String>(value: "English", child: Text("English")),
+        if (!isCategory)
+          const PopupMenuItem<String>(value: "Kannada", child: Text("Kannada")),
       ],
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
     ).then((value) {
       if (value != null) {
         setState(() {
-          _selectedOrder = value;
-          _sortKeerthane();
+          if (isCategory) {
+            _orderBy = value;
+          } else {
+            _selectedLanguage = value;
+          }
+          _sortAndFilterKeerthanes();
         });
       }
     });
@@ -288,47 +309,84 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: custom.SearchBar(
-          hintText: 'Search Keerthane (Number, Title)',
-          onChanged: (searchQuery) {
-            setState(() {
-              _searchQuery = searchQuery;
-              _filterKeerthane();
-            });
-          },
-          focusNode: _searchFocusNode,
-          onQueryCleared: () {
-            setState(() {
-              _searchQuery = null;
-              _filterKeerthane();
-              Future.delayed(const Duration(milliseconds: 100), () {
-                _searchFocusNode.unfocus();
-              });
-            });
-          },
-          backgroundColor: colorScheme.surfaceContainerHighest,
-          searchIconColor: colorScheme.onSurfaceVariant,
-          clearIconColor: colorScheme.onSurfaceVariant,
-          textStyle: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
-        ),
-        actions: [
-          Builder(
-            builder: (context) => IconButton(
-              icon: const Icon(Icons.filter_list),
-              tooltip: 'Filter Keerthane',
-              color: colorScheme.onSurface,
-              onPressed: () => _showFilterMenu(context),
+        automaticallyImplyLeading: false,
+        elevation: 0,
+        toolbarHeight: 130, // Ensuring this is 130
+        backgroundColor: colorScheme.surface,
+        flexibleSpace: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    custom.SearchBar(
+                      hintText: 'Search Keerthane (Number, Title)',
+                      onChanged: (searchQuery) {
+                        setState(() {
+                          _searchQuery = searchQuery;
+                          _sortAndFilterKeerthanes();
+                        });
+                      },
+                      focusNode: _searchFocusNode,
+                      onQueryCleared: () {
+                        setState(() {
+                          _searchQuery = null;
+                          _sortAndFilterKeerthanes();
+                          Future.delayed(const Duration(milliseconds: 100), () {
+                            _searchFocusNode.unfocus();
+                          });
+                        });
+                      },
+                      backgroundColor: colorScheme.surfaceContainerHighest,
+                      searchIconColor: colorScheme.onSurfaceVariant,
+                      clearIconColor: colorScheme.onSurfaceVariant,
+                      textStyle: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        TextButton.icon(
+                          icon: const Icon(Icons.filter_list),
+                          label: Text(
+                            'Filter',
+                            style: TextStyle(color: colorScheme.onSurface),
+                          ),
+                          style: TextButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                          ).copyWith(
+                            overlayColor: MaterialStateProperty.resolveWith<Color?>(
+                              (Set<MaterialState> states) {
+                                if (states.contains(MaterialState.pressed))
+                                  return Theme.of(context).colorScheme.primary.withOpacity(0.12);
+                                if (states.contains(MaterialState.hovered))
+                                  return Theme.of(context).colorScheme.primary.withOpacity(0.04);
+                                return null;
+                              },
+                            ),
+                          ),
+                          onPressed: () => _showFilterMenu(context, true),
+                        ),
+                        TextButton.icon(
+                          icon: const Icon(Icons.refresh),
+                          label: const Text('Refresh Lyrics'),
+                          onPressed: checkAndUpdateLyrics,
+                          style: TextButton.styleFrom(
+                            foregroundColor: colorScheme.onSurface,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          ),
+                        ),
+                      ],
+                    )
+                  ],
+                );
+              },
             ),
           ),
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            tooltip: 'Refresh Lyrics',
-            color: colorScheme.onSurface,
-            onPressed: checkAndUpdateLyrics,
-          ),
-        ],
-        backgroundColor: colorScheme.surface,
-        elevation: 0,
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -407,9 +465,21 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
         ),
         trailing: Icon(Icons.chevron_right, color: colorScheme.secondary),
         onTap: () {
+          HapticFeedbackManager.lightClick();
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => KeerthaneDetailScreen(keerthane: keerthaneItem)),
+            PageRouteBuilder(
+              transitionDuration: const Duration(milliseconds: 300),
+              pageBuilder: (context, animation, secondaryAnimation) => KeerthaneDetailScreen(keerthane: keerthaneItem),
+              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                return SharedAxisTransition(
+                  animation: animation,
+                  secondaryAnimation: secondaryAnimation,
+                  transitionType: SharedAxisTransitionType.horizontal, // Use a suitable transition type like SLIDE
+                  child: child,
+                );
+              },
+            ),
           );
         },
         contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
