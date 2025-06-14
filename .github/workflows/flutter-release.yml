@@ -1,47 +1,56 @@
-name: Build APK & AAB and Send APK to Telegram
+name: Flutter CI - Signed Build & Telegram Upload
 
 on:
   push:
     branches:
-      - main  # or your release branch
-  workflow_dispatch:  # allows manual triggering
+      - main
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Set up Flutter
+      - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.32.3'
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: flutter pub get
 
       - name: Decode Android Keystore
-        run: |
-          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
+        run: echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
 
-      - name: Build APK
+      - name: Build Signed APK
+        env:
+          CI: true
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: flutter build apk --release
 
-      - name: Build AAB
+      - name: Build Signed AAB
+        env:
+          CI: true
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: flutter build appbundle --release
 
-      - name: Upload APK Artifact to GitHub
+      - name: Upload APK to GitHub Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: app-release.apk
+          name: Worship-Companion-APK
           path: build/app/outputs/flutter-apk/app-release.apk
 
-      - name: Upload AAB Artifact to GitHub
+      - name: Upload AAB to GitHub Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: app-release.aab
+          name: Worship-Companion-AAB
           path: build/app/outputs/bundle/release/app-release.aab
 
       - name: Send APK to Telegram
@@ -51,6 +60,5 @@ jobs:
         run: |
           curl -F document=@build/app/outputs/flutter-apk/app-release.apk \
                -F chat_id=$TELEGRAM_CHAT_ID \
-               -F caption="🚀 New APK build of CSI Hymns Book 📱" \
+               -F caption="📦 CSI Hymns Book • New Signed APK Build is here!" \
                https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendDocument
-
