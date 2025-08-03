@@ -1,5 +1,16 @@
 [
     { 
+        "title": "Fifth Public Stable Version Released!",
+        "version": "3.3.0-stable",
+        "date": "03-08-2025",
+        "changes": [ 
+            "Better Notification Handling",
+            "Major UI Improvements",
+            "Under-the-hood improvements and bug fixes",
+            "For more info on changes, visit https://github.com/Reynold29/CSI-Hymns-and-Lyrics/commits/main/"
+        ]
+    },
+    { 
         "title": "Fourth Public Stable Version Released!",
         "version": "3.2.0-stable",
         "date": "08-06-2025",
