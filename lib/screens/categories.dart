@@ -24,7 +24,7 @@ class Categories extends StatelessWidget {
                 _buildCategory(context, "Birthday", [361], [215]),
                 _buildCategory(context, "Marriage", [358, 359, 360], [188, 189, 190]),
                 _buildCategory(context, "House Warming", [362], [227, 228, 229, 230, 231, 232, 233, 234]),
-                _buildCategory(context, "Funeral", [], []),
+                _buildCategory(context, "Funeral", [310, 311,312], []),
                 _buildCategory(context, "Mangala", null, [227, 228, 229, 230, 231, 232, 233, 234]),
                 _buildCategory(context, "Children's Prayer", [328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348, 349], [200, 201, 202, 203, 204, 205, 206, 207, 208, 209]),
                 _buildCategory(context, "Lord's Supper", [273, 274, 275, 276, 277, 278, 279], [184, 185, 186, 187]),
