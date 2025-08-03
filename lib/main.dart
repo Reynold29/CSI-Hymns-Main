@@ -17,6 +17,21 @@ import 'package:hymns_latest/screens/favorites_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 
+class LightSwipePagePhysics extends PageScrollPhysics {
+  const LightSwipePagePhysics({ScrollPhysics? parent}) : super(parent: parent);
+
+  @override
+  LightSwipePagePhysics applyTo(ScrollPhysics? ancestor) {
+    return LightSwipePagePhysics(parent: buildParent(ancestor));
+  }
+
+  @override
+  double get minFlingDistance => 5.0; // much lower than default (50.0)
+
+  @override
+  double get minFlingVelocity => 100.0; // lower than default (400.0)
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -309,40 +324,126 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
         elevation: 0,
       ),
       drawer: Sidebar(animationController: _animationController),
-      body: PageView(
-        controller: _pageController,
-        physics: const NeverScrollableScrollPhysics(),
-        onPageChanged: (int index) async {
-          setState(() => _selectedIndex = index);
-          await HapticFeedbackManager.lightClick();
-        },
-        children: _screens,
+      body: Column(
+        children: [
+          Expanded(
+            child: PageView(
+              controller: _pageController,
+              physics: const LightSwipePagePhysics(),
+              onPageChanged: (int index) async {
+                setState(() => _selectedIndex = index);
+                await HapticFeedbackManager.lightClick();
+              },
+              children: _screens,
+            ),
+          ),
+          // Modern curved navbar with SafeArea
+          SafeArea(
+            top: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              child: LayoutBuilder(
+                builder: (context, constraints) {
+                  final tabCount = 4;
+                  final tabWidth = constraints.maxWidth / tabCount;
+                  return Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.08),
+                          blurRadius: 8,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: Stack(
+                      alignment: Alignment.bottomLeft,
+                      children: [
+                        // Row of tab buttons with less bottom padding for indicator
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 6),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              _buildTabButton(context, 0, Icons.music_note, 'Hymns'),
+                              _buildTabButton(context, 1, Icons.album, 'Keerthane'),
+                              _buildTabButton(context, 2, Icons.category, 'Categories'),
+                              _buildTabButton(context, 3, Icons.favorite, 'Favorites'),
+                            ],
+                          ),
+                        ),
+                        // Perfectly aligned indicator
+                        AnimatedPositioned(
+                          duration: const Duration(milliseconds: 300),
+                          curve: Curves.easeInOutCubic,
+                          left: _selectedIndex * tabWidth,
+                          bottom: 1,
+                          child: Container(
+                            width: tabWidth,
+                            height: 2.5,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary,
+                              borderRadius: BorderRadius.circular(6),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Theme.of(context).colorScheme.primary.withOpacity(0.13),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              ),
+            ),
+          ),
+        ],
       ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _selectedIndex,
-        onDestinationSelected: (int index) {
+    );
+  }
+
+  Widget _buildTabButton(BuildContext context, int index, IconData icon, String label) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final isSelected = _selectedIndex == index;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
           HapticFeedbackManager.lightClick();
           _onItemTapped(index);
         },
-        animationDuration: _pageAnimationDuration,
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.music_note),
-            label: 'Hymns',
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeInOut,
+          padding: const EdgeInsets.symmetric(vertical: 2),
+          decoration: BoxDecoration(
+            color: isSelected ? colorScheme.primary.withOpacity(0.07) : Colors.transparent,
+            borderRadius: BorderRadius.circular(12),
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.album),
-            label: 'Keerthane',
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant, size: 22),
+              const SizedBox(height: 1),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  letterSpacing: 0.2,
+                  height: 1.1,
+                ),
+              ),
+            ],
           ),
-          NavigationDestination(
-            icon: const Icon(Icons.category),
-            label: 'Categories',
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.favorite),
-            label: 'Favorites',
-          ),
-        ],
+        ),
       ),
     );
   }
