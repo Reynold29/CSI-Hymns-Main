@@ -313,7 +313,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
               overlayColor: Colors.black.withOpacity(0.7),
               titleTextStyle: TextStyle(color: colorScheme.onPrimaryContainer, fontSize: 20, fontWeight: FontWeight.bold),
               child: IconButton(
-                icon: Icon(Icons.menu, color: colorScheme.onSurface),
+                icon: Icon(Icons.menu, color: colorScheme.onSurface, size: 26),
                 onPressed: () => Scaffold.of(context).openDrawer(),
               ),
             );

@@ -5,6 +5,7 @@ import 'package:hymns_latest/screens/praise_app.dart';
 import 'package:hymns_latest/screens/settings_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hymns_latest/screens/about_developer_screen.dart';
+import 'dart:ui';
 
 class Sidebar extends StatefulWidget {
   final AnimationController animationController;
@@ -20,148 +21,176 @@ class _SidebarState extends State<Sidebar> {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.pop(context);
-      },
-      child: Scaffold(
-        backgroundColor: Colors.transparent,
-        body: Container(
-          width: 288,
-          height: double.infinity,
-          color: Colors.black,
+    final colorScheme = Theme.of(context).colorScheme;
+    // Example: Assume the first ListTile (AboutApp) is the selected one for demo. You can wire this to your navigation logic.
+    final int selectedIndex = 0;
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        topRight: Radius.circular(28),
+        bottomRight: Radius.circular(28),
+      ),
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+        child: Drawer(
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.only(
+              topRight: Radius.circular(28),
+              bottomRight: Radius.circular(28),
+            ),
+          ),
+          backgroundColor: colorScheme.surface.withOpacity(0.85),
+          elevation: 12,
           child: SafeArea(
-            child: Column(
-              children: [
-                ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 21, vertical: 16),
-                  leading: const CircleAvatar(
-                    backgroundColor: Colors.blue,
-                    child: FaIcon(
-                      FontAwesomeIcons.church,
-                      size: 30,
-                    ),
-                  ),
-                  title: const Text(
-                    "CSI Hymns and Lyrics",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'plusJakartaSans', color: Colors.white),
-                  ),
-                  subtitle: const Text(
-                    "Praise The Lord!",
-                    style: TextStyle(
-                      color: Color.fromARGB(255, 255, 255, 255),
-                      fontWeight: FontWeight.w100,
-                      fontFamily: 'plusJakartaSans',
-                    ),
-                  ),
-                  onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const AboutApp()),
-                  );
-                  },
-                ),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 34),
-                  child: Divider(
-                    color: Color.fromARGB(133, 220, 220, 220),
-                    height: 1,
-                  ),
-                ),
-                ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const PraiseAppScreen()),
-                    );
-                  },
-                  leading: const SizedBox(
-                    height: 34,
-                    width: 34,
-                    child: FaIcon(FontAwesomeIcons.googlePlay),
-                  ),
-                  title: const Text("Praise and Worship App", style: TextStyle(color: Colors.white)),
-                ),
-                ListTile(
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-                  onTap: () {
-                    setState(() {
-                      _showOptions = !_showOptions;
-                    });
-                  },
-                  leading: const SizedBox(
-                    height: 34,
-                    width: 34,
-                    child: FaIcon(FontAwesomeIcons.bookBible),
-                  ),
-                  title: Row(
+            child: Material(
+              color: Colors.transparent,
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text("Categories", style: TextStyle(color: Colors.white)),
-                      const Spacer(),
-                      Icon(
-                        _showOptions ? Icons.expand_less : Icons.expand_more,
-                        color: Colors.white,
-                      semanticLabel: _showOptions ? 'Collapse Categories' : 'Expand Categories',
+                      // App branding / user profile card
+                      Card(
+                        color: colorScheme.primaryContainer,
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+                          child: Row(
+                            children: [
+                              CircleAvatar(
+                                radius: 28,
+                                backgroundColor: colorScheme.primary,
+                                child: FaIcon(
+                                  FontAwesomeIcons.church,
+                                  size: 28,
+                                  color: colorScheme.onPrimary,
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "CSI Hymns and Lyrics",
+                                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'plusJakartaSans', color: colorScheme.onPrimaryContainer),
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      "Praise The Lord!",
+                                      style: TextStyle(
+                                        color: colorScheme.onPrimaryContainer.withOpacity(0.7),
+                                        fontWeight: FontWeight.w400,
+                                        fontFamily: 'plusJakartaSans',
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Divider(),
+                      ),
+                      // Sidebar items
+                      _sidebarTile(
+                        context,
+                        icon: FontAwesomeIcons.googlePlay,
+                        label: "Praise and Worship App",
+                        selected: selectedIndex == 0,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const PraiseAppScreen()),
+                          );
+                        },
+                        colorScheme: colorScheme,
+                      ),
+                      _sidebarTile(
+                        context,
+                        icon: FontAwesomeIcons.bookBible,
+                        label: "Categories",
+                        selected: selectedIndex == 1,
+                        onTap: () {
+                          setState(() {
+                            _showOptions = !_showOptions;
+                          });
+                        },
+                        colorScheme: colorScheme,
+                        trailing: Icon(
+                          _showOptions ? Icons.expand_less : Icons.expand_more,
+                          color: colorScheme.onSurface,
+                        ),
+                      ),
+                      if (_showOptions) ...SidebarOptions.getOptions(context).map((option) =>
+                        Padding(
+                          padding: const EdgeInsets.only(left: 16.0),
+                          child: option,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      const Divider(),
+                      _sidebarTile(
+                        context,
+                        icon: FontAwesomeIcons.gear,
+                        label: "Settings",
+                        selected: selectedIndex == 2,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                          );
+                        },
+                        colorScheme: colorScheme,
+                      ),
+                      _sidebarTile(
+                        context,
+                        icon: FontAwesomeIcons.circleUser,
+                        label: "About Developer",
+                        selected: selectedIndex == 3,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const AboutDeveloper()),
+                          );
+                        },
+                        colorScheme: colorScheme,
                       ),
                     ],
                   ),
                 ),
-                if (_showOptions) ...SidebarOptions.getOptions(context).map((option) =>
-                  Material(
-                    color: const Color.fromARGB(0, 188, 188, 188),
-                    child: InkWell(
-                      onTap: () {
-                        // Handle tap action //
-                      },
-                      child: option,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                const Divider(
-                  color: Color.fromARGB(133, 220, 220, 220),
-                  height: 1,
-                ),
-                ListTile(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const SettingsScreen()),
-                    );
-                  },
-                  leading: const SizedBox(
-                    height: 34,
-                    width: 34,
-                    child: FaIcon(FontAwesomeIcons.gear),
-                  ),
-                  title: Semantics(
-                    label: 'Open app settings', 
-                    child: const Text("Settings", style: TextStyle(color: Colors.white)), 
-                  ),
-                ),
-                ListTile(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const AboutDeveloper()),
-                    );
-                  },
-                  leading: const SizedBox(
-                    height: 34,
-                    width: 34,
-                    child: FaIcon(FontAwesomeIcons.circleUser),
-                  ),
-                  title: Semantics(
-                    label: "About Develoepr",
-                    child: const Text("About Developer", style: TextStyle(color: Colors.white)),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
       ),
     );
   }
-}
+
+// Helper for expressive sidebar tile
+Widget _sidebarTile(BuildContext context, {required IconData icon, required String label, required bool selected, required VoidCallback onTap, required ColorScheme colorScheme, Widget? trailing}) {
+  return ListTile(
+    leading: SizedBox(
+      height: 30,
+      width: 30,
+      child: FaIcon(icon, color: selected ? colorScheme.primary : colorScheme.onSurfaceVariant),
+    ),
+    title: Text(
+      label,
+      style: TextStyle(
+        color: selected ? colorScheme.primary : colorScheme.onSurface,
+        fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+      ),
+    ),
+    selected: selected,
+    selectedTileColor: colorScheme.primary.withOpacity(0.10),
+    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+    onTap: onTap,
+    trailing: trailing,
+  );
+}}

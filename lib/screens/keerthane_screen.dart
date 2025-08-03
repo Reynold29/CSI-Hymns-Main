@@ -348,35 +348,45 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
                     const SizedBox(height: 4),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,
+                      mainAxisSize: MainAxisSize.max,
                       children: [
-                        TextButton.icon(
-                          icon: const Icon(Icons.filter_list),
-                          label: Text(
-                            'Filter',
-                            style: TextStyle(color: colorScheme.onSurface),
-                          ),
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          ).copyWith(
-                            overlayColor: MaterialStateProperty.resolveWith<Color?>(
-                              (Set<MaterialState> states) {
-                                if (states.contains(MaterialState.pressed))
-                                  return Theme.of(context).colorScheme.primary.withOpacity(0.12);
-                                if (states.contains(MaterialState.hovered))
-                                  return Theme.of(context).colorScheme.primary.withOpacity(0.04);
-                                return null;
-                              },
+                        Flexible(
+                          child: TextButton.icon(
+                            icon: const Icon(Icons.filter_list, size: 18),
+                            label: Text(
+                              'Filter',
+                              style: TextStyle(color: colorScheme.onSurface, fontSize: 13),
                             ),
+                            style: TextButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                              minimumSize: const Size(0, 32),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ).copyWith(
+                              overlayColor: MaterialStateProperty.resolveWith<Color?>(
+                                (Set<MaterialState> states) {
+                                  if (states.contains(MaterialState.pressed))
+                                    return Theme.of(context).colorScheme.primary.withOpacity(0.12);
+                                  if (states.contains(MaterialState.hovered))
+                                    return Theme.of(context).colorScheme.primary.withOpacity(0.04);
+                                  return null;
+                                },
+                              ),
+                            ),
+                            onPressed: () => _showFilterMenu(context, true),
                           ),
-                          onPressed: () => _showFilterMenu(context, true),
                         ),
-                        TextButton.icon(
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Refresh Lyrics'),
-                          onPressed: checkAndUpdateLyrics,
-                          style: TextButton.styleFrom(
-                            foregroundColor: colorScheme.onSurface,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        const SizedBox(width: 6),
+                        Flexible(
+                          child: TextButton.icon(
+                            icon: const Icon(Icons.refresh, size: 18),
+                            label: const Text('Refresh Lyrics', style: TextStyle(fontSize: 13)),
+                            onPressed: checkAndUpdateLyrics,
+                            style: TextButton.styleFrom(
+                              foregroundColor: colorScheme.onSurface,
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                              minimumSize: const Size(0, 32),
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
                           ),
                         ),
                       ],

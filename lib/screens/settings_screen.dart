@@ -33,99 +33,130 @@ class _SettingsScreenState extends State<SettingsScreen> {
       appBar: AppBar(
         title: const Text('Settings'),
       ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 16.0),
-        children: <Widget>[
-          _buildSectionHeader(context, 'Appearance', FontAwesomeIcons.palette),
-          SwitchListTile(
-            title: const Text('Dark Mode'),
-            value: currentVisualIsDark, // Use the determined visual state for the toggle value
-            onChanged: (bool value) {
-              HapticFeedbackManager.lightClick();
-              // When toggled, explicitly set to Light or Dark
-              themeState.setThemeMode(value ? ThemeMode.dark : ThemeMode.light);
-            },
-            secondary: Icon(currentVisualIsDark ? FontAwesomeIcons.solidMoon : FontAwesomeIcons.moon),
-            activeColor: Theme.of(context).colorScheme.primary,
-          ),
-          if (currentVisualIsDark) // AMOLED option visibility based on current visual dark state
-            SwitchListTile(
-              title: const Text('AMOLED Black Mode'),
-              subtitle: const Text('Uses true black for dark theme backgrounds'),
-              value: themeState.blackThemeEnabled,
-              onChanged: (bool value) {
-                HapticFeedbackManager.lightClick();
-                themeState.setBlackThemeEnabled(value);
-              },
-              secondary: const Icon(FontAwesomeIcons.paintRoller),
-              activeColor: Theme.of(context).colorScheme.primary,
-            ),
-          ListTile(
-            title: const Text('Theme Color'),
-            subtitle: const Text('Tap to change the app\'s primary color'),
-            trailing: Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: themeState.seedColor,
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: Theme.of(context).colorScheme.outline,
-                  width: 2,
+      body: Container(
+        color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.5),
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 18.0),
+          children: <Widget>[
+            _buildSectionHeader(context, 'Appearance', FontAwesomeIcons.palette),
+            Card(
+              elevation: 2,
+              margin: const EdgeInsets.only(bottom: 18),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: Column(
+                  children: [
+                    SwitchListTile(
+                      title: const Text('Dark Mode'),
+                      value: currentVisualIsDark,
+                      onChanged: (bool value) {
+                        HapticFeedbackManager.lightClick();
+                        themeState.setThemeMode(value ? ThemeMode.dark : ThemeMode.light);
+                      },
+                      secondary: Icon(currentVisualIsDark ? FontAwesomeIcons.solidMoon : FontAwesomeIcons.moon),
+                      activeColor: Theme.of(context).colorScheme.primary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    if (currentVisualIsDark)
+                      SwitchListTile(
+                        title: const Text('AMOLED Black Mode'),
+                        subtitle: const Text('Uses true black for dark theme backgrounds'),
+                        value: themeState.blackThemeEnabled,
+                        onChanged: (bool value) {
+                          HapticFeedbackManager.lightClick();
+                          themeState.setBlackThemeEnabled(value);
+                        },
+                        secondary: const Icon(FontAwesomeIcons.paintRoller),
+                        activeColor: Theme.of(context).colorScheme.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ListTile(
+                      title: const Text('Theme Color'),
+                      subtitle: const Text('Tap to change the app\'s primary color'),
+                      trailing: Container(
+                        width: 32,
+                        height: 32,
+                        decoration: BoxDecoration(
+                          color: themeState.seedColor,
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: Theme.of(context).colorScheme.outline,
+                            width: 2,
+                          ),
+                        ),
+                      ),
+                      onTap: () {
+                        HapticFeedbackManager.lightClick();
+                        _showColorPickerDialog(context, themeState);
+                      },
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ],
                 ),
               ),
             ),
-            onTap: () {
-              HapticFeedbackManager.lightClick();
-              _showColorPickerDialog(context, themeState);
-            },
-          ),
-          const SizedBox(height: 16),
-          _buildSectionHeader(context, 'App Information', FontAwesomeIcons.circleInfo),
-          ListTile(
-            leading: const Icon(FontAwesomeIcons.cloudArrowDown),
-            title: const Text('Check for Updates'),
-            enabled: !_isCheckingForUpdate, // Disable button when checking for update
-            onTap: _isCheckingForUpdate
-                ? null
-                : () async {
-                    HapticFeedbackManager.lightClick();
-                    setState(() {
-                      _isCheckingForUpdate = true;
-                    });
-                    try {
-                      final updateManager = UpdateManager();
-                      await updateManager.checkForUpdates(context);
-                    } finally {
-                      setState(() {
-                        _isCheckingForUpdate = false;
-                      });
-                    }
-                  },
-          ),
-          ListTile(
-            leading: const Icon(FontAwesomeIcons.scroll),
-            title: const Text('What\'s New? (Changelog)'),
-            onTap: () {
-              HapticFeedbackManager.lightClick();
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const ChangelogScreen()),
-              );
-            },
-          ),
-          ListTile(
-            leading: const Icon(FontAwesomeIcons.book),
-            title: const Text('About App'),
-            onTap: () {
-              HapticFeedbackManager.lightClick();
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => const AboutApp()),
-              );
-            },
-          ),
-        ],
+            _buildSectionHeader(context, 'App Information', FontAwesomeIcons.circleInfo),
+            Card(
+              elevation: 2,
+              margin: const EdgeInsets.only(bottom: 18),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: Column(
+                  children: [
+                    ListTile(
+                      leading: const Icon(FontAwesomeIcons.cloudArrowDown),
+                      title: const Text('Check for Updates'),
+                      enabled: !_isCheckingForUpdate,
+                      onTap: _isCheckingForUpdate
+                          ? null
+                          : () async {
+                              HapticFeedbackManager.lightClick();
+                              setState(() {
+                                _isCheckingForUpdate = true;
+                              });
+                              try {
+                                final updateManager = UpdateManager();
+                                await updateManager.checkForUpdates(context);
+                              } finally {
+                                setState(() {
+                                  _isCheckingForUpdate = false;
+                                });
+                              }
+                            },
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    ListTile(
+                      leading: const Icon(FontAwesomeIcons.scroll),
+                      title: const Text('What\'s New? (Changelog)'),
+                      onTap: () {
+                        HapticFeedbackManager.lightClick();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const ChangelogScreen()),
+                        );
+                      },
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                    ListTile(
+                      leading: const Icon(FontAwesomeIcons.book),
+                      title: const Text('About App'),
+                      onTap: () {
+                        HapticFeedbackManager.lightClick();
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const AboutApp()),
+                        );
+                      },
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

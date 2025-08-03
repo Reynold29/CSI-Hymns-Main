@@ -344,79 +344,91 @@ class _HymnsScreenState extends State<HymnsScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: false, 
         elevation: 0,
-        toolbarHeight: 130, // Ensuring this is 130
+        toolbarHeight: 110, // More compact
         backgroundColor: colorScheme.surface,
         flexibleSpace: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 2.0),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                return Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    custom.SearchBar(
-                      hintText: 'Search Hymns (Number, Title, Meter)',
-                      onChanged: (searchQuery) {
-                        setState(() {
-                          _searchQuery = searchQuery;
-                          _filterHymns();
-                        });
-                      },
-                      focusNode: _searchFocusNode,
-                      onQueryCleared: () {
-                        setState(() {
-                          _searchQuery = null;
-                          _filterHymns();
-                          if (_selectedOrder == 'time_signature') _groupHymnsBySignature();
-                          Future.delayed(const Duration(milliseconds: 100), () {
-                            _searchFocusNode.unfocus();
+                return SingleChildScrollView(
+                  physics: const NeverScrollableScrollPhysics(),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      custom.SearchBar(
+                        hintText: 'Search Hymns (Number, Title, Meter)',
+                        onChanged: (searchQuery) {
+                          setState(() {
+                            _searchQuery = searchQuery;
+                            _filterHymns();
                           });
-                        });
-                      },
-                      backgroundColor: colorScheme.surfaceContainerHighest,
-                      searchIconColor: colorScheme.onSurfaceVariant,
-                      clearIconColor: colorScheme.onSurfaceVariant,
-                      textStyle: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        TextButton.icon(
-                          icon: const Icon(Icons.filter_list),
-                          label: Text(
-                            'Filter',
-                            style: TextStyle(color: colorScheme.onSurface),
-                          ),
-                          style: TextButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                          ).copyWith(
-                            overlayColor: MaterialStateProperty.resolveWith<Color?>(
-                              (Set<MaterialState> states) {
-                                if (states.contains(MaterialState.pressed))
-                                  return Theme.of(context).colorScheme.primary.withOpacity(0.12);
-                                if (states.contains(MaterialState.hovered))
-                                  return Theme.of(context).colorScheme.primary.withOpacity(0.04);
-                                return null;
-                              },
+                        },
+                        focusNode: _searchFocusNode,
+                        onQueryCleared: () {
+                          setState(() {
+                            _searchQuery = null;
+                            _filterHymns();
+                            if (_selectedOrder == 'time_signature') _groupHymnsBySignature();
+                            Future.delayed(const Duration(milliseconds: 100), () {
+                              _searchFocusNode.unfocus();
+                            });
+                          });
+                        },
+                        backgroundColor: colorScheme.surfaceContainerHighest,
+                        searchIconColor: colorScheme.onSurfaceVariant,
+                        clearIconColor: colorScheme.onSurfaceVariant,
+                        textStyle: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        mainAxisSize: MainAxisSize.max,
+                        children: [
+                          Flexible(
+                            child: TextButton.icon(
+                              icon: const Icon(Icons.filter_list, size: 18),
+                              label: Text(
+                                'Filter',
+                                style: TextStyle(color: colorScheme.onSurface, fontSize: 13),
+                              ),
+                              style: TextButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                minimumSize: const Size(0, 32),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ).copyWith(
+                                overlayColor: MaterialStateProperty.resolveWith<Color?>(
+                                  (Set<MaterialState> states) {
+                                    if (states.contains(MaterialState.pressed))
+                                      return Theme.of(context).colorScheme.primary.withOpacity(0.12);
+                                    if (states.contains(MaterialState.hovered))
+                                      return Theme.of(context).colorScheme.primary.withOpacity(0.04);
+                                    return null;
+                                  },
+                                ),
+                              ),
+                              onPressed: () => _showFilterMenu(context, true),
                             ),
                           ),
-                          onPressed: () => _showFilterMenu(context, true),
-                        ),
-                        const SizedBox(width: 8),
-                        TextButton.icon(
-                          icon: const Icon(Icons.refresh),
-                          label: const Text('Refresh Lyrics'),
-                          onPressed: checkAndUpdateLyrics,
-                          style: TextButton.styleFrom(
-                            foregroundColor: colorScheme.onSurface,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                          const SizedBox(width: 6),
+                          Flexible(
+                            child: TextButton.icon(
+                              icon: const Icon(Icons.refresh, size: 18),
+                              label: const Text('Refresh Lyrics', style: TextStyle(fontSize: 13)),
+                              onPressed: checkAndUpdateLyrics,
+                              style: TextButton.styleFrom(
+                                foregroundColor: colorScheme.onSurface,
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                                minimumSize: const Size(0, 32),
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
-                    )
-                  ],
+                        ],
+                      )
+                    ],
+                  ),
                 );
               },
             ),

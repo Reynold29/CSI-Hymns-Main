@@ -68,43 +68,67 @@ class _SearchBarState extends State<SearchBar> {
     final defaultTextStyle = theme.textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface);
     final effectiveTextStyle = widget.textStyle ?? defaultTextStyle;
     final effectiveHintStyle = widget.hintStyle ?? theme.textTheme.bodyLarge?.copyWith(color: colorScheme.onSurfaceVariant);
-    final effectiveBackgroundColor = widget.backgroundColor ?? colorScheme.surfaceVariant.withOpacity(0.7);
+    final effectiveBackgroundColor = widget.backgroundColor ?? colorScheme.surfaceVariant.withOpacity(0.9);
     final effectiveSearchIconColor = widget.searchIconColor ?? colorScheme.onSurfaceVariant;
     final effectiveClearIconColor = widget.clearIconColor ?? colorScheme.onSurfaceVariant;
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 8.0),
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 10.0),
+      padding: const EdgeInsets.symmetric(horizontal: 0),
       decoration: BoxDecoration(
         color: effectiveBackgroundColor,
-        borderRadius: BorderRadius.circular(28.0),
+        borderRadius: BorderRadius.circular(24.0),
+        border: Border.all(
+          color: widget.focusNode.hasFocus ? colorScheme.primary : colorScheme.outlineVariant,
+          width: widget.focusNode.hasFocus ? 2.0 : 1.0,
+        ),
+        boxShadow: [
+          if (widget.focusNode.hasFocus)
+            BoxShadow(
+              color: colorScheme.primary.withOpacity(0.10),
+              blurRadius: 12,
+              offset: const Offset(0, 2),
+            ),
+        ],
       ),
-      child: TextField(
-        controller: _textController,
-        focusNode: widget.focusNode,
-        onChanged: widget.onChanged,
-        decoration: InputDecoration(
-          prefixIcon: Padding(
-            padding: const EdgeInsets.only(left: 8.0, right: 8.0),
-            child: Icon(Icons.search, color: effectiveSearchIconColor),
-          ),
-          suffixIcon: _isSearching
-              ? IconButton(
-                  icon: Icon(Icons.clear, color: effectiveClearIconColor),
-                  onPressed: () {
+      child: Material(
+        color: Colors.transparent,
+        child: Row(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(left: 14.0, right: 8.0),
+              child: Icon(Icons.search, color: effectiveSearchIconColor, size: 26),
+            ),
+            Expanded(
+              child: TextField(
+                controller: _textController,
+                focusNode: widget.focusNode,
+                onChanged: widget.onChanged,
+                decoration: InputDecoration(
+                  border: InputBorder.none,
+                  hintText: widget.hintText,
+                  hintStyle: effectiveHintStyle,
+                  isDense: true,
+                  contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 0.0),
+                ),
+                style: effectiveTextStyle?.copyWith(fontSize: 17),
+              ),
+            ),
+            if (_isSearching)
+              Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(20),
+                  onTap: () {
                     _textController.clear();
                     widget.onQueryCleared();
                   },
-                )
-              : null,
-          border: InputBorder.none,
-          hintText: widget.hintText,
-          hintStyle: effectiveHintStyle,
-          focusedBorder: InputBorder.none,
-          enabledBorder: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(vertical: 14.0, horizontal: 8.0),
+                  child: Icon(Icons.clear, color: effectiveClearIconColor, size: 22),
+                ),
+              ),
+          ],
         ),
-        style: effectiveTextStyle,
       ),
     );
   }
