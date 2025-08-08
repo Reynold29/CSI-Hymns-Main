@@ -2,7 +2,6 @@ import 'dart:async';
 import 'hymns_def.dart';
 import 'audio_error_handling.dart';
 import 'package:flutter/material.dart';
-import 'package:vibration/vibration.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:audio_session/audio_session.dart';
@@ -10,6 +9,7 @@ import 'package:favorite_button/favorite_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
+import 'package:hymns_latest/services/supabase_service.dart';
 
 class HymnDetailScreen extends StatefulWidget {
   final Hymn hymn;
@@ -119,6 +119,18 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
     await HapticFeedbackManager.mediumClick();
 
     await _checkIsFavorite();
+
+    // Sync remote if logged in
+    final user = SupabaseService().currentUser;
+    if (user != null) {
+      try {
+        if (_isFavorite) {
+          await SupabaseService().addFavorite(itemNumber: widget.hymn.number, itemType: 'hymn');
+        } else {
+          await SupabaseService().removeFavorite(itemNumber: widget.hymn.number, itemType: 'hymn');
+        }
+      } catch (_) {}
+    }
   }
 
   @override
@@ -182,6 +194,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
 
   Future<void> _saveToFavorites(Hymn hymn) async {
     final prefs = await SharedPreferences.getInstance();
+    // If logged in, local list is mirror of remote, but allow quick local UX then remote sync
     final storedIds = prefs.getStringList('favoriteHymnIds') ?? [];
 
     if (!storedIds.contains(hymn.number.toString())) {
@@ -192,6 +205,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
 
   Future<void> _removeFromFavorites(Hymn hymn) async {
     final prefs = await SharedPreferences.getInstance();
+    // If logged in, local list is mirror of remote, but allow quick local UX then remote sync
     final storedIds = prefs.getStringList('favoriteHymnIds') ?? [];
 
     if (storedIds.contains(hymn.number.toString())) {
@@ -295,7 +309,6 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
       appBar: AppBar(
@@ -496,7 +509,6 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
 
   Widget _buildMiniAudioPlayer(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final textTheme = Theme.of(context).textTheme;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),

@@ -4,18 +4,21 @@ import 'widgets/sidebar.dart';
 import 'screens/categories.dart';
 import 'screens/hymns_screen.dart';
 import 'screens/keerthane_screen.dart';
+import 'screens/order_of_service_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/foundation.dart';
-import 'package:vibration/vibration.dart';
 import 'package:showcaseview/showcaseview.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
-import 'package:hymns_latest/widgets/gesture_control.dart';
 import 'package:hymns_latest/screens/favorites_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
+import 'package:hymns_latest/services/supabase_service.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'dart:async';
 
 class LightSwipePagePhysics extends PageScrollPhysics {
   const LightSwipePagePhysics({ScrollPhysics? parent}) : super(parent: parent);
@@ -52,6 +55,16 @@ void main() async {
   } catch (e) {
     debugPrint('Firebase initialization error: $e');
     // Continue app initialization even if Firebase fails
+  }
+
+  // Initialize Supabase
+  try {
+    await dotenv.load(fileName: '.env');
+    final url = dotenv.env['SUPABASE_URL'] ?? dotenv.env['SUPABASE_PROJECT_URL'] ?? '';
+    final anon = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
+    await SupabaseService().init(url: url, anonKey: anon);
+  } catch (e) {
+    debugPrint('Supabase init error: $e');
   }
 
   runApp(
@@ -132,13 +145,11 @@ class MainScreen extends StatefulWidget {
 }
 
 class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateMixin {
-  // ignore: unused_field
-  int _counter = 0;
   final GlobalKey _menuButtonKey = GlobalKey();
   int _selectedIndex = 0;
   late AnimationController _animationController;
   late PageController _pageController;
-  bool _isDrawerOpen = false;
+  StreamSubscription<AuthState>? _authSub;
 
   static const Duration _pageAnimationDuration = Duration(milliseconds: 300);
   static const Curve _pageAnimationCurve = Curves.easeInOutCubic;
@@ -151,6 +162,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     checkForUpdate();
     _initOneSignalWithCount();
     _checkFirstRunAndShowCase();
+    _listenToSupabaseAuth();
   }
 
   Future<void> checkForUpdate() async {
@@ -184,33 +196,22 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     InAppUpdate.completeFlexibleUpdate().then((_) {}).catchError((e) {});
   }
 
-  void _incrementCounter() {
-    setState(() {
-      _counter++;
-    });
-  }
+  // Removed unused counter method
 
   @override
   void dispose() {
     _pageController.dispose();
     _animationController.dispose();
+    _authSub?.cancel();
     super.dispose();
   }
 
-  void _toggleDrawer() {
-    setState(() {
-      _isDrawerOpen = !_isDrawerOpen;
-      if (_isDrawerOpen) {
-        _animationController.forward();
-      } else {
-        _animationController.reverse();
-      }
-    });
-  }
+  // Removed unused drawer toggle stub
 
   static final List<Widget> _screens = [
     const HymnsScreen(),
     const KeerthaneScreen(),
+    const OrderOfServiceScreen(),
     const Categories(),
     const FavoritesScreen(),
   ];
@@ -225,13 +226,79 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     );
   }
 
+  void _listenToSupabaseAuth() {
+    _authSub = SupabaseService().authStream.listen((state) async {
+      if (!mounted) return;
+      if (state.event == AuthChangeEvent.passwordRecovery) {
+        _showResetPasswordDialog();
+      }
+    });
+  }
+
+  void _showResetPasswordDialog() {
+    final TextEditingController pass1 = TextEditingController();
+    final TextEditingController pass2 = TextEditingController();
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Set new password'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: pass1,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'New password'),
+              ),
+              const SizedBox(height: 8),
+              TextField(
+                controller: pass2,
+                obscureText: true,
+                decoration: const InputDecoration(labelText: 'Confirm password'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () async {
+                final p1 = pass1.text;
+                final p2 = pass2.text;
+                if (p1.length < 6) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password must be at least 6 characters')));
+                  return;
+                }
+                if (p1 != p2) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
+                  return;
+                }
+                try {
+                  await Supabase.instance.client.auth.updateUser(UserAttributes(password: p1));
+                  if (!mounted) return;
+                  Navigator.pop(ctx);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password updated successfully')));
+                } catch (e) {
+                  if (!mounted) return;
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Update failed: $e')));
+                }
+              },
+              child: const Text('Save'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> _checkFirstRunAndShowCase() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     bool isFirstRun = (prefs.getBool('isFirstRun') ?? true);
 
-    if (isFirstRun) {
+    if (isFirstRun == true) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted && ShowCaseWidget.of(context) != null) {
+        if (mounted) {
           ShowCaseWidget.of(context).startShowCase([_menuButtonKey]);
           prefs.setBool('isFirstRun', false);
         }
@@ -344,10 +411,10 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final tabCount = 4;
+                  final tabCount = 5;
                   final tabWidth = constraints.maxWidth / tabCount;
                   return Container(
-                    height: 48,
+                    height: 56,
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
@@ -364,14 +431,15 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
                       children: [
                         // Row of tab buttons with less bottom padding for indicator
                         Padding(
-                          padding: const EdgeInsets.only(bottom: 6),
+                          padding: const EdgeInsets.only(bottom: 8),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                             children: [
                               _buildTabButton(context, 0, Icons.music_note, 'Hymns'),
                               _buildTabButton(context, 1, Icons.album, 'Keerthane'),
-                              _buildTabButton(context, 2, Icons.category, 'Categories'),
-                              _buildTabButton(context, 3, Icons.favorite, 'Favorites'),
+                              _buildTabButton(context, 2, Icons.event_note, 'Service'),
+                              _buildTabButton(context, 3, Icons.category, 'Categories'),
+                              _buildTabButton(context, 4, Icons.favorite, 'Favorites'),
                             ],
                           ),
                         ),
@@ -380,10 +448,10 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeInOutCubic,
                           left: _selectedIndex * tabWidth,
-                          bottom: 1,
+                          bottom: 2,
                           child: Container(
                             width: tabWidth,
-                            height: 2.5,
+                            height: 3,
                             decoration: BoxDecoration(
                               color: Theme.of(context).colorScheme.primary,
                               borderRadius: BorderRadius.circular(6),

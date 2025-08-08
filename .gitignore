@@ -1,6 +1,7 @@
 # Miscellaneous
 *.log
 *.DS_Store
+.env
 
 # Build directories
 /build/

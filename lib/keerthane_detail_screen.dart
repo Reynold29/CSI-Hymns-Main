@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'audio_error_handling.dart';
 import 'package:flutter/material.dart';
-import 'package:vibration/vibration.dart';
 import 'package:just_audio/just_audio.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:hymns_latest/keerthanes_def.dart';
@@ -10,6 +9,7 @@ import 'package:favorite_button/favorite_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
+import 'package:hymns_latest/services/supabase_service.dart';
 
 class KeerthaneDetailScreen extends StatefulWidget {
   final Keerthane keerthane;
@@ -119,6 +119,18 @@ class _KeerthaneDetailScreenState extends State<KeerthaneDetailScreen> {
     await HapticFeedbackManager.mediumClick();
 
     await _checkIsFavorite();
+
+    // Sync remote if logged in
+    final user = SupabaseService().currentUser;
+    if (user != null) {
+      try {
+        if (_isFavorite) {
+          await SupabaseService().addFavorite(itemNumber: widget.keerthane.number, itemType: 'keerthane');
+        } else {
+          await SupabaseService().removeFavorite(itemNumber: widget.keerthane.number, itemType: 'keerthane');
+        }
+      } catch (_) {}
+    }
   }
 
   @override
@@ -182,6 +194,7 @@ class _KeerthaneDetailScreenState extends State<KeerthaneDetailScreen> {
 
   Future<void> _saveToFavorites(Keerthane keerthane) async {
     final prefs = await SharedPreferences.getInstance();
+    // If logged in, local list mirrors remote; keep UX snappy then sync
     final storedIds = prefs.getStringList('favoriteKeerthaneIds') ?? [];
 
     if (!storedIds.contains(keerthane.number.toString())) {
@@ -192,6 +205,7 @@ class _KeerthaneDetailScreenState extends State<KeerthaneDetailScreen> {
 
   Future<void> _removeFromFavorites(Keerthane keerthane) async {
     final prefs = await SharedPreferences.getInstance();
+    // If logged in, local list mirrors remote; keep UX snappy then sync
     final storedIds = prefs.getStringList('favoriteKeerthaneIds') ?? [];
 
     if (storedIds.contains(keerthane.number.toString())) {

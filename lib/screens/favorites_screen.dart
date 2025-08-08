@@ -4,6 +4,9 @@ import 'package:hymns_latest/keerthanes_def.dart';
 import 'package:hymns_latest/hymn_detail_screen.dart';
 import 'package:hymns_latest/keerthane_detail_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hymns_latest/services/supabase_service.dart';
+import 'dart:async';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -17,22 +20,43 @@ class _FavoritesScreenState extends State<FavoritesScreen>
   List<Hymn> _favoriteHymns = [];
   List<Keerthane> _favoriteKeerthane = [];
   late TabController _tabController;
+  StreamSubscription<AuthState>? _authSubscription;
 
   @override
   void initState() {
     super.initState();
     _loadFavorites();
     _tabController = TabController(length: 2, vsync: this);
+    _authSubscription = SupabaseService().authStream.listen((_) {
+      if (mounted) _loadFavorites();
+    });
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _authSubscription?.cancel();
     super.dispose();
   }
 
   Future<void> _loadFavorites() async {
     final favoriteIdsMap = await _retrieveFavorites();
+    final user = SupabaseService().currentUser;
+    if (user != null) {
+      try {
+        final remote = await SupabaseService().fetchFavorites();
+        final remoteHymnIds = remote.where((m) => m['item_type'] == 'hymn').map<int>((m) => (m['item_number'] as num).toInt()).toList();
+        final remoteKeerthaneIds = remote.where((m) => m['item_type'] == 'keerthane').map<int>((m) => (m['item_number'] as num).toInt()).toList();
+
+        // Do NOT merge local into remote. Remote is source of truth per account.
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setStringList('favoriteHymnIds', remoteHymnIds.map((e) => e.toString()).toList());
+        await prefs.setStringList('favoriteKeerthaneIds', remoteKeerthaneIds.map((e) => e.toString()).toList());
+        await prefs.setString('favorites_owner_auth_uid', user.id);
+        favoriteIdsMap['favoriteHymnIds'] = remoteHymnIds;
+        favoriteIdsMap['favoriteKeerthaneIds'] = remoteKeerthaneIds;
+      } catch (_) {}
+    }
     final hymns =
         await _fetchHymnsByIds(favoriteIdsMap['favoriteHymnIds'] ?? []);
     final keerthane =

@@ -74,11 +74,11 @@ class _SearchBarState extends State<SearchBar> {
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
-      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 10.0),
+      margin: const EdgeInsets.symmetric(horizontal: 0, vertical: 6.0),
       padding: const EdgeInsets.symmetric(horizontal: 0),
       decoration: BoxDecoration(
         color: effectiveBackgroundColor,
-        borderRadius: BorderRadius.circular(24.0),
+        borderRadius: BorderRadius.circular(16.0),
         border: Border.all(
           color: widget.focusNode.hasFocus ? colorScheme.primary : colorScheme.outlineVariant,
           width: widget.focusNode.hasFocus ? 2.0 : 1.0,
@@ -97,7 +97,7 @@ class _SearchBarState extends State<SearchBar> {
         child: Row(
           children: [
             Padding(
-              padding: const EdgeInsets.only(left: 14.0, right: 8.0),
+              padding: const EdgeInsets.only(left: 12.0, right: 6.0),
               child: Icon(Icons.search, color: effectiveSearchIconColor, size: 26),
             ),
             Expanded(
@@ -110,21 +110,21 @@ class _SearchBarState extends State<SearchBar> {
                   hintText: widget.hintText,
                   hintStyle: effectiveHintStyle,
                   isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 0.0),
+                  contentPadding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 0.0),
                 ),
-                style: effectiveTextStyle?.copyWith(fontSize: 17),
+                style: effectiveTextStyle?.copyWith(fontSize: 16),
               ),
             ),
             if (_isSearching)
               Padding(
-                padding: const EdgeInsets.only(right: 8.0),
+                padding: const EdgeInsets.only(right: 6.0),
                 child: InkWell(
                   borderRadius: BorderRadius.circular(20),
                   onTap: () {
                     _textController.clear();
                     widget.onQueryCleared();
                   },
-                  child: Icon(Icons.clear, color: effectiveClearIconColor, size: 22),
+                  child: Icon(Icons.clear, color: effectiveClearIconColor, size: 20),
                 ),
               ),
           ],

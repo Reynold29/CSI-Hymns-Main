@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:hymns_latest/category.dart';
-import 'package:hymns_latest/screens/about_app.dart';
 import 'package:hymns_latest/screens/praise_app.dart';
 import 'package:hymns_latest/screens/settings_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hymns_latest/screens/about_developer_screen.dart';
+import 'package:hymns_latest/screens/auth_screen.dart';
+import 'package:hymns_latest/services/supabase_service.dart';
 import 'dart:ui';
 
 class Sidebar extends StatefulWidget {
@@ -17,11 +18,11 @@ class Sidebar extends StatefulWidget {
 }
 
 class _SidebarState extends State<Sidebar> {
-  bool _showOptions = true;
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final user = SupabaseService().currentUser;
     // Example: Assume the first ListTile (AboutApp) is the selected one for demo. You can wire this to your navigation logic.
     final int selectedIndex = 0;
     return ClipRRect(
@@ -43,12 +44,15 @@ class _SidebarState extends State<Sidebar> {
           child: SafeArea(
             child: Material(
               color: Colors.transparent,
-              child: SingleChildScrollView(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
+              child: Column(
+                children: [
+                  Expanded(
+                    child: SingleChildScrollView(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
                       // App branding / user profile card
                       Card(
                         color: colorScheme.primaryContainer,
@@ -97,6 +101,53 @@ class _SidebarState extends State<Sidebar> {
                         padding: EdgeInsets.symmetric(horizontal: 16),
                         child: Divider(),
                       ),
+                      // Auth section
+                      if (user == null) ...[
+                        _sidebarTile(
+                          context,
+                          icon: FontAwesomeIcons.rightToBracket,
+                          label: "Login / Sign up",
+                          selected: false,
+                          onTap: () async {
+                            final result = await Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const AuthScreen()),
+                            );
+                            if (mounted && result == true) setState(() {});
+                          },
+                          colorScheme: colorScheme,
+                        ),
+                      ] else ...[
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+                          child: Row(
+                            children: [
+                              CircleAvatar(radius: 16, child: Text(user.email != null && user.email!.isNotEmpty ? user.email![0].toUpperCase() : '?')),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: Text(
+                                  user.email ?? 'Logged in',
+                                  style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        _sidebarTile(
+                          context,
+                          icon: FontAwesomeIcons.arrowRightFromBracket,
+                          label: "Logout",
+                          selected: false,
+                          onTap: () async {
+                            await SupabaseService().signOut();
+                            if (context.mounted) Navigator.pop(context);
+                            setState(() {});
+                          },
+                          colorScheme: colorScheme,
+                        ),
+                      ],
+                      const Divider(),
                       // Sidebar items
                       _sidebarTile(
                         context,
@@ -116,54 +167,61 @@ class _SidebarState extends State<Sidebar> {
                         icon: FontAwesomeIcons.bookBible,
                         label: "Categories",
                         selected: selectedIndex == 1,
-                        onTap: () {
-                          setState(() {
-                            _showOptions = !_showOptions;
-                          });
-                        },
+                        onTap: () {},
                         colorScheme: colorScheme,
-                        trailing: Icon(
-                          _showOptions ? Icons.expand_less : Icons.expand_more,
-                          color: colorScheme.onSurface,
-                        ),
+                        trailing: null,
                       ),
-                      if (_showOptions) ...SidebarOptions.getOptions(context).map((option) =>
+                      // Categories list should be scrollable and expanded by default
+                      for (final option in SidebarOptions.getOptions(context))
                         Padding(
                           padding: const EdgeInsets.only(left: 16.0),
                           child: option,
                         ),
+                        ],
                       ),
-                      const SizedBox(height: 12),
-                      const Divider(),
-                      _sidebarTile(
-                        context,
-                        icon: FontAwesomeIcons.gear,
-                        label: "Settings",
-                        selected: selectedIndex == 2,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const SettingsScreen()),
-                          );
-                        },
-                        colorScheme: colorScheme,
-                      ),
-                      _sidebarTile(
-                        context,
-                        icon: FontAwesomeIcons.circleUser,
-                        label: "About Developer",
-                        selected: selectedIndex == 3,
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const AboutDeveloper()),
-                          );
-                        },
-                        colorScheme: colorScheme,
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  ),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Divider(),
+                  ),
+                  // Bottom fixed actions
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12, left: 8, right: 8),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _sidebarTile(
+                          context,
+                          icon: FontAwesomeIcons.gear,
+                          label: "Settings",
+                          selected: false,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                            );
+                          },
+                          colorScheme: colorScheme,
+                        ),
+                        _sidebarTile(
+                          context,
+                          icon: FontAwesomeIcons.circleUser,
+                          label: "About Developer",
+                          selected: false,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(builder: (context) => const AboutDeveloper()),
+                            );
+                          },
+                          colorScheme: colorScheme,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
           ),

@@ -234,49 +234,7 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
     });
   }
 
-  void _showFilterMenu(BuildContext context, bool isCategory) {
-    final RenderBox? overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
-    final RenderBox? button = context.findRenderObject() as RenderBox?;
-    if (overlay == null || button == null) {
-      return;
-    }
-
-    final RelativeRect position = RelativeRect.fromRect(
-      Rect.fromPoints(
-        button.localToGlobal(Offset.zero, ancestor: overlay),
-        button.localToGlobal(button.size.bottomRight(Offset.zero), ancestor: overlay),
-      ),
-      Offset.zero & overlay.size,
-    );
-
-    showMenu<String>(
-      context: context,
-      position: position.shift(const Offset(0, 8)),
-      elevation: 4, // Material 3 elevation
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)), // Rounded corners
-      items: [
-        if (isCategory)
-          const PopupMenuItem<String>(value: "number", child: Text("Order by Number")),
-        if (isCategory)
-          const PopupMenuItem<String>(value: "title", child: Text("Order Alphabetically")),
-        if (!isCategory)
-          const PopupMenuItem<String>(value: "English", child: Text("English")),
-        if (!isCategory)
-          const PopupMenuItem<String>(value: "Kannada", child: Text("Kannada")),
-      ],
-    ).then((value) {
-      if (value != null) {
-        setState(() {
-          if (isCategory) {
-            _orderBy = value;
-          } else {
-            _selectedLanguage = value;
-          }
-          _sortAndFilterKeerthanes();
-        });
-      }
-    });
-  }
+  // Deprecated popup filter removed in favor of chips
 
   @override
   void dispose() {
@@ -311,7 +269,7 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: false,
         elevation: 0,
-        toolbarHeight: 130, // Ensuring this is 130
+        toolbarHeight: 140, // match hymns to avoid overflow
         backgroundColor: colorScheme.surface,
         flexibleSpace: SafeArea(
           child: Padding(
@@ -347,47 +305,46 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
                     ),
                     const SizedBox(height: 4),
                     Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      mainAxisSize: MainAxisSize.max,
                       children: [
-                        Flexible(
-                          child: TextButton.icon(
-                            icon: const Icon(Icons.filter_list, size: 18),
-                            label: Text(
-                              'Filter',
-                              style: TextStyle(color: colorScheme.onSurface, fontSize: 13),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 0,
+                          children: [
+                            ChoiceChip(
+                              label: const Text('Number'),
+                              selected: _orderBy == 'number',
+                              onSelected: (s) { setState(() { _orderBy = 'number'; _sortAndFilterKeerthanes(); }); },
+                              labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                              labelPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              selectedColor: colorScheme.primaryContainer,
+                              backgroundColor: colorScheme.surfaceContainerHigh,
+                              visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
-                            style: TextButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                              minimumSize: const Size(0, 32),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ).copyWith(
-                              overlayColor: MaterialStateProperty.resolveWith<Color?>(
-                                (Set<MaterialState> states) {
-                                  if (states.contains(MaterialState.pressed))
-                                    return Theme.of(context).colorScheme.primary.withOpacity(0.12);
-                                  if (states.contains(MaterialState.hovered))
-                                    return Theme.of(context).colorScheme.primary.withOpacity(0.04);
-                                  return null;
-                                },
-                              ),
+                            ChoiceChip(
+                              label: const Text('Title'),
+                              selected: _orderBy == 'title',
+                              onSelected: (s) { setState(() { _orderBy = 'title'; _sortAndFilterKeerthanes(); }); },
+                              labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                              labelPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              selectedColor: colorScheme.primaryContainer,
+                              backgroundColor: colorScheme.surfaceContainerHigh,
+                              visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
-                            onPressed: () => _showFilterMenu(context, true),
-                          ),
+                          ],
                         ),
-                        const SizedBox(width: 6),
-                        Flexible(
-                          child: TextButton.icon(
-                            icon: const Icon(Icons.refresh, size: 18),
-                            label: const Text('Refresh Lyrics', style: TextStyle(fontSize: 13)),
-                            onPressed: checkAndUpdateLyrics,
-                            style: TextButton.styleFrom(
-                              foregroundColor: colorScheme.onSurface,
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                              minimumSize: const Size(0, 32),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                          ),
+                        const Spacer(),
+                        ActionChip(
+                          label: const Text('Refresh'),
+                          avatar: const Icon(Icons.refresh, size: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                          labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                          shape: const StadiumBorder(),
+                          backgroundColor: colorScheme.primary.withOpacity(0.10),
+                          onPressed: checkAndUpdateLyrics,
                         ),
                       ],
                     )

@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:hymns_latest/hymns_def.dart';
 import '../widgets/search_bar.dart' as custom;
-import 'package:showcaseview/showcaseview.dart';
 import 'package:hymns_latest/hymn_detail_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:animations/animations.dart';
@@ -18,7 +17,7 @@ class HymnsScreen extends StatefulWidget {
 }
 
 class _HymnsScreenState extends State<HymnsScreen> {
-  final GlobalKey _searchKey = GlobalKey();
+  // Removed unused Showcase key
   List<Hymn> hymns = [];
   List<Hymn> filteredHymns = [];
   Map<String, List<Hymn>> groupedHymns = {};
@@ -286,38 +285,7 @@ class _HymnsScreenState extends State<HymnsScreen> {
     super.dispose();
   }
 
-  void _showFilterMenu(BuildContext context, bool isCategoryFilter) {
-    final RenderBox? overlay = Overlay.of(context).context.findRenderObject() as RenderBox?;
-    final RenderBox? button = context.findRenderObject() as RenderBox?;
-    if (button == null || overlay == null) return;
-
-    final position = RelativeRect.fromRect(
-      Rect.fromPoints(
-        button.localToGlobal(Offset.zero, ancestor: overlay),
-        button.localToGlobal(button.size.bottomRight(Offset.zero), ancestor: overlay),
-      ),
-      Offset.zero & overlay.size,
-    );
-
-    showMenu<String>(
-      context: context,
-      position: position.shift(const Offset(0, 8)),
-      items: [
-        const PopupMenuItem<String>(value: "number", child: Text("Order by Hymn Number")),
-        const PopupMenuItem<String>(value: "title", child: Text("Order in Alphabetical Order")),
-        const PopupMenuItem<String>(value: "time_signature", child: Text("Order by Tune Meter")),
-      ],
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-    ).then((value) {
-      if (value != null) {
-        setState(() {
-          _selectedOrder = value;
-          _sortHymns();
-        });
-      }
-    });
-  }
+  // Deprecated popup filter removed in favor of chips
 
   bool _showScrollToTopButton = false;
 
@@ -344,91 +312,91 @@ class _HymnsScreenState extends State<HymnsScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: false, 
         elevation: 0,
-        toolbarHeight: 110, // More compact
+        toolbarHeight: 140, // Slightly larger to avoid overflow with chips
         backgroundColor: colorScheme.surface,
         flexibleSpace: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 2.0),
+            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
             child: LayoutBuilder(
               builder: (context, constraints) {
-                return SingleChildScrollView(
-                  physics: const NeverScrollableScrollPhysics(),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
+                return Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
                       custom.SearchBar(
-                        hintText: 'Search Hymns (Number, Title, Meter)',
-                        onChanged: (searchQuery) {
-                          setState(() {
-                            _searchQuery = searchQuery;
-                            _filterHymns();
+                      hintText: 'Search Hymns (Number, Title, Meter)',
+                      onChanged: (searchQuery) {
+                        setState(() {
+                          _searchQuery = searchQuery;
+                          _filterHymns();
+                        });
+                      },
+                      focusNode: _searchFocusNode,
+                      onQueryCleared: () {
+                        setState(() {
+                          _searchQuery = null;
+                          _filterHymns();
+                          if (_selectedOrder == 'time_signature') _groupHymnsBySignature();
+                          Future.delayed(const Duration(milliseconds: 100), () {
+                            _searchFocusNode.unfocus();
                           });
-                        },
-                        focusNode: _searchFocusNode,
-                        onQueryCleared: () {
-                          setState(() {
-                            _searchQuery = null;
-                            _filterHymns();
-                            if (_selectedOrder == 'time_signature') _groupHymnsBySignature();
-                            Future.delayed(const Duration(milliseconds: 100), () {
-                              _searchFocusNode.unfocus();
-                            });
-                          });
-                        },
-                        backgroundColor: colorScheme.surfaceContainerHighest,
-                        searchIconColor: colorScheme.onSurfaceVariant,
-                        clearIconColor: colorScheme.onSurfaceVariant,
-                        textStyle: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
-                      ),
-                      const SizedBox(height: 2),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          Flexible(
-                            child: TextButton.icon(
-                              icon: const Icon(Icons.filter_list, size: 18),
-                              label: Text(
-                                'Filter',
-                                style: TextStyle(color: colorScheme.onSurface, fontSize: 13),
-                              ),
-                              style: TextButton.styleFrom(
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                minimumSize: const Size(0, 32),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ).copyWith(
-                                overlayColor: MaterialStateProperty.resolveWith<Color?>(
-                                  (Set<MaterialState> states) {
-                                    if (states.contains(MaterialState.pressed))
-                                      return Theme.of(context).colorScheme.primary.withOpacity(0.12);
-                                    if (states.contains(MaterialState.hovered))
-                                      return Theme.of(context).colorScheme.primary.withOpacity(0.04);
-                                    return null;
-                                  },
-                                ),
-                              ),
-                              onPressed: () => _showFilterMenu(context, true),
+                        });
+                      },
+                      backgroundColor: colorScheme.surfaceContainerHighest,
+                      searchIconColor: colorScheme.onSurfaceVariant,
+                      clearIconColor: colorScheme.onSurfaceVariant,
+                      textStyle: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 0,
+                          children: [
+                            ChoiceChip(
+                              label: const Text('Number'),
+                              selected: _selectedOrder == 'number',
+                              onSelected: (s) {
+                                setState(() { _selectedOrder = 'number'; _sortHymns(); });
+                              },
+                              labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                              labelPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              selectedColor: colorScheme.primaryContainer,
+                              backgroundColor: colorScheme.surfaceContainerHigh,
+                              visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
-                          ),
-                          const SizedBox(width: 6),
-                          Flexible(
-                            child: TextButton.icon(
-                              icon: const Icon(Icons.refresh, size: 18),
-                              label: const Text('Refresh Lyrics', style: TextStyle(fontSize: 13)),
-                              onPressed: checkAndUpdateLyrics,
-                              style: TextButton.styleFrom(
-                                foregroundColor: colorScheme.onSurface,
-                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                                minimumSize: const Size(0, 32),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
+                            ChoiceChip(
+                              label: const Text('Meter'),
+                              selected: _selectedOrder == 'time_signature',
+                              onSelected: (s) {
+                                setState(() { _selectedOrder = 'time_signature'; _sortHymns(); });
+                              },
+                              labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                              labelPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              selectedColor: colorScheme.primaryContainer,
+                              backgroundColor: colorScheme.surfaceContainerHigh,
+                              visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
+                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
-                          ),
-                        ],
-                      )
-                    ],
-                  ),
+                          ],
+                        ),
+                        const Spacer(),
+                        ActionChip(
+                          label: const Text('Refresh'),
+                          avatar: const Icon(Icons.refresh, size: 16),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
+                          labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                          shape: const StadiumBorder(),
+                          backgroundColor: colorScheme.primary.withOpacity(0.10),
+                          onPressed: checkAndUpdateLyrics,
+                        ),
+                      ],
+                    )
+                  ],
                 );
               },
             ),
@@ -528,28 +496,30 @@ class _HymnsScreenState extends State<HymnsScreen> {
       margin: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 0),
       child: ListTile(
         leading: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 0.0), // Adjust padding for image
+          padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 0.0),
           child: SizedBox(
-            width: 40, // Original width
-            height: 40, // Original height
-            child: Image.asset(
-              'lib/assets/icons/hymn.png', // Restore original image
-            ),
+            width: 40,
+            height: 40,
+            child: Image.asset('lib/assets/icons/hymn.png'),
           ),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min, // Important for Column in ListTile
           children: [
-            Text(
-              'Hymn ${hymn.number}: ${hymn.title}',
-              style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)
-            ),
+            _buildHighlightedTitle('Hymn ${hymn.number}: ${hymn.title}', textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600), colorScheme),
             if (hymn.signature.isNotEmpty) ...[
               const SizedBox(height: 4.0), // Gap between title and subtitle
-              Text(
-                hymn.signature,
-                style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  hymn.signature,
+                  style: textTheme.bodySmall?.copyWith(color: colorScheme.onSurfaceVariant),
+                ),
               ),
             ]
           ],
@@ -577,6 +547,34 @@ class _HymnsScreenState extends State<HymnsScreen> {
         contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       ),
     );
+  }
+
+  Widget _buildHighlightedTitle(String text, TextStyle? baseStyle, ColorScheme colorScheme) {
+    final query = _searchQuery?.trim();
+    if (query == null || query.isEmpty) {
+      return Text(text, style: baseStyle);
+    }
+    final lowerText = text.toLowerCase();
+    final lowerQuery = query.toLowerCase();
+    final spans = <TextSpan>[];
+    int start = 0;
+    while (true) {
+      final idx = lowerText.indexOf(lowerQuery, start);
+      if (idx < 0) {
+        spans.add(TextSpan(text: text.substring(start), style: baseStyle));
+        break;
+      }
+      if (idx > start) {
+        spans.add(TextSpan(text: text.substring(start, idx), style: baseStyle));
+      }
+      spans.add(TextSpan(
+        text: text.substring(idx, idx + lowerQuery.length),
+        style: baseStyle?.copyWith(backgroundColor: colorScheme.primary.withOpacity(0.18)),
+      ));
+      start = idx + lowerQuery.length;
+      if (start >= text.length) break;
+    }
+    return RichText(text: TextSpan(children: spans));
   }
 
   void navigateToHymnDetail(BuildContext context, Hymn hymn) {
