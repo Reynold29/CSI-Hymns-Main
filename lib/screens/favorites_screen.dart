@@ -61,6 +61,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
         await _fetchHymnsByIds(favoriteIdsMap['favoriteHymnIds'] ?? []);
     final keerthane =
         await _fetchKeerthaneByIds(favoriteIdsMap['favoriteKeerthaneIds'] ?? []);
+    if (!mounted) return;
     setState(() {
       _favoriteHymns = hymns;
       _favoriteKeerthane = keerthane;
@@ -92,7 +93,7 @@ class _FavoritesScreenState extends State<FavoritesScreen>
 
     storedIds.remove(item.number.toString());
     await prefs.setStringList(key, storedIds);
-
+    if (!mounted) return;
     setState(() {
       if (hymnType == 'hymn') {
         _favoriteHymns.remove(item);

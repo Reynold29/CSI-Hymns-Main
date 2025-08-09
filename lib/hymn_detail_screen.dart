@@ -395,8 +395,8 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                           backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                           foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          padding: const EdgeInsets.all(8.0),
-                          minimumSize: const Size(40, 40),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          minimumSize: const Size(34, 34),
                         ).copyWith(
                           overlayColor: MaterialStateProperty.resolveWith<Color?>(
                             (Set<MaterialState> states) {
@@ -411,16 +411,16 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                         onPressed: _decrementFontSize,
                         child: const Icon(Icons.remove, size: 20),
                       ),
-                      const SizedBox(width: 4),
-                      const Text('Font', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 3),
+                      const Text('Font', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      const SizedBox(width: 3),
                       ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                           foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                          padding: const EdgeInsets.all(8.0),
-                          minimumSize: const Size(40, 40),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                          minimumSize: const Size(34, 34),
                         ).copyWith(
                           overlayColor: MaterialStateProperty.resolveWith<Color?>(
                             (Set<MaterialState> states) {
@@ -435,20 +435,32 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                         onPressed: _incrementFontSize,
                         child: const Icon(Icons.add, size: 20),
                       ),
+                      const SizedBox(width: 10),
+                      FilledButton.icon(
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size(92, 36),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                          shape: const StadiumBorder(),
+                          textStyle: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        onPressed: _showAddToCategoryDialog,
+                        icon: const Icon(Icons.playlist_add, size: 18),
+                        label: const Text('Add'),
+                      ),
                       const Spacer(),
                       Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           SizedBox(
-                            width: 50.0,
-                            height: 50.0,
+                            width: 44.0,
+                            height: 44.0,
                             child: FloatingActionButton(
                               heroTag: _audioButtonHeroTag,
                               onPressed: _toggleMiniPlayerVisibility,
                               tooltip: 'Open Audio Player',
                               backgroundColor: colorScheme.secondaryContainer,
                               foregroundColor: colorScheme.primary,
-                              elevation: 3.0,
+                              elevation: 2.5,
                               hoverColor: colorScheme.onSecondaryContainer.withOpacity(0.08),
                               splashColor: colorScheme.onSecondaryContainer.withOpacity(0.16),
                               child: _isAudioLoading
@@ -463,17 +475,17 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                                 : Icon(_isMiniPlayerVisible ? Icons.volume_up_rounded : Icons.music_note_rounded, size: 22),
                             ),
                           ),
-                          const SizedBox(width: 6.0),
+                          const SizedBox(width: 8.0),
                           SizedBox(
-                            width: 50.0,
-                            height: 50.0,
+                            width: 44.0,
+                            height: 44.0,
                             child: FloatingActionButton(
                               heroTag: _debugButtonHeroTag,
                               onPressed: _showFeedbackDialog,
                               tooltip: 'Report Lyrics Issue',
                               backgroundColor: colorScheme.tertiaryContainer,
                               foregroundColor: colorScheme.onTertiaryContainer,
-                              elevation: 3.0,
+                              elevation: 2.5,
                               hoverColor: colorScheme.onTertiaryContainer.withOpacity(0.08),
                               splashColor: colorScheme.onTertiaryContainer.withOpacity(0.16),
                               child: const Icon(Icons.bug_report_rounded, size: 22),
@@ -505,6 +517,113 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _showAddToCategoryDialog() async {
+    final service = SupabaseService();
+    final categories = await service.fetchCustomCategoriesUnified();
+    if (!mounted) return;
+    // If none exist, prompt to create one first
+    if (categories.isEmpty) {
+      final ctrl = TextEditingController();
+      final name = await showDialog<String>(
+        context: context,
+        builder: (c) => AlertDialog(
+          title: const Text('Create a category first'),
+          content: TextField(controller: ctrl, decoration: const InputDecoration(hintText: 'Category name')), 
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
+            FilledButton(onPressed: () => Navigator.pop(c, ctrl.text.trim()), child: const Text('Create')),
+          ],
+        ),
+      );
+      if (name == null || name.isEmpty) return;
+      final newId = await service.createCustomCategoryUnified(name);
+      if (newId == null) {
+        if (!mounted) return;
+        showDialog(
+          context: context,
+          builder: (c) => AlertDialog(
+            title: const Text('Limit reached'),
+            content: const Text('Guests can create up to 5 categories locally. Sign in to create more.'),
+            actions: [TextButton(onPressed: () => Navigator.pop(c), child: const Text('OK'))],
+          ),
+        );
+        return;
+      }
+      await service.addSongToCategoryUnified(categoryId: newId, songId: widget.hymn.number, songType: 'hymn');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Added to new category')));
+      }
+      return;
+    }
+    int? selectedId;
+    final res = await showDialog<bool>(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSB) => AlertDialog(
+          title: const Text('Add song to category'),
+          content: SizedBox(
+            width: 360,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (categories.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 8.0),
+                    child: Text('No categories yet. Create one below.'),
+                  ),
+                ...categories.map((c) => RadioListTile<int>(
+                      value: (c['id'] as num).toInt(),
+                      groupValue: selectedId,
+                      title: Text(c['name'] as String),
+                      onChanged: (v) => setSB(() => selectedId = v),
+                    )),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+            TextButton(
+              onPressed: () async {
+                final nameCtrl = TextEditingController();
+                final name = await showDialog<String>(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    title: const Text('New category'),
+                    content: TextField(controller: nameCtrl, decoration: const InputDecoration(hintText: 'Category name')),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+                      FilledButton(onPressed: () => Navigator.pop(context, nameCtrl.text.trim()), child: const Text('Create')),
+                    ],
+                  ),
+                );
+                if (name != null && name.isNotEmpty) {
+                  final id = await service.createCustomCategory(name);
+                  if (id != null) {
+                    selectedId = id;
+                    Navigator.pop(context, true);
+                  }
+                }
+              },
+              child: const Text('New category'),
+            ),
+            FilledButton(
+              onPressed: selectedId == null
+                  ? null
+                  : () async {
+                      await service.addSongToCategoryUnified(categoryId: selectedId!, songId: widget.hymn.number, songType: 'hymn');
+                      if (mounted) Navigator.pop(context, true);
+                    },
+              child: const Text('Add'),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (res == true && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Added to category')));
+    }
   }
 
   Widget _buildMiniAudioPlayer(BuildContext context) {
@@ -621,31 +740,23 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
               ),
               StatefulBuilder(
                 builder: (BuildContext context, StateSetter setStateSB) {
-                    bool _isButtonPushed = false;
+                    bool isPressed = false;
 
                     return IconButton(
                         icon: AnimatedScale(
-                            scale: _isButtonPushed ? 1.2 : 1.0,
-                            duration: const Duration(milliseconds: 150),
-                            child: FaIcon(
-                                FontAwesomeIcons.repeat,
-                                color: _isLooping
-                                    ? colorScheme.primary
-                                    : colorScheme.onSurfaceVariant,
-                                size: 22,
-                            ),
+                          scale: isPressed ? 1.2 : 1.0,
+                          duration: const Duration(milliseconds: 150),
+                          child: FaIcon(
+                            FontAwesomeIcons.repeat,
+                            color: _isLooping ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                            size: 22,
+                          ),
                         ),
                         tooltip: _isLooping ? 'Loop On' : 'Loop Off',
                         onPressed: () {
                             _toggleLoop();
-                            setStateSB(() {
-                                _isButtonPushed = true;
-                            });
-                            Future.delayed(const Duration(milliseconds: 150), () {
-                                setStateSB(() {
-                                    _isButtonPushed = false;
-                                });
-                            });
+                            setStateSB(() => isPressed = true);
+                            Future.delayed(const Duration(milliseconds: 150), () => setStateSB(() => isPressed = false));
                         },
                     );
                 },
