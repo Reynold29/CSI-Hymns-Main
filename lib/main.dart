@@ -88,6 +88,7 @@ class MyApp extends StatelessWidget {
           title: 'CSI Hymns and Lyrics',
           theme: ThemeData(
             useMaterial3: true,
+            fontFamily: 'plusJakartaSans',
             colorScheme: ColorScheme.fromSeed(
               seedColor: themeState.seedColor,
               brightness: Brightness.light,
@@ -109,6 +110,7 @@ class MyApp extends StatelessWidget {
           ),
           darkTheme: ThemeData(
             useMaterial3: true,
+            fontFamily: 'plusJakartaSans',
             scaffoldBackgroundColor: themeState.blackThemeEnabled ? Colors.black : null,
             colorScheme: ColorScheme.fromSeed(
               seedColor: themeState.seedColor,
@@ -414,7 +416,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
                   final tabCount = 5;
                   final tabWidth = constraints.maxWidth / tabCount;
                   return Container(
-                    height: 56,
+                    height: 58,
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
@@ -489,24 +491,25 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           curve: Curves.easeInOut,
-          padding: const EdgeInsets.symmetric(vertical: 2),
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
           decoration: BoxDecoration(
-            color: isSelected ? colorScheme.primary.withOpacity(0.07) : Colors.transparent,
-            borderRadius: BorderRadius.circular(12),
+            color: isSelected ? colorScheme.primary.withOpacity(0.12) : Colors.transparent,
+            borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant, size: 22),
+              Icon(icon, color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant, size: 24),
               const SizedBox(height: 1),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  letterSpacing: 0.2,
-                  height: 1.1,
+                  letterSpacing: 0.1,
+                  height: 1.0,
                 ),
               ),
             ],

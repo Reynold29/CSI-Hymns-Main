@@ -82,6 +82,7 @@ flutter:
   assets:
     - lib/assets/hymns_data.json
     - lib/assets/keerthane_data.json
+    - lib/assets/order-of-service_data.json
     - lib/assets/icons/hymn.png
     - lib/assets/icons/keerthane.png
     - lib/assets/changelog.json

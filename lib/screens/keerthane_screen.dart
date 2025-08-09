@@ -85,18 +85,40 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) {
+        final colorScheme = Theme.of(context).colorScheme;
         return AlertDialog(
-          title: const Text('Refresh Keerthane Lyrics?'),
-          content: const Text('Do you want to check for updated Keerthane lyrics?'),
-          actionsAlignment: MainAxisAlignment.end,
+          backgroundColor: colorScheme.surfaceContainerHigh,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          contentPadding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          title: Row(
+            children: [
+              Icon(Icons.refresh, color: colorScheme.primary),
+              const SizedBox(width: 8),
+              const Text('Refresh Keerthane?'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'We\'ll fetch any updated and corrected Keerthane lyrics from the cloud.',
+                style: TextStyle(color: colorScheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: 12),
+            ],
+          ),
           actions: <Widget>[
-            TextButton(
+            OutlinedButton(
               onPressed: () => Navigator.pop(context, false),
               child: const Text('Cancel'),
             ),
-            TextButton(
+            FilledButton.icon(
               onPressed: () => Navigator.pop(context, true),
-              child: const Text('YES'),
+              icon: const Icon(Icons.refresh),
+              label: const Text('Refresh'),
             ),
           ],
         );
@@ -115,14 +137,29 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
       context: context,
       barrierDismissible: false,
       builder: (BuildContext context) {
+        final colorScheme = Theme.of(context).colorScheme;
         return AlertDialog(
-          title: const Text('Updating Keerthane Lyrics...'),
+          backgroundColor: colorScheme.surfaceContainerHigh,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+          contentPadding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
+          title: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: _isLoading ? const CircularProgressIndicator(strokeWidth: 2) : const SizedBox(),
+              ),
+              const SizedBox(width: 8),
+              const Text('Updating Keerthane'),
+            ],
+          ),
           content: SizedBox(
-            height: 100,
-            width: 100,
+            height: 110,
+            width: 110,
             child: Center(
               child: _isLoading
-                  ? const CircularProgressIndicator()
+                  ? const SizedBox.shrink()
                   : Lottie.asset('lib/assets/icons/tick-animation.json', width: 80, height: 80),
             ),
           ),
@@ -138,19 +175,19 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
           context: context,
           barrierDismissible: false,
           builder: (BuildContext context) {
-            return AlertDialog(
-              title: const Text('Keerthane Lyrics Updated!'),
-              content: SizedBox(
-                  height: 100, width: 100,
-                  child: Lottie.asset('lib/assets/icons/tick-animation.json', width: 80, height: 80)),
-              actionsAlignment: MainAxisAlignment.end,
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
-                ),
-              ],
-            );
+        final colorScheme = Theme.of(context).colorScheme;
+        return AlertDialog(
+          backgroundColor: colorScheme.surfaceContainerHigh,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Keerthane updated!'),
+          content: SizedBox(height: 110, width: 110, child: Lottie.asset('lib/assets/icons/tick-animation.json', width: 80, height: 80)),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Done'),
+            ),
+          ],
+        );
           },
         );
       }
@@ -161,14 +198,16 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
         showDialog(
           context: context,
           builder: (BuildContext context) {
+            final colorScheme = Theme.of(context).colorScheme;
             return AlertDialog(
-              title: const Text('Update Failed'),
-              content: const Text('Failed to update Keerthane lyrics. Please try again later.'),
-              actionsAlignment: MainAxisAlignment.end,
+              backgroundColor: colorScheme.surfaceContainerHigh,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              title: const Text('Update failed'),
+              content: Text('Failed to update Keerthane lyrics. Please try again later.', style: TextStyle(color: colorScheme.onSurfaceVariant)),
               actions: [
-                TextButton(
+                OutlinedButton(
                   onPressed: () => Navigator.of(context).pop(),
-                  child: const Text('OK'),
+                  child: const Text('Close'),
                 ),
               ],
             );
