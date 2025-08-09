@@ -6,7 +6,9 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hymns_latest/screens/about_developer_screen.dart';
 import 'package:hymns_latest/screens/auth_screen.dart';
 import 'package:hymns_latest/services/supabase_service.dart';
+import 'package:hymns_latest/screens/profile_edit_screen.dart';
 import 'dart:ui';
+import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 
 class Sidebar extends StatefulWidget {
   final AnimationController animationController;
@@ -125,10 +127,22 @@ class _SidebarState extends State<Sidebar> {
                               CircleAvatar(radius: 16, child: Text(user.email != null && user.email!.isNotEmpty ? user.email![0].toUpperCase() : '?')),
                               const SizedBox(width: 10),
                               Expanded(
-                                child: Text(
-                                  user.email ?? 'Logged in',
-                                  style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onSurface),
-                                  overflow: TextOverflow.ellipsis,
+                                child: FutureBuilder<String?>(
+                                  future: SupabaseService().getProfileName(),
+                                  builder: (context, snap) {
+                                    final name = snap.data;
+                                    return GestureDetector(
+                                      onTap: () async {
+                                        final changed = await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileEditScreen()));
+                                        if (changed == true && mounted) setState(() {});
+                                      },
+                                      child: Text(
+                                        (name != null && name.trim().isNotEmpty) ? name : (user.email ?? 'Logged in'),
+                                        style: TextStyle(fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+                                        overflow: TextOverflow.ellipsis,
+                                      ),
+                                    );
+                                  },
                                 ),
                               ),
                             ],
@@ -248,7 +262,7 @@ Widget _sidebarTile(BuildContext context, {required IconData icon, required Stri
     selected: selected,
     selectedTileColor: colorScheme.primary.withOpacity(0.10),
     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-    onTap: onTap,
+    onTap: () async { await HapticFeedbackManager.lightClick(); onTap(); },
     trailing: trailing,
   );
 }}

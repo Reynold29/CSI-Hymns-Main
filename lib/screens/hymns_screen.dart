@@ -386,7 +386,8 @@ class _HymnsScreenState extends State<HymnsScreen> {
                             ChoiceChip(
                               label: const Text('Number'),
                               selected: _selectedOrder == 'number',
-                              onSelected: (s) {
+                              onSelected: (s) async {
+                                await HapticFeedbackManager.lightClick();
                                 setState(() { _selectedOrder = 'number'; _sortHymns(); });
                               },
                               labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
@@ -400,7 +401,8 @@ class _HymnsScreenState extends State<HymnsScreen> {
                             ChoiceChip(
                               label: const Text('Meter'),
                               selected: _selectedOrder == 'time_signature',
-                              onSelected: (s) {
+                              onSelected: (s) async {
+                                await HapticFeedbackManager.lightClick();
                                 setState(() { _selectedOrder = 'time_signature'; _sortHymns(); });
                               },
                               labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
@@ -421,7 +423,7 @@ class _HymnsScreenState extends State<HymnsScreen> {
                           labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                           shape: const StadiumBorder(),
                           backgroundColor: colorScheme.primary.withOpacity(0.10),
-                          onPressed: checkAndUpdateLyrics,
+                          onPressed: () async { await HapticFeedbackManager.lightClick(); await checkAndUpdateLyrics(); },
                         ),
                       ],
                     )

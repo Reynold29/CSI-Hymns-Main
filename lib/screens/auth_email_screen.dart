@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hymns_latest/services/supabase_service.dart';
+import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 
 class AuthEmailScreen extends StatefulWidget {
   const AuthEmailScreen({super.key});
@@ -12,6 +13,7 @@ class _AuthEmailScreenState extends State<AuthEmailScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
   bool _isLogin = true;
   bool _loading = false;
   bool _hidePassword = true;
@@ -22,6 +24,7 @@ class _AuthEmailScreenState extends State<AuthEmailScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
     try {
+      await HapticFeedbackManager.lightClick();
       if (_isLogin) {
         await _supabase.signInWithEmail(
           _emailController.text.trim(),
@@ -32,6 +35,7 @@ class _AuthEmailScreenState extends State<AuthEmailScreen> {
           _emailController.text.trim(),
           _passwordController.text,
         );
+        await _supabase.upsertProfile(fullName: _nameController.text.trim());
       }
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
@@ -117,6 +121,16 @@ class _AuthEmailScreenState extends State<AuthEmailScreen> {
                   decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.alternate_email)),
                   validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
                 ),
+                if (!_isLogin) ...[
+                  const SizedBox(height: 12),
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(labelText: 'Full name', prefixIcon: Icon(Icons.person_outline)),
+                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter your full name' : null,
+                  ),
+                  const SizedBox(height: 4),
+                  Text('Use your full name. You will use email to log in. Your personal data is encrypted and never shared.', style: Theme.of(context).textTheme.bodySmall),
+                ],
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _passwordController,

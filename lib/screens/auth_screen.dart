@@ -5,6 +5,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hymns_latest/screens/auth_email_screen.dart';
+import 'package:hymns_latest/screens/profile_edit_screen.dart';
+import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 
 class AuthScreen extends StatefulWidget {
   const AuthScreen({super.key});
@@ -25,14 +27,20 @@ class _AuthScreenState extends State<AuthScreen> {
   void initState() {
     super.initState();
     // Close this screen automatically when auth completes (e.g., Google OAuth deep link returns)
-    _authSub = _supabase.authStream.listen((state) {
+    _authSub = _supabase.authStream.listen((state) async {
       if (!mounted) return;
       if (state.session != null) {
         // On login, refresh favorites owner marker to avoid cross-account merge
         SharedPreferences.getInstance().then((prefs) async {
           await prefs.setString('favorites_owner_auth_uid', state.session!.user.id);
         });
-        Navigator.of(context).pop(true);
+        // If profile name is missing, collect it before closing
+        final name = await _supabase.getProfileName();
+        if (!mounted) return;
+        if (name == null || name.trim().isEmpty) {
+          await Navigator.push(context, MaterialPageRoute(builder: (_) => const ProfileEditScreen()));
+        }
+        if (mounted) Navigator.of(context).pop(true);
       }
     });
   }
@@ -50,6 +58,7 @@ class _AuthScreenState extends State<AuthScreen> {
   Future<void> _signInWithGoogle() async {
     setState(() => _loading = true);
     try {
+      await HapticFeedbackManager.lightClick();
       await _supabase.signInWithGoogle();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Google sign-in error: $e')));
@@ -114,6 +123,7 @@ class _AuthScreenState extends State<AuthScreen> {
                             onPressed: _loading
                                 ? null
                                 : () async {
+                                    await HapticFeedbackManager.lightClick();
                                     final result = await Navigator.push(
                                       context,
                                       MaterialPageRoute(builder: (_) => const AuthEmailScreen()),

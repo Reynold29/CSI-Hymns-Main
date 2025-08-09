@@ -3,6 +3,7 @@ import 'package:hymns_latest/categories/dynamic_category_screen.dart';
 import 'package:hymns_latest/screens/custom_categories_screen.dart';
 import 'package:hymns_latest/screens/custom_category_viewer.dart';
 import 'package:hymns_latest/services/supabase_service.dart';
+import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 
 class Categories extends StatefulWidget {
   const Categories({super.key});
@@ -95,7 +96,8 @@ class _CategoriesState extends State<Categories> {
   Widget _buildCategoryCard(BuildContext context, String category, List<int>? hymnNumbers, List<int>? keerthaneNumbers) {
     final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
-      onTap: () {
+      onTap: () async {
+        await HapticFeedbackManager.lightClick();
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -134,6 +136,7 @@ class _CategoriesState extends State<Categories> {
         final remaining = snap.data ?? 0;
         return InkWell(
           onTap: () async {
+            await HapticFeedbackManager.lightClick();
             await Navigator.push(
               context,
               MaterialPageRoute(builder: (_) => const CustomCategoriesScreen()),
@@ -189,6 +192,7 @@ class _CategoriesState extends State<Categories> {
     final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: () async {
+        await HapticFeedbackManager.lightClick();
         await Navigator.push(
           context,
           MaterialPageRoute(

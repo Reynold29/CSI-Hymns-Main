@@ -39,6 +39,24 @@ class SupabaseService {
     await client.auth.signOut();
   }
 
+  // Profile helpers (public.users table with columns: user_id serial, auth_uid uuid unique, full_name text, ...)
+  Future<void> upsertProfile({required String fullName}) async {
+    final user = currentUser;
+    if (user == null) return;
+    await client.from('users').upsert({
+      'auth_uid': user.id,
+      'full_name': fullName,
+    }, onConflict: 'auth_uid');
+  }
+
+  Future<String?> getProfileName() async {
+    final user = currentUser;
+    if (user == null) return null;
+    final rows = await client.from('users').select('full_name').eq('auth_uid', user.id).maybeSingle();
+    if (rows == null) return null;
+    return rows['full_name'] as String?;
+  }
+
   Future<void> sendPasswordResetEmail(String email, {String? redirectTo}) async {
     final target = redirectTo ?? 'io.supabase.flutter://callback';
     await client.auth.resetPasswordForEmail(email, redirectTo: target);

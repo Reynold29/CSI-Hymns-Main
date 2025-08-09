@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hymns_latest/hymns_def.dart';
 import 'package:hymns_latest/keerthanes_def.dart';
 import 'package:hymns_latest/services/supabase_service.dart';
+import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 
 class SelectSongsForCategoryScreen extends StatefulWidget {
   final int categoryId;
@@ -44,6 +45,7 @@ class _SelectSongsForCategoryScreenState extends State<SelectSongsForCategoryScr
       Navigator.pop(context, false);
       return;
     }
+    await HapticFeedbackManager.mediumClick();
     final service = SupabaseService();
     for (final n in _selectedHymns) {
       await service.addSongToCategoryUnified(categoryId: widget.categoryId, songId: n, songType: 'hymn');
@@ -121,7 +123,8 @@ class _SelectSongsForCategoryScreenState extends State<SelectSongsForCategoryScr
         final sel = _selectedHymns.contains(h.number);
         return CheckboxListTile(
           value: sel,
-          onChanged: (v) {
+          onChanged: (v) async {
+            await HapticFeedbackManager.lightClick();
             setState(() {
               if (v == true) {
                 _selectedHymns.add(h.number);
@@ -149,7 +152,8 @@ class _SelectSongsForCategoryScreenState extends State<SelectSongsForCategoryScr
         final sel = _selectedKeerthanes.contains(k.number);
         return CheckboxListTile(
           value: sel,
-          onChanged: (v) {
+          onChanged: (v) async {
+            await HapticFeedbackManager.lightClick();
             setState(() {
               if (v == true) {
                 _selectedKeerthanes.add(k.number);

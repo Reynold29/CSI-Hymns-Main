@@ -439,7 +439,7 @@ class _KeerthaneDetailScreenState extends State<KeerthaneDetailScreen> {
                           shape: const StadiumBorder(),
                           textStyle: const TextStyle(fontWeight: FontWeight.w700),
                         ),
-                        onPressed: _showAddToCategoryDialog,
+                        onPressed: () async { await HapticFeedbackManager.lightClick(); await _showAddToCategoryDialog(); },
                         icon: const Icon(Icons.playlist_add, size: 18),
                         label: const Text('Add'),
                       ),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/material.dart';
+import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 
 class OrderOfServiceScreen extends StatefulWidget {
   const OrderOfServiceScreen({super.key});
@@ -60,7 +61,8 @@ class _OrderOfServiceScreenState extends State<OrderOfServiceScreen> {
                         kannadaTitle: 'ಭಾನುವಾರದ ದೇವರಾರಾಧನೆ',
                         showEnglish: _showEnglishPrimary,
                         gradient: [const Color(0xFFFFC66A), const Color(0xFFFFD48C)],
-                        onTap: () {
+                        onTap: () async {
+                          await HapticFeedbackManager.lightClick();
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => const _OrderOfServiceReaderRoute(
@@ -78,7 +80,8 @@ class _OrderOfServiceScreenState extends State<OrderOfServiceScreen> {
                         kannadaTitle: 'ಹಬ್ಬದ ಆರಾಧನೆ',
                         showEnglish: _showEnglishPrimary,
                         gradient: [const Color(0xFFBCEBFF), const Color(0xFFD7F4FF)],
-                        onTap: () {
+                        onTap: () async {
+                          await HapticFeedbackManager.lightClick();
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(content: Text('Festival service – coming soon')),
                           );
@@ -124,7 +127,7 @@ class _OrderCard extends StatelessWidget {
         return SizedBox(
           height: targetHeight,
           child: InkWell(
-            onTap: onTap,
+            onTap: () async { await HapticFeedbackManager.lightClick(); onTap(); },
             borderRadius: BorderRadius.circular(16),
             child: Ink(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
@@ -394,7 +397,8 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
                         _PageChip(
                           label: no.toString(),
                           selected: _pages[_currentPageIndex].pageNo == no,
-                          onTap: () {
+                          onTap: () async {
+                            await HapticFeedbackManager.lightClick();
                             Navigator.of(context).pop();
                             _jumpTo(no);
                           },
@@ -478,9 +482,12 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
                                           border: OutlineInputBorder(borderRadius: BorderRadius.circular(28)),
                                           contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                                         ),
-                                        onSubmitted: (value) {
+                                        onSubmitted: (value) async {
                                           final target = int.tryParse(value);
-                                          if (target != null) _jumpTo(target);
+                                          if (target != null) {
+                                            await HapticFeedbackManager.mediumClick();
+                                            _jumpTo(target);
+                                          }
                                         },
                                       ),
                                     ),
@@ -490,7 +497,7 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
                                       child: _MorphingCTAButton(
                                         label: 'Open Full Book',
                                         icon: Icons.menu_book_rounded,
-                                        onPressed: () => setState(() => _hasSelectedPage = true),
+                                        onPressed: () async { await HapticFeedbackManager.lightClick(); setState(() => _hasSelectedPage = true); },
                                       ),
                                     ),
                                   ],
@@ -544,7 +551,7 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
                                                     Expanded(
                                                       child: FilledButton.tonalIcon(
                                                         style: _tonalExpressive(context),
-                                                        onPressed: hasPrev ? () => _jumpTo(prevNo!) : null,
+                                                         onPressed: hasPrev ? () async { await HapticFeedbackManager.lightClick(); _jumpTo(prevNo!); } : null,
                                                         icon: const Icon(Icons.arrow_back),
                                                         label: Text(hasPrev ? 'Previous Page - ${prevNo!}' : 'Previous Page'),
                                                       ),
@@ -553,7 +560,7 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
                                                     Expanded(
                                                       child: FilledButton.icon(
                                                         style: _primaryExpressive(context),
-                                                        onPressed: hasNext ? () => _jumpTo(nextNo!) : null,
+                                                         onPressed: hasNext ? () async { await HapticFeedbackManager.lightClick(); _jumpTo(nextNo!); } : null,
                                                         icon: const Icon(Icons.arrow_forward),
                                                         label: Text(hasNext ? 'Next Page - ${nextNo!}' : 'Next Page'),
                                                       ),
@@ -600,8 +607,8 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
                     child: !_hasSelectedPage
                         ? Row(
                             children: [
-                              TextButton.icon(
-                                onPressed: _openAllPagesSheet,
+                               TextButton.icon(
+                                 onPressed: () async { await HapticFeedbackManager.lightClick(); await _openAllPagesSheet(); },
                                 icon: const Icon(Icons.grid_view_rounded, size: 18),
                                 label: const Text('All pages'),
                               ),
@@ -617,7 +624,7 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
                                           child: _PageChip(
                                             label: no.toString(),
                                             selected: false,
-                                            onTap: () => _jumpTo(no),
+                                            onTap: () async { await HapticFeedbackManager.lightClick(); _jumpTo(no); },
                                           ),
                                         ),
                                     ],
@@ -638,9 +645,9 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
                                     : null,
                               ),
                               const SizedBox(width: 8),
-                              Expanded(
+                               Expanded(
                                 child: OutlinedButton(
-                                  onPressed: _openAllPagesSheet,
+                                   onPressed: () async { await HapticFeedbackManager.lightClick(); await _openAllPagesSheet(); },
                                   child: Text('Page ${_pages[_currentPageIndex].pageNo}'),
                                 ),
                               ),
@@ -722,7 +729,7 @@ class _NavIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final enabled = onTap != null;
     return InkResponse(
-      onTap: onTap,
+      onTap: enabled ? () async { await HapticFeedbackManager.lightClick(); onTap!(); } : null,
       radius: 24,
       child: Container(
         width: 44,

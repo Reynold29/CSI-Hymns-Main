@@ -352,7 +352,7 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
                             ChoiceChip(
                               label: const Text('Number'),
                               selected: _orderBy == 'number',
-                              onSelected: (s) { setState(() { _orderBy = 'number'; _sortAndFilterKeerthanes(); }); },
+                              onSelected: (s) async { await HapticFeedbackManager.lightClick(); setState(() { _orderBy = 'number'; _sortAndFilterKeerthanes(); }); },
                               labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                               labelPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -364,7 +364,7 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
                             ChoiceChip(
                               label: const Text('Title'),
                               selected: _orderBy == 'title',
-                              onSelected: (s) { setState(() { _orderBy = 'title'; _sortAndFilterKeerthanes(); }); },
+                              onSelected: (s) async { await HapticFeedbackManager.lightClick(); setState(() { _orderBy = 'title'; _sortAndFilterKeerthanes(); }); },
                               labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                               labelPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -383,7 +383,7 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
                           labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
                           shape: const StadiumBorder(),
                           backgroundColor: colorScheme.primary.withOpacity(0.10),
-                          onPressed: checkAndUpdateLyrics,
+                          onPressed: () async { await HapticFeedbackManager.lightClick(); await checkAndUpdateLyrics(); },
                         ),
                       ],
                     )

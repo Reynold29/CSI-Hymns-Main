@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:hymns_latest/services/supabase_service.dart';
 import 'package:hymns_latest/screens/select_songs_for_category.dart';
+import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 import 'package:hymns_latest/screens/auth_screen.dart';
 
 class CustomCategoriesScreen extends StatefulWidget {
@@ -44,6 +45,7 @@ class _CustomCategoriesScreenState extends State<CustomCategoriesScreen> {
   }
 
   Future<void> _createCategory() async {
+    await HapticFeedbackManager.lightClick();
     final controller = TextEditingController();
     final name = await showDialog<String>(
       context: context,
@@ -74,6 +76,7 @@ class _CustomCategoriesScreenState extends State<CustomCategoriesScreen> {
       );
       return;
     }
+    await HapticFeedbackManager.success();
     await _load();
     // After creation, if guest has hit 0 remaining, nudge to sign in
     if (mounted && SupabaseService().currentUser == null && _guestRemaining == 0) {
@@ -126,7 +129,7 @@ class _CustomCategoriesScreenState extends State<CustomCategoriesScreen> {
                         children: [
                           const Text('No custom categories yet'),
                           const SizedBox(height: 8),
-                          FilledButton(onPressed: _createCategory, child: const Text('Create one')),
+                          FilledButton(onPressed: () async { await HapticFeedbackManager.lightClick(); await _createCategory(); }, child: const Text('Create one')),
                         ],
                       ),
                     )
@@ -156,7 +159,7 @@ class _CustomCategoriesScreenState extends State<CustomCategoriesScreen> {
                               ListTile(
                                 leading: const Icon(Icons.add),
                                 title: const Text('Create new category'),
-                                onTap: _createCategory,
+                                onTap: () async { await HapticFeedbackManager.lightClick(); await _createCategory(); },
                               ),
                             ],
                           );
