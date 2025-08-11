@@ -1,5 +1,18 @@
 [
     { 
+        "title": "Sixth Public Stable Version Released!",
+        "version": "4.0.0-stable",
+        "date": "11-08-2025",
+        "changes": [
+            "NEW Option to Sign Up or Login to keep your data and custom collections saved",
+            "NEW Custom Categories for your own collections",
+            "NEW Order of Service Screen",
+            "Order of Service Screen is now available in the Service Page. More content will be added and implemented in the future.",
+            "Under-the-hood improvements and bug fixes",
+            "For more info on changes, visit https://github.com/Reynold29/CSI-Hymns-and-Lyrics/commits/main/"
+        ]
+    },
+    { 
         "title": "Fifth Public Stable Version Released!",
         "version": "3.3.0-stable",
         "date": "03-08-2025",
