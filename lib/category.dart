@@ -20,9 +20,9 @@ class SidebarOptions {
           width: 34,
           child: Icon(Icons.collections_bookmark),
         ),
-        title: const Text(
+        title: Text(
           "Christmas",
-          style: TextStyle(color: Colors.white),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
         ),
       ),
       ListTile(
@@ -37,9 +37,9 @@ class SidebarOptions {
           width: 34,
           child: Icon(Icons.collections_bookmark),
         ),
-        title: const Text(
+        title: Text(
           "Lent and Good Friday",
-          style: TextStyle(color: Colors.white),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
         ),
       ),
       ListTile(
@@ -54,9 +54,9 @@ class SidebarOptions {
           width: 34,
           child: Icon(Icons.collections_bookmark),
         ),
-        title: const Text(
+        title: Text(
           "Easter",
-          style: TextStyle(color: Colors.white),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
         ),
       ),
       ListTile(
@@ -71,9 +71,9 @@ class SidebarOptions {
           width: 34,
           child: Icon(Icons.collections_bookmark),
         ),
-        title: const Text(
+        title: Text(
           "Jesus' Ascension and His Kingdom",
-          style: TextStyle(color: Colors.white),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
         ),
       ),
       ListTile(
@@ -88,9 +88,9 @@ class SidebarOptions {
           width: 34,
           child: Icon(Icons.collections_bookmark),
         ),
-        title: const Text(
+        title: Text(
           "Jesus' Coming Again",
-          style: TextStyle(color: Colors.white),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
         ),
       ),
     ];

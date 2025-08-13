@@ -41,7 +41,7 @@ class _SidebarState extends State<Sidebar> {
               bottomRight: Radius.circular(28),
             ),
           ),
-          backgroundColor: colorScheme.surface.withOpacity(0.85),
+          backgroundColor: colorScheme.surface,
           elevation: 12,
           child: SafeArea(
             child: Material(
@@ -56,41 +56,23 @@ class _SidebarState extends State<Sidebar> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                       // App branding / user profile card
-                      Card(
-                        color: colorScheme.primaryContainer,
+                       Card(
+                        color: colorScheme.surfaceContainerHigh,
                         elevation: 2,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
                           child: Row(
                             children: [
-                              CircleAvatar(
-                                radius: 28,
-                                backgroundColor: colorScheme.primary,
-                                child: FaIcon(
-                                  FontAwesomeIcons.church,
-                                  size: 28,
-                                  color: colorScheme.onPrimary,
-                                ),
-                              ),
+                               CircleAvatar(radius: 28, backgroundColor: colorScheme.primary, child: FaIcon(FontAwesomeIcons.church, size: 28, color: colorScheme.onPrimary)),
                               const SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text(
-                                      "CSI Hymns and Lyrics",
-                                      style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'plusJakartaSans', color: colorScheme.onPrimaryContainer),
-                                    ),
+                                     Text("CSI Hymns and Lyrics", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'plusJakartaSans', color: colorScheme.onSurface)),
                                     const SizedBox(height: 2),
-                                    Text(
-                                      "Praise The Lord!",
-                                      style: TextStyle(
-                                        color: colorScheme.onPrimaryContainer.withOpacity(0.7),
-                                        fontWeight: FontWeight.w400,
-                                        fontFamily: 'plusJakartaSans',
-                                      ),
-                                    ),
+                                     Text("Praise The Lord!", style: TextStyle(color: colorScheme.onSurfaceVariant, fontWeight: FontWeight.w400, fontFamily: 'plusJakartaSans')),
                                   ],
                                 ),
                               ),

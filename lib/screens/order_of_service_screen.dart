@@ -2,7 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 
 class OrderOfServiceScreen extends StatefulWidget {
   const OrderOfServiceScreen({super.key});
@@ -14,6 +18,7 @@ class OrderOfServiceScreen extends StatefulWidget {
 class _OrderOfServiceScreenState extends State<OrderOfServiceScreen> {
   bool _showEnglishPrimary = true;
   late final Timer _timer;
+  void _log(String msg) => debugPrint('[OrderOfService] ' + msg);
 
   @override
   void initState() {
@@ -22,12 +27,69 @@ class _OrderOfServiceScreenState extends State<OrderOfServiceScreen> {
       if (!mounted) return;
       setState(() => _showEnglishPrimary = !_showEnglishPrimary);
     });
+    _checkAndUpdateOrderOfServiceOnOpen();
   }
 
   @override
   void dispose() {
     _timer.cancel();
     super.dispose();
+  }
+
+  Future<void> _checkAndUpdateOrderOfServiceOnOpen() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final int last = prefs.getInt('lastOrderOfServiceUpdate') ?? 0;
+      final now = DateTime.now().millisecondsSinceEpoch;
+      final interval = const Duration(days: 3).inMilliseconds;
+      _log('startup: last=$last now=$now delta=${now - last} interval=$interval');
+      if (now - last < interval) {
+        _log('within cache window, skipping remote fetch');
+        return;
+      }
+      _log('fetching remote…');
+      await _fetchAndCacheOrderOfService();
+      await prefs.setInt('lastOrderOfServiceUpdate', now);
+      _log('remote fetch complete, cached');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Order of Service updated')));
+    } catch (e) { _log('startup update failed: $e'); }
+  }
+
+  Future<void> _manualRefreshOrderOfService() async {
+    try {
+      _log('manual refresh tapped');
+      await HapticFeedbackManager.lightClick();
+      await _fetchAndCacheOrderOfService();
+      _log('manual refresh success');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Order of Service refreshed')));
+    } catch (e) {
+      _log('manual refresh failed: $e');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Refresh failed: $e')));
+    }
+  }
+
+  Future<void> _fetchAndCacheOrderOfService() async {
+    const url = 'https://raw.githubusercontent.com/Reynold29/csi-hymns-vault/refs/heads/main/order-of-service_data.json';
+    _log('GET $url');
+    final resp = await http.get(Uri.parse(url));
+    _log('status ${resp.statusCode} bytes=${resp.bodyBytes.length}');
+    if (resp.statusCode != 200) {
+      throw Exception('HTTP ${resp.statusCode}');
+    }
+    final body = resp.body;
+    // basic validation
+    final decoded = jsonDecode(body);
+    if (decoded is! List && decoded is! Map<String, dynamic>) {
+      throw Exception('Unexpected JSON format');
+    }
+    if (decoded is List) _log('parsed list length=${decoded.length}');
+    if (decoded is Map<String, dynamic>) _log('parsed legacy map keys=${decoded.length}');
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('orderOfServiceData', body);
+    _log('cached to SharedPreferences key=orderOfServiceData');
   }
 
   @override
@@ -69,6 +131,7 @@ class _OrderOfServiceScreenState extends State<OrderOfServiceScreen> {
                                 key: ValueKey('regular-sunday-reader'),
                                 englishHeader: 'Regular Sunday Order of Service',
                                 kannadaHeader: 'ಭಾನುವಾರದ ದೇವರಾರಾಧನೆ',
+                                type: 'regular',
                               ),
                             ),
                           );
@@ -82,15 +145,34 @@ class _OrderOfServiceScreenState extends State<OrderOfServiceScreen> {
                         gradient: [const Color(0xFFBCEBFF), const Color(0xFFD7F4FF)],
                         onTap: () async {
                           await HapticFeedbackManager.lightClick();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Festival service – coming soon')),
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => const _OrderOfServiceReaderRoute(
+                                key: ValueKey('festival-reader'),
+                                englishHeader: 'Festival Order of Service',
+                                kannadaHeader: 'ಹಬ್ಬದ ಆರಾಧನೆ',
+                                type: 'festival',
+                              ),
+                            ),
                           );
                         },
                       ),
                     ],
                   ),
                 ),
-                 const SizedBox(height: 8),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: FilledButton.tonalIcon(
+                      onPressed: _manualRefreshOrderOfService,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Refresh Order of Service'),
+                      style: FilledButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                        textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+                        shape: const StadiumBorder(),
+                      ),
+                    ),
+                  ),
               ],
             );
           },
@@ -154,15 +236,19 @@ class _OrderCard extends StatelessWidget {
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 450),
                       transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
-                      child: Text(
-                        showEnglish ? englishTitle : kannadaTitle,
-                        key: ValueKey(showEnglish),
-                        maxLines: 3,
-                        overflow: TextOverflow.ellipsis,
-                        style: textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          height: 1.15,
-                          color: Colors.black,
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          showEnglish ? englishTitle : kannadaTitle,
+                          key: ValueKey(showEnglish),
+                          maxLines: 3,
+                          overflow: TextOverflow.ellipsis,
+                          textAlign: TextAlign.start,
+                          style: textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            height: 1.15,
+                            color: Colors.black,
+                          ),
                         ),
                       ),
                     ),
@@ -182,7 +268,7 @@ class _OrderCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Icon(Icons.north_east_rounded, color: scheme.onSurface, size: 20),
+                    child: Icon(Icons.north_east_rounded, color: Colors.black, size: 20),
                   ),
                 ],
               ),
@@ -198,11 +284,13 @@ class _OrderCard extends StatelessWidget {
 class _OrderOfServiceReaderRoute extends StatelessWidget {
   final String englishHeader;
   final String kannadaHeader;
+  final String type; // 'regular' or 'festival'
 
   const _OrderOfServiceReaderRoute({
     super.key,
     required this.englishHeader,
     required this.kannadaHeader,
+    required this.type,
   });
 
   @override
@@ -210,6 +298,7 @@ class _OrderOfServiceReaderRoute extends StatelessWidget {
     return OrderOfServiceReader(
       englishHeader: englishHeader,
       kannadaHeader: kannadaHeader,
+      type: type,
     );
   }
 }
@@ -217,11 +306,13 @@ class _OrderOfServiceReaderRoute extends StatelessWidget {
 class OrderOfServiceReader extends StatefulWidget {
   final String englishHeader;
   final String kannadaHeader;
+  final String type; // 'regular' or 'festival'
 
   const OrderOfServiceReader({
     super.key,
     required this.englishHeader,
     required this.kannadaHeader,
+    required this.type,
   });
 
   @override
@@ -278,9 +369,17 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
 
   Future<void> _load() async {
     try {
-      // Resolve the actual asset key from AssetManifest to avoid path mismatches
-      final assetKey = await _resolveOrderOfServiceAssetKey();
-      final data = await rootBundle.loadString(assetKey);
+      // Prefer cached remote, fall back to bundled asset
+      final prefs = await SharedPreferences.getInstance();
+      String? data = prefs.getString('orderOfServiceData');
+      if (data == null || data.trim().isEmpty) {
+        // Resolve the actual asset key from AssetManifest to avoid path mismatches
+        final assetKey = await _resolveOrderOfServiceAssetKey();
+        data = await rootBundle.loadString(assetKey);
+        debugPrint('[OrderOfService] loaded bundled asset: ' + assetKey);
+      } else {
+        debugPrint('[OrderOfService] loaded cached remote JSON');
+      }
       final parsed = jsonDecode(data);
       final pages = <_OrderPage>[];
       if (parsed is List) {
@@ -289,19 +388,37 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
         }
         pages.sort((a, b) => a.pageNo.compareTo(b.pageNo));
       } else if (parsed is Map<String, dynamic>) {
-        // Backwards compatibility: {"183": "content"}
-        parsed.forEach((k, v) {
-          final no = int.tryParse(k) ?? 0;
-          pages.add(_OrderPage(pageNo: no, title: null, content: (v ?? '').toString()));
-        });
-        pages.sort((a, b) => a.pageNo.compareTo(b.pageNo));
+        // New grouped format: { "regular": [ {...}, ... ], "festival": [ {...}, ... ] }
+        if (parsed.containsKey('regular') || parsed.containsKey('festival')) {
+          for (final key in ['regular', 'festival']) {
+            final block = parsed[key];
+            if (block is List) {
+              for (final item in block) {
+                if (item is Map<String, dynamic>) {
+                  final withType = Map<String, dynamic>.from(item)..['type'] = key;
+                  pages.add(_OrderPage.fromJson(withType));
+                }
+              }
+            }
+          }
+          pages.sort((a, b) => a.pageNo.compareTo(b.pageNo));
+        } else {
+          // Backwards compatibility: {"183": "content"}
+          parsed.forEach((k, v) {
+            final no = int.tryParse(k) ?? 0;
+            pages.add(_OrderPage(pageNo: no, title: null, content: (v ?? '').toString(), type: 'regular'));
+          });
+          pages.sort((a, b) => a.pageNo.compareTo(b.pageNo));
+        }
       }
+      // Filter by requested type (regular/festival)
+      final filteredPages = pages.where((p) => p.type == widget.type).toList();
       setState(() {
-        _pages = pages;
+        _pages = filteredPages;
         // Build quick lookup for exact page number → index
         final map = <int, int>{};
-        for (int i = 0; i < pages.length; i++) {
-          map[pages[i].pageNo] = i;
+        for (int i = 0; i < filteredPages.length; i++) {
+          map[filteredPages[i].pageNo] = i;
         }
         _pageNoToIndex = map;
         _loading = false;
@@ -336,7 +453,9 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
   }
 
   int? _indexForPageNo(int pageNo) {
-    // Strict exact match only
+    // Strict exact match only for the currently selected type
+    if (widget.type == 'regular') return _pageNoToIndex[pageNo];
+    if (widget.type == 'festival') return _pageNoToIndex[pageNo];
     return _pageNoToIndex[pageNo];
   }
 
@@ -364,10 +483,9 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
 
   List<int> _visiblePageNumbers() {
     if (_pages.isEmpty) return const [];
-    final int currentPageNo = _pages[_currentPageIndex].pageNo;
-    final int start = (currentPageNo - _chipWindowRadius).clamp(_pages.first.pageNo, _pages.last.pageNo);
-    final int end = (currentPageNo + _chipWindowRadius).clamp(_pages.first.pageNo, _pages.last.pageNo);
-    return [for (int i = start; i <= end; i++) i];
+    final int startIndex = (_currentPageIndex - _chipWindowRadius).clamp(0, _pages.length - 1);
+    final int endIndex = (_currentPageIndex + _chipWindowRadius).clamp(0, _pages.length - 1);
+    return [for (int i = startIndex; i <= endIndex; i++) _pages[i].pageNo];
   }
 
   Future<void> _openAllPagesSheet() async {
@@ -414,6 +532,49 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
     );
   }
 
+  Future<void> _composeReportEmail() async {
+    if (_pages.isEmpty) return;
+    final int pageNo = _pages[_currentPageIndex].pageNo;
+    final String type = widget.type;
+    final String subject = 'Order of Service issue ($type) - Page $pageNo';
+    final String body = 'Hi,\n\nI found a spelling/formatting issue in the Order of Service.\n\nType: $type\nPage: $pageNo\n\nDescribe the correction here:\n- ';
+    final String qp = 'subject=' + Uri.encodeComponent(subject) + '&body=' + Uri.encodeComponent(body);
+    final uri = Uri.parse('mailto:reyziecrafts@gmail.com?' + qp);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri);
+    }
+  }
+
+  Future<void> _reportIssue() async {
+    await HapticFeedbackManager.lightClick();
+    showDialog(
+      context: context,
+      builder: (context) {
+        final colorScheme = Theme.of(context).colorScheme;
+        return AlertDialog(
+          backgroundColor: colorScheme.surfaceContainerHigh,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Text('Found something wrong?'),
+          content: const Text('Press "Send email" to report corrections for this page.'),
+          actions: [
+            OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            FilledButton.icon(
+              onPressed: () async {
+                Navigator.pop(context);
+                await _composeReportEmail();
+              },
+              icon: const Icon(Icons.send),
+              label: const Text('Send email'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
@@ -427,9 +588,49 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
         return true; // allow normal back
       },
       child: Scaffold(
-        appBar: AppBar(
-          title: Text('${widget.kannadaHeader} / ${widget.englishHeader}'),
-        ),
+        appBar: !_hasSelectedPage
+            ? AppBar(
+                title: Text('${widget.kannadaHeader} / ${widget.englishHeader}'),
+              )
+            : AppBar(
+                toolbarHeight: 64,
+                leading: IconButton(
+                  icon: const Icon(Icons.arrow_back),
+                  onPressed: () async {
+                    await HapticFeedbackManager.lightClick();
+                    setState(() => _hasSelectedPage = false);
+                  },
+                ),
+                title: Builder(
+                  builder: (context) {
+                    final t = (_pages.isNotEmpty)
+                        ? ((_pages[_currentPageIndex].title ?? '').trim())
+                        : '';
+                    return Text(
+                      t,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            fontSize: (Theme.of(context).textTheme.titleMedium?.fontSize ?? 16) + 4,
+                          ),
+                    );
+                  },
+                ),
+                actions: [
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12),
+                    child: Center(
+                      child: Chip(
+                        label: Text(
+                          _pages.isNotEmpty ? 'Page ${_pages[_currentPageIndex].pageNo}' : 'Page',
+                        ),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
         body: Stack(
         children: [
           Column(
@@ -455,7 +656,9 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
                                   children: [
                                     // Heading and helper text
                                     Text(
-                                      'Huduvada Aaradhana Krama',
+                                      widget.type == 'festival'
+                                          ? 'Habbada Aaradhana Krama'
+                                          : 'Huduvada Aaradhana Krama',
                                       textAlign: TextAlign.center,
                                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                             fontWeight: FontWeight.w900,
@@ -515,23 +718,12 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
                                   final bool hasNext = index < _pages.length - 1;
                                   final int? prevNo = hasPrev ? _pages[index - 1].pageNo : null;
                                   final int? nextNo = hasNext ? _pages[index + 1].pageNo : null;
-                                  const double topBadgeReserve = 40.0; // leave space under the fixed top-right page chip
+                                  const double topBadgeReserve = 8.0; // AppBar is used; no extra header padding needed
                                   return Padding(
                                     padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        if ((page.title ?? '').trim().isNotEmpty)
-                                          Padding(
-                                            padding: const EdgeInsets.only(bottom: 10.0),
-                                            child: Text(
-                                              page.title!,
-                                              style: textTheme.titleLarge?.copyWith(
-                                                fontWeight: FontWeight.w800,
-                                                height: 1.2,
-                                              ),
-                                            ),
-                                          ),
                                         Expanded(
                                           child: SingleChildScrollView(
                                             padding: EdgeInsets.only(
@@ -541,6 +733,28 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
                                             child: Column(
                                               crossAxisAlignment: CrossAxisAlignment.start,
                                               children: [
+                                                Align(
+                                                  alignment: Alignment.centerRight,
+                                                  child: OutlinedButton.icon(
+                                                    style: OutlinedButton.styleFrom(
+                                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                                                      minimumSize: const Size(0, 40),
+                                                      textStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                                            fontWeight: FontWeight.w700,
+                                                            height: 1.0,
+                                                            fontSize: (Theme.of(context).textTheme.titleSmall?.fontSize ?? 12) + 2,
+                                                          ),
+                                                      shape: const StadiumBorder(),
+                                                    ),
+                                                    onPressed: _reportIssue,
+                                                    icon: Padding(
+                                                      padding: const EdgeInsets.only(bottom: 0.5),
+                                                      child: const Icon(Icons.bug_report, size: 20),
+                                                    ),
+                                                    label: const Text('Report', style: TextStyle(height: 1.0)),
+                                                  ),
+                                                ),
+                                                const SizedBox(height: 8),
                                                 SelectableText(
                                                   page.content,
                                                   style: textTheme.bodyLarge?.copyWith(height: 1.45),
@@ -579,16 +793,7 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
               ),
             ],
           ),
-          // Fixed top-right page badge (always above content and title)
-          if (_pages.isNotEmpty && _hasSelectedPage)
-            Positioned(
-              right: 12,
-              top: 12 + MediaQuery.of(context).padding.top,
-              child: Chip(
-                label: Text('Page ${_pages[_currentPageIndex].pageNo}'),
-                visualDensity: VisualDensity.compact,
-              ),
-            ),
+          // AppBar provides persistent header in reader mode
 
           // Bottom: landing mode -> chips; book mode -> nav bar with arrows
           if (_pages.isNotEmpty)
@@ -681,14 +886,16 @@ class _OrderPage {
   final int pageNo;
   final String? title;
   final String content;
+  final String type; // 'regular' | 'festival'
 
-  _OrderPage({required this.pageNo, required this.title, required this.content});
+  _OrderPage({required this.pageNo, required this.title, required this.content, required this.type});
 
   factory _OrderPage.fromJson(Map<String, dynamic> json) {
     return _OrderPage(
       pageNo: json['page_no'] is int ? json['page_no'] as int : int.tryParse('${json['page_no']}') ?? 0,
       title: json['title'] as String?,
       content: (json['content'] ?? '').toString(),
+      type: (json['type'] ?? 'regular').toString(),
     );
   }
 }
