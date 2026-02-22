@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 4.0.0-stable+22
+version: 4.1.0-stable+24
 
 environment:
   sdk: '>=3.4.1 <4.0.0'
@@ -59,6 +59,13 @@ dependencies:
   animations: ^2.0.0
   supabase_flutter: ^2.5.6
   flutter_dotenv: ^5.1.0
+  package_info_plus: ^8.0.0
+  flutter_email_sender: ^6.0.2
+  # Christmas feature dependencies
+  file_picker: ^8.0.0+1
+  uuid: ^4.4.0
+  pdfx: ^2.6.0  # Cross-platform PDF rendering
+  crypto: ^3.0.3  # For PDF cache key generation
 
 dev_dependencies:
   flutter_test:
@@ -89,6 +96,7 @@ flutter:
     - lib/assets/profile.png
     - lib/assets/icons/logo.png
     - lib/assets/icons/tick-animation.json
+    - lib/assets/data/christmas_carols.json
     - .env
 
   fonts:

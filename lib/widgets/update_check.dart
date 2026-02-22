@@ -7,27 +7,43 @@ class UpdateManager {
       final info = await InAppUpdate.checkForUpdate();
       if (info.updateAvailability == UpdateAvailability.updateAvailable) {
         // Initiate flexible update flow
-        await InAppUpdate.startFlexibleUpdate();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Update downloaded. Restart the app to apply."),
-          action: SnackBarAction(
-            label: 'RESTART',
-            onPressed: () async {
-              await InAppUpdate.completeFlexibleUpdate();
-            },
-          ),
-          ),
-        );
+        try {
+          await InAppUpdate.startFlexibleUpdate();
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: const Text("Update downloaded. Restart the app to apply."),
+                action: SnackBarAction(
+                  label: 'RESTART',
+                  onPressed: () async {
+                    await InAppUpdate.completeFlexibleUpdate();
+                  },
+                ),
+              ),
+            );
+          }
+        } catch (e) {
+          if (context.mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Update check completed. Please update from Play Store.")),
+            );
+          }
+        }
       } else {
         // Already up to date or no update available
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("You're on the latest version!")),
-        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("You're on the latest version!")),
+          );
+        }
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error checking for update: $e')),
-      );
+      // Silently handle errors - in-app updates only work for Play Store installs
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Update check unavailable. Please check Play Store for updates.")),
+        );
+      }
     }
   }
 }

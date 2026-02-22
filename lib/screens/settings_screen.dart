@@ -7,6 +7,10 @@ import 'package:hymns_latest/screens/about_app.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
+import 'package:hymns_latest/services/christmas_mode_service.dart';
+import 'package:hymns_latest/services/christmas_carols_service.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -96,6 +100,43 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
             ),
+            _buildSectionHeader(context, 'Special Features', FontAwesomeIcons.star),
+            Card(
+              elevation: 2,
+              margin: const EdgeInsets.only(bottom: 18),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+                child: Consumer<ChristmasModeService>(
+                  builder: (context, christmasService, _) {
+                    return SwitchListTile(
+                      title: const Row(
+                        children: [
+                          Text('🎄 '),
+                          Text('Christmas Mode'),
+                        ],
+                      ),
+                      subtitle: const Text(
+                        'Enable festive theme and Christmas carols section',
+                      ),
+                      value: christmasService.isChristmasTime,
+                      onChanged: (bool value) async {
+                        await HapticFeedbackManager.lightClick();
+                        await christmasService.setChristmasMode(value);
+                      },
+                      secondary: Icon(
+                        FontAwesomeIcons.snowflake,
+                        color: christmasService.isChristmasTime
+                            ? const Color(0xFFB22222)
+                            : null,
+                      ),
+                      activeColor: const Color(0xFFB22222),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    );
+                  },
+                ),
+              ),
+            ),
             _buildSectionHeader(context, 'App Information', FontAwesomeIcons.circleInfo),
             Card(
               elevation: 2,
@@ -182,7 +223,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _showColorPickerDialog(BuildContext context, ThemeState themeState) async {
-    final colorBeforeDialog = themeState.seedColor;
     Color newColor = themeState.seedColor;
 
     return showDialog<void>(
@@ -244,5 +284,241 @@ class _SettingsScreenState extends State<SettingsScreen> {
         );
       },
     );
+  }
+
+  Future<void> _showRemoteJsonDialog(BuildContext context, ChristmasCarolsService service) async {
+    final currentUrl = await service.getRemoteJsonUrl();
+    final prefs = await SharedPreferences.getInstance();
+    final customUrl = prefs.getString('remote_carols_json_url');
+    final isUsingDefault = customUrl == null || customUrl.isEmpty;
+    
+    final urlController = TextEditingController(text: isUsingDefault ? service.defaultRemoteJsonUrl : (currentUrl ?? ''));
+    
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remote JSON URL'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isUsingDefault
+                  ? 'Currently using the default remote JSON URL. You can change it below.\n\n'
+                      'The app will fetch and cache this file (refreshes every 24 hours).\n\n'
+                      'Example: https://raw.githubusercontent.com/user/repo/carols.json'
+                  : 'Enter a URL to a JSON file containing Christmas carols.\n\n'
+                      'The app will fetch and cache this file (refreshes every 24 hours).\n\n'
+                      'Example: https://raw.githubusercontent.com/user/repo/carols.json',
+              style: const TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: urlController,
+              decoration: const InputDecoration(
+                labelText: 'JSON URL',
+                hintText: 'https://...',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: TextInputType.url,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          if (!isUsingDefault)
+            TextButton(
+              onPressed: () async {
+                await service.setRemoteJsonUrl(null);
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Reverted to default remote JSON URL')),
+                  );
+                  // Refresh carols
+                  await service.loadAllCarols();
+                }
+              },
+              child: const Text('Use Default', style: TextStyle(color: Colors.blue)),
+            ),
+          FilledButton(
+            onPressed: () async {
+              final url = urlController.text.trim();
+              if (url.isEmpty) {
+                await service.setRemoteJsonUrl(null);
+              } else {
+                // Validate URL
+                try {
+                  final uri = Uri.parse(url);
+                  if (!uri.hasScheme || (!uri.scheme.startsWith('http'))) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Please enter a valid HTTP/HTTPS URL')),
+                      );
+                    }
+                    return;
+                  }
+                  await service.setRemoteJsonUrl(url);
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Invalid URL: $e')),
+                    );
+                  }
+                  return;
+                }
+              }
+              
+              if (context.mounted) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(url.isEmpty 
+                        ? 'Remote JSON URL removed'
+                        : 'Remote JSON URL set. Refreshing...'),
+                  ),
+                );
+                // Refresh carols
+                await service.loadAllCarols();
+              }
+            },
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _importJsonFile(BuildContext context, ChristmasCarolsService service) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+        allowMultiple: false,
+      );
+
+      if (result == null || result.files.isEmpty) return;
+
+      final file = result.files.first;
+      if (file.path == null) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not access the file')),
+          );
+        }
+        return;
+      }
+
+      // Show loading
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: Card(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(width: 16),
+                    Text('Importing JSON...'),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+
+      try {
+        final imported = await service.importFromJsonFile(file.path!);
+        
+        if (context.mounted) {
+          Navigator.pop(context); // Close loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Imported ${imported.length} carol(s) successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          Navigator.pop(context); // Close loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Import failed: $e')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
+  }
+
+  Future<void> _exportJsonFile(BuildContext context, ChristmasCarolsService service) async {
+    try {
+      // Show loading
+      if (context.mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => const Center(
+            child: Card(
+              child: Padding(
+                padding: EdgeInsets.all(20),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    CircularProgressIndicator(),
+                    SizedBox(width: 16),
+                    Text('Exporting JSON...'),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }
+
+      try {
+        final filePath = await service.exportToJsonFile();
+        
+        if (context.mounted) {
+          Navigator.pop(context); // Close loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Exported to: $filePath'),
+              duration: const Duration(seconds: 4),
+              action: SnackBarAction(
+                label: 'OK',
+                onPressed: () {},
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          Navigator.pop(context); // Close loading
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Export failed: $e')),
+          );
+        }
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    }
   }
 }

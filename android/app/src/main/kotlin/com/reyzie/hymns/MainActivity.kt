@@ -1,4 +1,4 @@
-package com.reyzie.hymns_latest
+package com.reyzie.hymns
 
 import io.flutter.embedding.android.FlutterActivity
 import android.os.Build
@@ -28,3 +28,4 @@ class MainActivity: FlutterActivity() {
         super.onDestroy()
     }
 }
+

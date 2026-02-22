@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'theme_state.dart';
 import 'widgets/sidebar.dart';
 import 'screens/categories.dart';
-import 'screens/hymns_screen.dart';
+import 'screens/hymns_landing_screen.dart';
 import 'screens/keerthane_screen.dart';
 import 'screens/order_of_service_screen.dart';
 import 'package:flutter/material.dart';
@@ -16,6 +16,11 @@ import 'package:hymns_latest/screens/favorites_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 import 'package:hymns_latest/services/supabase_service.dart';
+import 'package:hymns_latest/services/christmas_mode_service.dart';
+import 'package:hymns_latest/services/christmas_carols_service.dart';
+import 'package:hymns_latest/services/changelog_service.dart';
+import 'package:hymns_latest/widgets/welcome_changelog_dialog.dart';
+import 'package:hymns_latest/theme/christmas_theme.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:async';
@@ -62,15 +67,25 @@ void main() async {
     await dotenv.load(fileName: '.env');
     final url = dotenv.env['SUPABASE_URL'] ?? dotenv.env['SUPABASE_PROJECT_URL'] ?? '';
     final anon = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
-    await SupabaseService().init(url: url, anonKey: anon);
-  } catch (e) {
+    if (url.isNotEmpty && anon.isNotEmpty) {
+      await SupabaseService().init(url: url, anonKey: anon);
+    } else {
+      debugPrint('Supabase credentials not found in .env file. App will run in offline mode.');
+    }
+  } catch (e, stackTrace) {
     debugPrint('Supabase init error: $e');
+    debugPrint('Stack trace: $stackTrace');
+    // Continue app initialization even if Supabase fails
   }
 
   runApp(
     ShowCaseWidget(
-      builder: (context) => ChangeNotifierProvider(
-        create: (context) => ThemeState(),
+      builder: (context) => MultiProvider(
+        providers: [
+          ChangeNotifierProvider(create: (_) => ThemeState()),
+          ChangeNotifierProvider(create: (_) => ChristmasModeService()),
+          ChangeNotifierProvider(create: (_) => ChristmasCarolsService()),
+        ],
         child: const MyApp(),
       ),
     ),
@@ -82,57 +97,73 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<ThemeState>(
-      builder: (context, themeState, child) {
-        return MaterialApp(
-          title: 'CSI Hymns and Lyrics',
-          theme: ThemeData(
-            useMaterial3: true,
-            fontFamily: 'plusJakartaSans',
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: themeState.seedColor,
-              brightness: Brightness.light,
-            ),
-            navigationBarTheme: NavigationBarThemeData(
-              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-              elevation: 0,
-            ),
-            cardTheme: CardThemeData(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            appBarTheme: const AppBarTheme(
-              centerTitle: true,
-              elevation: 0,
-            ),
+    return Consumer2<ThemeState, ChristmasModeService>(
+      builder: (context, themeState, christmasService, child) {
+        final isChristmas = christmasService.isChristmasTime;
+        
+        // Build light theme (with or without Christmas theme)
+        final lightTheme = isChristmas
+            ? createChristmasLightTheme()
+            : ThemeData(
+                useMaterial3: true,
+                fontFamily: 'plusJakartaSans',
+                colorScheme: ColorScheme.fromSeed(
+                  seedColor: themeState.seedColor,
+                  brightness: Brightness.light,
+                ),
+                navigationBarTheme: const NavigationBarThemeData(
+                  labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                  elevation: 0,
+                ),
+                cardTheme: CardThemeData(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                appBarTheme: const AppBarTheme(
+                  centerTitle: true,
+                  elevation: 0,
+                ),
+              );
+        
+        // Build dark theme (with or without Christmas theme)
+        final darkTheme = isChristmas
+            ? createChristmasDarkTheme(blackThemeEnabled: themeState.blackThemeEnabled)
+            : ThemeData(
+                useMaterial3: true,
+                fontFamily: 'plusJakartaSans',
+                scaffoldBackgroundColor: themeState.blackThemeEnabled ? Colors.black : null,
+                colorScheme: ColorScheme.fromSeed(
+                  seedColor: themeState.seedColor,
+                  brightness: Brightness.dark,
+                ),
+                navigationBarTheme: const NavigationBarThemeData(
+                  labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+                  elevation: 0,
+                ),
+                cardTheme: CardThemeData(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                appBarTheme: const AppBarTheme(
+                  centerTitle: true,
+                  elevation: 0,
+                ),
+              );
+
+        return AnimatedTheme(
+          data: themeState.themeMode == ThemeMode.dark ? darkTheme : lightTheme,
+          duration: const Duration(milliseconds: 300),
+          child: MaterialApp(
+            title: 'CSI Hymns and Lyrics',
+            theme: lightTheme,
+            darkTheme: darkTheme,
+            themeMode: themeState.themeMode,
+            home: const MainScreen(),
           ),
-          darkTheme: ThemeData(
-            useMaterial3: true,
-            fontFamily: 'plusJakartaSans',
-            scaffoldBackgroundColor: themeState.blackThemeEnabled ? Colors.black : null,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: themeState.seedColor,
-              brightness: Brightness.dark,
-            ),
-            navigationBarTheme: NavigationBarThemeData(
-              labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-              elevation: 0,
-            ),
-            cardTheme: CardThemeData(
-              elevation: 0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
-              ),
-            ),
-            appBarTheme: const AppBarTheme(
-              centerTitle: true,
-              elevation: 0,
-            ),
-          ),
-          themeMode: themeState.themeMode,
-          home: const MainScreen(),
         );
       },
     );
@@ -156,6 +187,23 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
   static const Duration _pageAnimationDuration = Duration(milliseconds: 300);
   static const Curve _pageAnimationCurve = Curves.easeInOutCubic;
 
+  // Screens for normal mode (5 tabs)
+  static const List<Widget> _normalScreens = [
+    HymnsLandingScreen(),
+    KeerthaneScreen(),
+    OrderOfServiceScreen(),
+    Categories(),
+    FavoritesScreen(),
+  ];
+
+  // Screens for Christmas mode (4 tabs: Songs combines Hymns landing with cards)
+  static const List<Widget> _christmasScreens = [
+    HymnsLandingScreen(), // This shows the 3-card view in Christmas mode
+    OrderOfServiceScreen(),
+    Categories(),
+    FavoritesScreen(),
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -165,37 +213,58 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     _initOneSignalWithCount();
     _checkFirstRunAndShowCase();
     _listenToSupabaseAuth();
+    _checkAndShowWelcomeChangelog();
+  }
+  
+  Future<void> _checkAndShowWelcomeChangelog() async {
+    // Wait for the first frame to ensure context is ready
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    if (!mounted) return;
+    
+    final changelogService = ChangelogService();
+    final shouldShow = await changelogService.shouldShowChangelog();
+    
+    if (shouldShow && mounted) {
+      final changelog = await changelogService.getLatestChangelog();
+      if (changelog != null && mounted) {
+        await HapticFeedbackManager.mediumClick();
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => WelcomeChangelogDialog(
+            changelog: changelog,
+            onDismiss: () async {
+              await changelogService.markChangelogAsShown();
+            },
+          ),
+        );
+      }
+    }
   }
 
   Future<void> checkForUpdate() async {
     try {
-      InAppUpdate.checkForUpdate().then((info) {
-        setState(() {
-          if (info.updateAvailability == UpdateAvailability.updateAvailable) {
-            update();
-          }
-        });
-      }).catchError((e) {
-        String msg = e.toString().contains('not owned by any user')
-            ? "In-app update is only available for Play Store installs."
-            : "Error checking for update: $e";
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(msg)),
-        );
-      });
+      final info = await InAppUpdate.checkForUpdate();
+      if (mounted && info.updateAvailability == UpdateAvailability.updateAvailable) {
+        update();
+      }
     } catch (e) {
-      String msg = e.toString().contains('not owned by any user')
-          ? "In-app update is only available for Play Store installs."
-          : "Error checking for update: $e";
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
+      // Silently fail - in-app updates only work for Play Store installs
+      // Don't show error to user as this is expected for debug builds
+      debugPrint('In-app update check failed (expected for debug builds): $e');
     }
   }
 
   void update() async {
-    await InAppUpdate.startFlexibleUpdate();
-    InAppUpdate.completeFlexibleUpdate().then((_) {}).catchError((e) {});
+    try {
+      await InAppUpdate.startFlexibleUpdate();
+      InAppUpdate.completeFlexibleUpdate().then((_) {}).catchError((e) {
+        debugPrint('Flexible update completion failed: $e');
+      });
+    } catch (e) {
+      debugPrint('Flexible update start failed: $e');
+    }
   }
 
   // Removed unused counter method
@@ -210,19 +279,13 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
 
   // Removed unused drawer toggle stub
 
-  static final List<Widget> _screens = [
-    const HymnsScreen(),
-    const KeerthaneScreen(),
-    const OrderOfServiceScreen(),
-    const Categories(),
-    const FavoritesScreen(),
-  ];
-
-  void _onItemTapped(int index) async {
+  void _onItemTapped(int index, int maxTabs) async {
     if (_selectedIndex == index) return;
+    // Clamp index to valid range based on current mode
+    final clampedIndex = index.clamp(0, maxTabs - 1);
     await HapticFeedbackManager.lightClick();
     _pageController.animateToPage(
-      index,
+      clampedIndex,
       duration: _pageAnimationDuration,
       curve: _pageAnimationCurve,
     );
@@ -365,11 +428,29 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
+    
+    // Check Christmas mode from provider
+    final christmasService = context.watch<ChristmasModeService>();
+    final isChristmasMode = christmasService.isChristmasTime;
+    
+    // Get the appropriate screens and tab count
+    final screens = isChristmasMode ? _christmasScreens : _normalScreens;
+    final tabCount = screens.length;
+    
+    // Clamp selected index if switching modes
+    if (_selectedIndex >= tabCount) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          setState(() => _selectedIndex = 0);
+          _pageController.jumpToPage(0);
+        }
+      });
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'CSI Kannada Hymns Book',
+          isChristmasMode ? '🎄 CSI Hymns Book' : 'CSI Kannada Hymns Book',
           style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: colorScheme.onSurface),
         ),
         leading: Builder(
@@ -403,7 +484,7 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
                 setState(() => _selectedIndex = index);
                 await HapticFeedbackManager.lightClick();
               },
-              children: _screens,
+              children: screens,
             ),
           ),
           // Modern curved navbar with SafeArea
@@ -413,12 +494,11 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               child: LayoutBuilder(
                 builder: (context, constraints) {
-                  final tabCount = 5;
                   final tabWidth = constraints.maxWidth / tabCount;
                   return Container(
                     height: 58,
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.surface,
+                      color: colorScheme.surface,
                       borderRadius: BorderRadius.circular(20),
                       boxShadow: [
                         BoxShadow(
@@ -431,35 +511,44 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
                     child: Stack(
                       alignment: Alignment.bottomLeft,
                       children: [
-                        // Row of tab buttons with less bottom padding for indicator
+                        // Row of tab buttons
                         Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                            children: [
-                              _buildTabButton(context, 0, Icons.music_note, 'Hymns'),
-                              _buildTabButton(context, 1, Icons.album, 'Keerthane'),
-                              _buildTabButton(context, 2, Icons.event_note, 'Service'),
-                              _buildTabButton(context, 3, Icons.category, 'Categories'),
-                              _buildTabButton(context, 4, Icons.favorite, 'Favorites'),
-                            ],
+                            children: isChristmasMode
+                                ? [
+                                    // Christmas mode: 4 tabs
+                                    _buildTabButton(context, 0, Icons.music_note, 'Songs', tabCount),
+                                    _buildTabButton(context, 1, Icons.event_note, 'Service', tabCount),
+                                    _buildTabButton(context, 2, Icons.category, 'Categories', tabCount),
+                                    _buildTabButton(context, 3, Icons.favorite, 'Favorites', tabCount),
+                                  ]
+                                : [
+                                    // Normal mode: 5 tabs
+                                    _buildTabButton(context, 0, Icons.music_note, 'Hymns', tabCount),
+                                    _buildTabButton(context, 1, Icons.album, 'Keerthane', tabCount),
+                                    _buildTabButton(context, 2, Icons.event_note, 'Service', tabCount),
+                                    _buildTabButton(context, 3, Icons.category, 'Categories', tabCount),
+                                    _buildTabButton(context, 4, Icons.favorite, 'Favorites', tabCount),
+                                  ],
                           ),
                         ),
                         // Perfectly aligned indicator
                         AnimatedPositioned(
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeInOutCubic,
-                          left: _selectedIndex * tabWidth,
+                          left: _selectedIndex.clamp(0, tabCount - 1) * tabWidth,
                           bottom: 2,
                           child: Container(
                             width: tabWidth,
                             height: 3,
                             decoration: BoxDecoration(
-                              color: Theme.of(context).colorScheme.primary,
+                              color: colorScheme.primary,
                               borderRadius: BorderRadius.circular(6),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Theme.of(context).colorScheme.primary.withOpacity(0.13),
+                                  color: colorScheme.primary.withOpacity(0.13),
                                   blurRadius: 4,
                                   offset: const Offset(0, 1),
                                 ),
@@ -479,14 +568,14 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildTabButton(BuildContext context, int index, IconData icon, String label) {
+  Widget _buildTabButton(BuildContext context, int index, IconData icon, String label, int tabCount) {
     final colorScheme = Theme.of(context).colorScheme;
     final isSelected = _selectedIndex == index;
     return Expanded(
       child: GestureDetector(
         onTap: () {
           HapticFeedbackManager.lightClick();
-          _onItemTapped(index);
+          _onItemTapped(index, tabCount);
         },
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),

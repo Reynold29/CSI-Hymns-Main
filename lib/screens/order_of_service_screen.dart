@@ -6,7 +6,8 @@ import 'package:flutter/foundation.dart';
 import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_email_sender/flutter_email_sender.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 class OrderOfServiceScreen extends StatefulWidget {
   const OrderOfServiceScreen({super.key});
@@ -532,47 +533,125 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
     );
   }
 
-  Future<void> _composeReportEmail() async {
+  Future<void> _showReportDialog() async {
     if (_pages.isEmpty) return;
+    await HapticFeedbackManager.lightClick();
+    
+    final descriptionController = TextEditingController();
     final int pageNo = _pages[_currentPageIndex].pageNo;
     final String type = widget.type;
-    final String subject = 'Order of Service issue ($type) - Page $pageNo';
-    final String body = 'Hi,\n\nI found a spelling/formatting issue in the Order of Service.\n\nType: $type\nPage: $pageNo\n\nDescribe the correction here:\n- ';
-    final String qp = 'subject=' + Uri.encodeComponent(subject) + '&body=' + Uri.encodeComponent(body);
-    final uri = Uri.parse('mailto:reyziecrafts@gmail.com?' + qp);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri);
-    }
-  }
-
-  Future<void> _reportIssue() async {
-    await HapticFeedbackManager.lightClick();
-    showDialog(
+    
+    // Dialog with optional text field
+    final action = await showDialog<String>(
       context: context,
+      barrierDismissible: false,
       builder: (context) {
         final colorScheme = Theme.of(context).colorScheme;
         return AlertDialog(
           backgroundColor: colorScheme.surfaceContainerHigh,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Found something wrong?'),
-          content: const Text('Press "Send email" to report corrections for this page.'),
-          actions: [
-            OutlinedButton(
-              onPressed: () => Navigator.pop(context),
+          title: const Text(
+            'Found something wrong?',
+            style: TextStyle(fontWeight: FontWeight.bold),
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Report issue for ${type == 'regular' ? 'Regular' : 'Festival'} Order of Service - Page $pageNo',
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Issue Description (Optional)',
+                  style: TextStyle(fontSize: 16),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: descriptionController,
+                  maxLines: 4,
+                  decoration: const InputDecoration(
+                    hintText: 'Describe the spelling/formatting issue...',
+                    border: OutlineInputBorder(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
               child: const Text('Cancel'),
+              onPressed: () => Navigator.pop(context, 'cancel'),
             ),
             FilledButton.icon(
-              onPressed: () async {
-                Navigator.pop(context);
-                await _composeReportEmail();
-              },
+              onPressed: () => Navigator.pop(context, 'send'),
               icon: const Icon(Icons.send),
-              label: const Text('Send email'),
+              label: const Text('Send Email'),
             ),
           ],
         );
       },
     );
+    
+    if (action == 'send' && mounted) {
+      await _sendReportEmail(context, descriptionController.text.trim(), pageNo, type);
+    }
+  }
+
+  Future<void> _sendReportEmail(
+    BuildContext context,
+    String description,
+    int pageNo,
+    String type,
+  ) async {
+    try {
+      final packageInfo = await PackageInfo.fromPlatform();
+      final appVersion = '${packageInfo.version}+${packageInfo.buildNumber}';
+
+      final emailBody = '''
+Order of Service Information:
+- Type: ${type == 'regular' ? 'Regular' : 'Festival'}
+- Page: $pageNo
+
+App Information:
+- Version: $appVersion
+
+${description.isNotEmpty ? 'Issue Description:\n$description\n\n' : ''}Submitted via: CSI Hymns App
+''';
+
+      final Email email = Email(
+        body: emailBody,
+        subject: 'Order of Service issue (${type == 'regular' ? 'Regular' : 'Festival'}) - Page $pageNo',
+        recipients: ['support@reyziecrafts.atlassian.net'],
+        isHTML: false,
+      );
+
+      await FlutterEmailSender.send(email);
+
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Issue report sent successfully!'),
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error sending email: ${e.toString()}'),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _reportIssue() async {
+    await _showReportDialog();
   }
 
   @override
@@ -1045,3 +1124,4 @@ class _MorphingCTAButtonState extends State<_MorphingCTAButton> with SingleTicke
     );
   }
 }
+

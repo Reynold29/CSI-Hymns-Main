@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hymns_latest/services/categories_db.dart';
 import 'dart:convert';
 
 class SupabaseService {
@@ -8,23 +9,72 @@ class SupabaseService {
   static final SupabaseService _instance = SupabaseService._internal();
   factory SupabaseService() => _instance;
 
-  SupabaseClient get client => Supabase.instance.client;
+  SupabaseClient? get client {
+    try {
+      return Supabase.instance.client;
+    } catch (e) {
+      debugPrint('SupabaseService: Client not available: $e');
+      return null;
+    }
+  }
+  
+  /// Helper to get client or throw if not initialized
+  SupabaseClient get _requireClient {
+    final c = client;
+    if (c == null) {
+      throw Exception('Supabase not initialized');
+    }
+    return c;
+  }
 
   Future<void> init({required String url, required String anonKey}) async {
-    await Supabase.initialize(url: url, anonKey: anonKey, debug: kDebugMode);
+    try {
+      if (url.isEmpty || anonKey.isEmpty) {
+        debugPrint('SupabaseService: URL or anonKey is empty, skipping initialization');
+        return;
+      }
+      await Supabase.initialize(url: url, anonKey: anonKey, debug: kDebugMode);
+      debugPrint('SupabaseService: Initialized successfully');
+    } catch (e, stackTrace) {
+      debugPrint('SupabaseService: Error during initialization: $e');
+      debugPrint('SupabaseService: Stack trace: $stackTrace');
+      // Don't rethrow - allow app to continue without Supabase
+    }
   }
 
   // Auth
-  Stream<AuthState> get authStream => client.auth.onAuthStateChange;
-  Session? get currentSession => client.auth.currentSession;
-  User? get currentUser => client.auth.currentUser;
+  Stream<AuthState> get authStream {
+    final c = client;
+    if (c == null) {
+      return const Stream<AuthState>.empty();
+    }
+    return c.auth.onAuthStateChange;
+  }
+  
+  Session? get currentSession {
+    final c = client;
+    return c?.auth.currentSession;
+  }
+  
+  User? get currentUser {
+    final c = client;
+    return c?.auth.currentUser;
+  }
 
   Future<AuthResponse> signUpWithEmail(String email, String password) {
-    return client.auth.signUp(email: email, password: password);
+    final c = client;
+    if (c == null) {
+      throw Exception('Supabase not initialized');
+    }
+    return c.auth.signUp(email: email, password: password);
   }
 
   Future<AuthResponse> signInWithEmail(String email, String password) {
-    return client.auth.signInWithPassword(email: email, password: password);
+    final c = client;
+    if (c == null) {
+      throw Exception('Supabase not initialized');
+    }
+    return c.auth.signInWithPassword(email: email, password: password);
   }
 
   Future<void> signOut() async {
@@ -36,35 +86,42 @@ class SupabaseService {
       await prefs.remove('favoriteKeerthaneIds');
       await prefs.remove('favorites_owner_auth_uid');
     } catch (_) {}
-    await client.auth.signOut();
+    final c = client;
+    if (c != null) {
+      await c.auth.signOut();
+    }
   }
 
   // Profile helpers (public.users table with columns: user_id serial, auth_uid uuid unique, full_name text, ...)
   Future<void> upsertProfile({required String fullName}) async {
+    final c = _requireClient;
     final user = currentUser;
     if (user == null) return;
-    await client.from('users').upsert({
+    await c.from('users').upsert({
       'auth_uid': user.id,
       'full_name': fullName,
     }, onConflict: 'auth_uid');
   }
 
   Future<String?> getProfileName() async {
+    final c = _requireClient;
     final user = currentUser;
     if (user == null) return null;
-    final rows = await client.from('users').select('full_name').eq('auth_uid', user.id).maybeSingle();
+    final rows = await c.from('users').select('full_name').eq('auth_uid', user.id).maybeSingle();
     if (rows == null) return null;
     return rows['full_name'] as String?;
   }
 
   Future<void> sendPasswordResetEmail(String email, {String? redirectTo}) async {
+    final c = _requireClient;
     final target = redirectTo ?? 'io.supabase.flutter://callback';
-    await client.auth.resetPasswordForEmail(email, redirectTo: target);
+    await c.auth.resetPasswordForEmail(email, redirectTo: target);
   }
 
   Future<void> signInWithGoogle({String? redirectTo}) async {
+    final c = _requireClient;
     final redirect = redirectTo ?? 'io.supabase.flutter://callback';
-    await client.auth.signInWithOAuth(
+    await c.auth.signInWithOAuth(
       OAuthProvider.google,
       redirectTo: redirect,
       queryParams: const {'prompt': 'select_account'},
@@ -74,9 +131,11 @@ class SupabaseService {
   // Favorites table helpers
   // Table schema expected: favorites(id, user_id uuid, item_number int, item_type text ['hymn'|'keerthane'], created_at)
   Future<List<Map<String, dynamic>>> fetchFavorites() async {
+    final c = client;
+    if (c == null) return [];
     final user = currentUser;
     if (user == null) return [];
-    final response = await client
+    final response = await c
         .from('favorites')
         .select('item_number,item_type')
         .eq('user_id', user.id);
@@ -84,10 +143,12 @@ class SupabaseService {
   }
 
   Future<void> addFavorite({required int itemNumber, required String itemType}) async {
+    final c = client;
+    if (c == null) return;
     final user = currentUser;
     if (user == null) return;
     try {
-      await client.from('favorites').insert({
+      await c.from('favorites').insert({
         'user_id': user.id,
         'item_number': itemNumber,
         'item_type': itemType,
@@ -98,9 +159,11 @@ class SupabaseService {
   }
 
   Future<void> removeFavorite({required int itemNumber, required String itemType}) async {
+    final c = client;
+    if (c == null) return;
     final user = currentUser;
     if (user == null) return;
-    await client
+    await c
         .from('favorites')
         .delete()
         .eq('user_id', user.id)
@@ -113,6 +176,7 @@ class SupabaseService {
   static const String _localCatSongsKey = 'local_custom_category_songs';
   static const int localCategoryLimit = 5;
   bool _migratedThisSession = false;
+  final CategoriesDB _categoriesDB = CategoriesDB();
 
   // Local helpers
   Future<List<Map<String, dynamic>>> _readLocalCategories() async {
@@ -152,9 +216,10 @@ class SupabaseService {
       return;
     }
     // Create categories remotely and map old local id -> new remote id
+    final supabaseClient = _requireClient;
     final Map<int, int> idMap = {};
     for (final c in localCats.where((c) => (c['deleted'] ?? 0) == 0)) {
-      final inserted = await client
+      final inserted = await supabaseClient
           .from('custom_categories')
           .insert({'user_id': user.id, 'name': c['name']})
           .select('id')
@@ -166,7 +231,7 @@ class SupabaseService {
       final remoteCatId = idMap[localCatId];
       if (remoteCatId != null) {
         try {
-          await client.from('custom_category_songs').insert({
+          await _requireClient.from('custom_category_songs').insert({
             'category_id': remoteCatId,
             'user_id': user.id,
             'song_id': (s['song_id'] as num).toInt(),
@@ -181,15 +246,73 @@ class SupabaseService {
     _migratedThisSession = true;
   }
 
-  // Unified API (works offline for guests, migrates on login)
+  // Unified API (works offline on mobile, online-only on web)
+  // Web: Always uses Supabase (online only)
+  // Mobile: Syncs with server when online, uses local DB when offline
   Future<List<Map<String, dynamic>>> fetchCustomCategoriesUnified() async {
     final user = currentUser;
-    if (user == null) {
-      final rows = await _readLocalCategories();
-      return rows.where((e) => (e['deleted'] ?? 0) == 0).toList();
+    
+    // Try Supabase first (when online and authenticated)
+    List<Map<String, dynamic>> remoteCategories = [];
+    if (user != null) {
+      try {
+        // On mobile: migrate local data if needed
+        if (!kIsWeb) {
+          await _migrateLocalIfNeeded();
+        }
+        remoteCategories = await fetchCustomCategories();
+        debugPrint('SupabaseService: Loaded ${remoteCategories.length} categories from Supabase');
+        
+        // On mobile: save to local DB for offline access
+        if (!kIsWeb && remoteCategories.isNotEmpty) {
+          try {
+            final categoriesWithUserId = remoteCategories.map((cat) => {
+              ...cat,
+              'user_id': user.id,
+              'deleted': 0,
+              'created_at': cat['created_at'] ?? DateTime.now().toIso8601String(),
+              'updated_at': cat['updated_at'] ?? DateTime.now().toIso8601String(),
+            }).toList();
+            await _categoriesDB.upsertCategories(categoriesWithUserId);
+            debugPrint('SupabaseService: Saved ${remoteCategories.length} categories to local DB');
+          } catch (dbError) {
+            debugPrint('SupabaseService: Failed to save categories to local DB: $dbError');
+          }
+        }
+      } catch (e) {
+        debugPrint('SupabaseService: Supabase load failed: $e');
+        if (kIsWeb) {
+          // On web, if Supabase fails, we have no fallback
+          debugPrint('SupabaseService: Web version requires online connection');
+        }
+      }
     }
-    await _migrateLocalIfNeeded();
-    return await fetchCustomCategories();
+    
+    // On web: always return remote (Supabase) data
+    if (kIsWeb) {
+      return remoteCategories;
+    }
+    
+    // On mobile: try to load from local DB (for offline access or as fallback)
+    try {
+      final localCategories = await _categoriesDB.getAllCategories(userId: user?.id);
+      debugPrint('SupabaseService: Loaded ${localCategories.length} categories from local DB');
+      
+      // Use remote if available, otherwise use local
+      if (remoteCategories.isNotEmpty) {
+        return remoteCategories;
+      } else {
+        return localCategories;
+      }
+    } catch (dbError) {
+      debugPrint('SupabaseService: Local DB load failed: $dbError');
+      // If local DB fails and we're not authenticated, fall back to SharedPreferences
+      if (user == null) {
+        final rows = await _readLocalCategories();
+        return rows.where((e) => (e['deleted'] ?? 0) == 0).toList();
+      }
+      return remoteCategories;
+    }
   }
 
   Future<int?> createCustomCategoryUnified(String name) async {
@@ -213,9 +336,22 @@ class SupabaseService {
       };
       current.add(row);
       await _writeLocalCategories(current);
+      // On mobile: also save to SQLite DB
+      if (!kIsWeb) {
+        try {
+          await _categoriesDB.upsertCategory({
+            ...row,
+            'user_id': null,
+          });
+        } catch (e) {
+          debugPrint('SupabaseService: Failed to save guest category to SQLite: $e');
+        }
+      }
       return nextId;
     }
-    await _migrateLocalIfNeeded();
+    if (!kIsWeb) {
+      await _migrateLocalIfNeeded();
+    }
     return await createCustomCategory(name);
   }
 
@@ -231,6 +367,14 @@ class SupabaseService {
         }
       }
       await _writeLocalCategories(rows);
+      // On mobile: also update SQLite DB
+      if (!kIsWeb) {
+        try {
+          await _categoriesDB.updateCategoryName(categoryId, newName);
+        } catch (e) {
+          debugPrint('SupabaseService: Failed to update guest category in SQLite: $e');
+        }
+      }
       return;
     }
     await renameCustomCategory(categoryId, newName);
@@ -248,6 +392,14 @@ class SupabaseService {
         }
       }
       await _writeLocalCategories(rows);
+      // On mobile: also update SQLite DB
+      if (!kIsWeb) {
+        try {
+          await _categoriesDB.softDeleteCategory(categoryId);
+        } catch (e) {
+          debugPrint('SupabaseService: Failed to delete guest category in SQLite: $e');
+        }
+      }
       return;
     }
     await softDeleteCustomCategory(categoryId);
@@ -255,11 +407,40 @@ class SupabaseService {
 
   Future<List<Map<String, dynamic>>> fetchSongsInCategoryUnified(int categoryId) async {
     final user = currentUser;
-    if (user == null || categoryId < 0) {
-      final rows = await _readLocalSongs();
-      return rows.where((r) => (r['category_id'] as num).toInt() == categoryId && (r['deleted'] ?? 0) == 0).toList();
+    
+    // On web: always use Supabase (online only)
+    // On mobile: try Supabase first, fallback to local DB
+    if (user != null && categoryId >= 0) {
+      try {
+        final songs = await fetchSongsInCategory(categoryId);
+        if (songs.isNotEmpty) {
+          return songs;
+        }
+      } catch (e) {
+        debugPrint('SupabaseService: Supabase load failed for category songs: $e');
+        if (kIsWeb) {
+          // On web, if Supabase fails, we have no fallback
+          return [];
+        }
+      }
     }
-    return await fetchSongsInCategory(categoryId);
+    
+    // On mobile: fallback to local DB
+    if (!kIsWeb) {
+      try {
+        if (user != null) {
+          return await _categoriesDB.getSongsInCategory(categoryId, userId: user.id);
+        } else if (categoryId < 0) {
+          // Guest user with local category
+          final rows = await _readLocalSongs();
+          return rows.where((r) => (r['category_id'] as num).toInt() == categoryId && (r['deleted'] ?? 0) == 0).toList();
+        }
+      } catch (dbError) {
+        debugPrint('SupabaseService: Local DB load failed for category songs: $dbError');
+      }
+    }
+    
+    return [];
   }
 
   Future<void> addSongToCategoryUnified({required int categoryId, required int songId, required String songType}) async {
@@ -296,96 +477,258 @@ class SupabaseService {
     await removeSongFromCategory(categoryId: categoryId, songId: songId, songType: songType);
   }
   Future<List<Map<String, dynamic>>> fetchCustomCategories() async {
+    final c = client;
+    if (c == null) return [];
     final user = currentUser;
     if (user == null) return [];
-    final rows = await client
-        .from('custom_categories')
-        .select('id,name,created_at,updated_at')
-        .eq('user_id', user.id)
-        .eq('deleted', 0)
-        .order('updated_at', ascending: false);
-    return List<Map<String, dynamic>>.from(rows);
+    try {
+      final rows = await c
+          .from('custom_categories')
+          .select('id,name,created_at,updated_at')
+          .eq('user_id', user.id)
+          .eq('deleted', 0)
+          .order('updated_at', ascending: false);
+      return List<Map<String, dynamic>>.from(rows);
+    } catch (e) {
+      debugPrint('SupabaseService: Error fetching categories from Supabase: $e');
+      rethrow;
+    }
   }
 
   Future<int?> createCustomCategory(String name) async {
+    final c = client;
+    if (c == null) return null;
     final user = currentUser;
     if (user == null) return null;
-    final rows = await client
-        .from('custom_categories')
-        .insert({
-          'user_id': user.id,
-          'name': name,
-        })
-        .select('id')
-        .single();
-    return (rows['id'] as num?)?.toInt();
+    try {
+      final rows = await c
+          .from('custom_categories')
+          .insert({
+            'user_id': user.id,
+            'name': name,
+          })
+          .select('id')
+          .single();
+      final categoryId = (rows['id'] as num?)?.toInt();
+      
+      // On mobile: also save to local DB
+      if (!kIsWeb && categoryId != null) {
+        try {
+          await _categoriesDB.upsertCategory({
+            'id': categoryId,
+            'user_id': user.id,
+            'name': name,
+            'deleted': 0,
+            'created_at': DateTime.now().toIso8601String(),
+            'updated_at': DateTime.now().toIso8601String(),
+          });
+        } catch (dbError) {
+          debugPrint('SupabaseService: Failed to save category to local DB: $dbError');
+        }
+      }
+      
+      return categoryId;
+    } catch (e) {
+      debugPrint('SupabaseService: Error creating category in Supabase: $e');
+      rethrow;
+    }
   }
 
   Future<void> renameCustomCategory(int categoryId, String newName) async {
+    final c = client;
+    if (c == null) return;
     final user = currentUser;
     if (user == null) return;
-    await client
-        .from('custom_categories')
-        .update({'name': newName, 'updated_at': DateTime.now().toIso8601String()})
-        .eq('id', categoryId)
-        .eq('user_id', user.id);
+    try {
+      await c
+          .from('custom_categories')
+          .update({'name': newName, 'updated_at': DateTime.now().toIso8601String()})
+          .eq('id', categoryId)
+          .eq('user_id', user.id);
+      
+      // On mobile: also update local DB
+      if (!kIsWeb) {
+        try {
+          await _categoriesDB.updateCategoryName(categoryId, newName);
+        } catch (dbError) {
+          debugPrint('SupabaseService: Failed to update category in local DB: $dbError');
+        }
+      }
+    } catch (e) {
+      debugPrint('SupabaseService: Error renaming category in Supabase: $e');
+      rethrow;
+    }
   }
 
   Future<void> softDeleteCustomCategory(int categoryId) async {
+    final c = client;
+    if (c == null) return;
     final user = currentUser;
     if (user == null) return;
-    // Prefer soft delete; fallback to hard delete if RLS blocks UPDATE
     try {
-      await client
-          .from('custom_categories')
-          .update({'deleted': 1, 'updated_at': DateTime.now().toIso8601String()})
-          .eq('id', categoryId)
-          .eq('user_id', user.id);
-    } on PostgrestException catch (_) {
-      await client
-          .from('custom_categories')
-          .delete()
-          .eq('id', categoryId)
-          .eq('user_id', user.id);
+      // Prefer soft delete; fallback to hard delete if RLS blocks UPDATE
+      try {
+        await c
+            .from('custom_categories')
+            .update({'deleted': 1, 'updated_at': DateTime.now().toIso8601String()})
+            .eq('id', categoryId)
+            .eq('user_id', user.id);
+      } on PostgrestException catch (_) {
+        await c
+            .from('custom_categories')
+            .delete()
+            .eq('id', categoryId)
+            .eq('user_id', user.id);
+      }
+      
+      // On mobile: also update local DB
+      if (!kIsWeb) {
+        try {
+          await _categoriesDB.softDeleteCategory(categoryId);
+        } catch (dbError) {
+          debugPrint('SupabaseService: Failed to delete category in local DB: $dbError');
+        }
+      }
+    } catch (e) {
+      debugPrint('SupabaseService: Error deleting category in Supabase: $e');
+      rethrow;
     }
   }
 
   Future<List<Map<String, dynamic>>> fetchSongsInCategory(int categoryId) async {
+    final c = client;
+    if (c == null) return [];
     final user = currentUser;
     if (user == null) return [];
-    final rows = await client
-        .from('custom_category_songs')
-        .select('id,song_id,song_type,created_at')
-        .eq('user_id', user.id)
-        .eq('category_id', categoryId)
-        .eq('deleted', 0)
-        .order('created_at', ascending: false);
-    return List<Map<String, dynamic>>.from(rows);
+    try {
+      final rows = await c
+          .from('custom_category_songs')
+          .select('id,song_id,song_type,created_at')
+          .eq('user_id', user.id)
+          .eq('category_id', categoryId)
+          .eq('deleted', 0)
+          .order('created_at', ascending: false);
+      final songs = List<Map<String, dynamic>>.from(rows);
+      
+      // On mobile: also save to local DB
+      if (!kIsWeb && songs.isNotEmpty) {
+        try {
+          final songsWithUserId = songs.map((song) => {
+            ...song,
+            'user_id': user.id,
+            'category_id': categoryId,
+            'deleted': 0,
+            'created_at': song['created_at'] ?? DateTime.now().toIso8601String(),
+            'updated_at': DateTime.now().toIso8601String(),
+          }).toList();
+          await _categoriesDB.upsertCategorySongs(songsWithUserId);
+        } catch (dbError) {
+          debugPrint('SupabaseService: Failed to save category songs to local DB: $dbError');
+        }
+      }
+      
+      return songs;
+    } catch (e) {
+      debugPrint('SupabaseService: Error fetching songs from Supabase, trying local DB: $e');
+      // Fallback to local DB
+      try {
+        return await _categoriesDB.getSongsInCategory(categoryId, userId: user.id);
+      } catch (dbError) {
+        debugPrint('SupabaseService: Local DB load also failed: $dbError');
+        return [];
+      }
+    }
   }
 
   Future<void> addSongToCategory({required int categoryId, required int songId, required String songType}) async {
+    final c = client;
+    if (c == null) return;
     final user = currentUser;
     if (user == null) return;
     try {
-      await client.from('custom_category_songs').insert({
+      await c.from('custom_category_songs').insert({
         'category_id': categoryId,
         'user_id': user.id,
         'song_id': songId,
         'song_type': songType,
       });
-    } catch (_) {}
+      
+      // On mobile: also save to local DB
+      if (!kIsWeb) {
+        try {
+          await _categoriesDB.upsertCategorySong({
+            'category_id': categoryId,
+            'user_id': user.id,
+            'song_id': songId,
+            'song_type': songType,
+            'deleted': 0,
+            'created_at': DateTime.now().toIso8601String(),
+            'updated_at': DateTime.now().toIso8601String(),
+          });
+        } catch (dbError) {
+          debugPrint('SupabaseService: Failed to save song to local DB: $dbError');
+        }
+      }
+    } catch (e) {
+      debugPrint('SupabaseService: Error adding song to category in Supabase: $e');
+      // On mobile: still try to save locally as fallback
+      // On web: rethrow since we need Supabase
+      if (kIsWeb) {
+        rethrow;
+      } else {
+        try {
+          await _categoriesDB.upsertCategorySong({
+            'category_id': categoryId,
+            'user_id': user.id,
+            'song_id': songId,
+            'song_type': songType,
+            'deleted': 0,
+            'created_at': DateTime.now().toIso8601String(),
+            'updated_at': DateTime.now().toIso8601String(),
+          });
+        } catch (dbError) {
+          debugPrint('SupabaseService: Failed to save song to local DB: $dbError');
+        }
+      }
+    }
   }
 
   Future<void> removeSongFromCategory({required int categoryId, required int songId, required String songType}) async {
+    final c = client;
+    if (c == null) return;
     final user = currentUser;
     if (user == null) return;
-    await client
-        .from('custom_category_songs')
-        .update({'deleted': 1, 'updated_at': DateTime.now().toIso8601String()})
-        .eq('user_id', user.id)
-        .eq('category_id', categoryId)
-        .eq('song_id', songId)
-        .eq('song_type', songType);
+    try {
+      await c
+          .from('custom_category_songs')
+          .update({'deleted': 1, 'updated_at': DateTime.now().toIso8601String()})
+          .eq('user_id', user.id)
+          .eq('category_id', categoryId)
+          .eq('song_id', songId)
+          .eq('song_type', songType);
+      
+      // On mobile: also update local DB
+      if (!kIsWeb) {
+        try {
+          await _categoriesDB.softDeleteCategorySong(categoryId, songId, songType);
+        } catch (dbError) {
+          debugPrint('SupabaseService: Failed to remove song from local DB: $dbError');
+        }
+      }
+    } catch (e) {
+      debugPrint('SupabaseService: Error removing song from category in Supabase: $e');
+      // On mobile: still try to update locally as fallback
+      // On web: rethrow since we need Supabase
+      if (kIsWeb) {
+        rethrow;
+      } else {
+        try {
+          await _categoriesDB.softDeleteCategorySong(categoryId, songId, songType);
+        } catch (dbError) {
+          debugPrint('SupabaseService: Failed to remove song from local DB: $dbError');
+        }
+      }
+    }
   }
 }
 

@@ -1,5 +1,18 @@
 [
     { 
+        "title": "Christmas Update! 🎄",
+        "version": "4.1.0-stable",
+        "date": "05-12-2025",
+        "changes": [
+            "NEW Christmas Mode with festive theming",
+            "NEW Christmas Carols section with community-contributed songs",
+            "Authenticated users can add their own Christmas carols (lyrics or PDF)",
+            "Beautiful snowfall animation and Christmas-themed colors",
+            "Toggle Christmas mode in Settings > Special Features",
+            "For more info on changes, visit https://github.com/Reynold29/CSI-Hymns-and-Lyrics/commits/main/"
+        ]
+    },
+    { 
         "title": "Sixth Public Stable Version Released!",
         "version": "4.0.0-stable",
         "date": "11-08-2025",

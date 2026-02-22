@@ -7,6 +7,7 @@ import 'package:hymns_latest/screens/about_developer_screen.dart';
 import 'package:hymns_latest/screens/auth_screen.dart';
 import 'package:hymns_latest/services/supabase_service.dart';
 import 'package:hymns_latest/screens/profile_edit_screen.dart';
+import 'package:hymns_latest/screens/tickets_screen.dart';
 import 'dart:ui';
 import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 
@@ -20,6 +21,7 @@ class Sidebar extends StatefulWidget {
 }
 
 class _SidebarState extends State<Sidebar> {
+  bool _categoriesExpanded = false; // Categories collapsed by default
 
   @override
   Widget build(BuildContext context) {
@@ -158,21 +160,48 @@ class _SidebarState extends State<Sidebar> {
                         },
                         colorScheme: colorScheme,
                       ),
+                      // Categories - Collapsible
+                      ExpansionTile(
+                        leading: FaIcon(
+                          FontAwesomeIcons.bookBible,
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        title: Text(
+                          "Categories",
+                          style: TextStyle(
+                            color: colorScheme.onSurface,
+                            fontWeight: FontWeight.normal,
+                          ),
+                        ),
+                        initiallyExpanded: _categoriesExpanded,
+                        onExpansionChanged: (expanded) {
+                          setState(() {
+                            _categoriesExpanded = expanded;
+                          });
+                          HapticFeedbackManager.lightClick();
+                        },
+                        children: [
+                          for (final option in SidebarOptions.getOptions(context))
+                            Padding(
+                              padding: const EdgeInsets.only(left: 16.0),
+                              child: option,
+                            ),
+                        ],
+                      ),
+                      // Tickets Submitted section
                       _sidebarTile(
                         context,
-                        icon: FontAwesomeIcons.bookBible,
-                        label: "Categories",
-                        selected: selectedIndex == 1,
-                        onTap: () {},
+                        icon: FontAwesomeIcons.ticket,
+                        label: "Tickets Submitted",
+                        selected: false,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const TicketsScreen()),
+                          );
+                        },
                         colorScheme: colorScheme,
-                        trailing: null,
                       ),
-                      // Categories list should be scrollable and expanded by default
-                      for (final option in SidebarOptions.getOptions(context))
-                        Padding(
-                          padding: const EdgeInsets.only(left: 16.0),
-                          child: option,
-                        ),
                         ],
                       ),
                     ),

@@ -72,10 +72,28 @@
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="mailto" />
         </intent>
+
+        <!-- Query for email apps -->
+        <intent>
+            <action android:name="android.intent.action.SEND" />
+            <data android:mimeType="*/*" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.SENDTO" />
+            <data android:scheme="mailto" />
+        </intent>
     </queries>
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
     <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    
+    <!-- Storage permissions for file_picker (PDF uploads) -->
+    <!-- file_picker uses the system file picker which handles permissions internally -->
+    <!-- For Android 10 and below: READ_EXTERNAL_STORAGE is sufficient -->
+    <!-- For Android 11-12: READ_EXTERNAL_STORAGE with scoped storage -->
+    <!-- For Android 13+: System file picker doesn't require explicit permissions -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="29"/>
 </manifest>
