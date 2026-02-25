@@ -1,5 +1,17 @@
 [
-    { 
+    {
+        "title": "New Public Stable Version Released!",
+        "version": "4.2.0-stable",
+        "date": "23-02-2026",
+        "changes": [
+            "NEW Implementation of Jira Ticketing System for lyric correction requests [Phase 1]",
+            "FIX Meter filter now correctly handles songs with multiple meters (e.g. 6.7.7.7 / C.M) — they appear under each meter group they belong to",
+            "NEW Jump to Meter selector — tap the list icon in Meter view to instantly navigate to any meter group",
+            "Refresh button is now hidden in Meter view to keep the toolbar clean",
+            "For more info on changes, visit https://github.com/Reynold29/CSI-Hymns-and-Lyrics/commits/main/"
+        ]
+    },
+    {
         "title": "Christmas Update! 🎄",
         "version": "4.1.0-stable",
         "date": "05-12-2025",
@@ -12,7 +24,7 @@
             "For more info on changes, visit https://github.com/Reynold29/CSI-Hymns-and-Lyrics/commits/main/"
         ]
     },
-    { 
+    {
         "title": "Sixth Public Stable Version Released!",
         "version": "4.0.0-stable",
         "date": "11-08-2025",
@@ -25,22 +37,22 @@
             "For more info on changes, visit https://github.com/Reynold29/CSI-Hymns-and-Lyrics/commits/main/"
         ]
     },
-    { 
+    {
         "title": "Fifth Public Stable Version Released!",
         "version": "3.3.0-stable",
         "date": "03-08-2025",
-        "changes": [ 
+        "changes": [
             "Better Notification Handling",
             "Major UI Improvements",
             "Under-the-hood improvements and bug fixes",
             "For more info on changes, visit https://github.com/Reynold29/CSI-Hymns-and-Lyrics/commits/main/"
         ]
     },
-    { 
+    {
         "title": "Fourth Public Stable Version Released!",
         "version": "3.2.0-stable",
         "date": "08-06-2025",
-        "changes": [ 
+        "changes": [
             "Welcome Android 16! \n Integrate Android 16 Goodies",
             "Better notification handling",
             "Better theming engine",
@@ -49,22 +61,23 @@
             "For more info on changes, visit https://github.com/Reynold29/CSI-Hymns-and-Lyrics/commits/main/"
         ]
     },
-    { 
+    {
         "title": "Third Public Stable Version Released!",
         "version": "3.1.0-stable",
         "date": "26-04-2025",
-        "changes": [ 
+        "changes": [
             "NEW Hymns and Lyrics Audio Button \n\n-> Some songs has audio playback support, now you can play the audio of the song.\n Few audio tracks are added for now. Most will be added in the future.",
             "NEW In-App Notifications",
             "Simplify Categories List Labels",
             "Improved Haptic Feedback",
             "For more info on changes, visit https://github.com/Reynold29/CSI-Hymns-and-Lyrics/commits/main/"
         ]
-    },{ 
+    },
+    {
         "title": "Second Public Stable Version Released!",
         "version": "2.3.0-stable",
         "date": "24-05-2024",
-        "changes": [ 
+        "changes": [
             "NEW Refresh Lyrics Button \n\n-> The Lyrics can now be dynamically updated, by fetching the latest updated changes from GitHub Repo. \n-> Why this change? Cuz now, there's no need to update the app each time some lyrics are corrected.\n",
             "NEW Time Metric Filter Option",
             "Simplify Categories List Labels",
@@ -72,11 +85,12 @@
             "Added a Top Nav Icon to Navigate to the Top.",
             "For more info on changes, visit https://github.com/Reynold29/CSI-Hymns-and-Lyrics/commits/main/"
         ]
-    },{ 
+    },
+    {
         "title": "Public Stable Version Released!",
         "version": "2.2.0-stable",
         "date": "16-05-2024",
-        "changes": [ 
+        "changes": [
             "Included All Hymns and Keerthane.",
             "Built-In Favorites Button.",
             "Filter Button Added with options to Order Hymns by Number, Alphabetical Order and Signatures.",
@@ -85,11 +99,12 @@
             "Improve Search Bar Operations. ( Now you can search using Signatures Too!! )",
             "For more info on changes, visit https://github.com/Reynold29/CSI-Hymns-and-Lyrics/commits/main/"
         ]
-    },{
+    },
+    {
         "title": "Third and Final BETA Released!",
         "version": "3.0.0-beta",
         "date": "11-04-2024",
-        "changes": [ 
+        "changes": [
             "NEW Font Size selection Button for every lyrics.",
             "NEW Sidebar Menu with Categories according to events.",
             "Now, you can swipe between the Hymns and Keerthane screens to switch between them.",
@@ -109,11 +124,11 @@
             "APKs / AABs from this release are signed"
         ]
     },
-    { 
+    {
         "title": "First Beta Version Released!",
         "version": "1.0.1-beta",
         "date": "05-04-2024",
-        "changes": [ 
+        "changes": [
             "Two separate categories for Hymns and Lyrics (Keerthane)",
             "Added Dark Mode support",
             "Added 1 song per category for testing purposes for now",

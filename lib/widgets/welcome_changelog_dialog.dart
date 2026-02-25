@@ -302,30 +302,6 @@ class _WelcomeChangelogDialogState extends State<WelcomeChangelogDialog>
                                 ),
                                 borderRadius: BorderRadius.circular(16),
                               ),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Row(
-                                    children: [
-                                      const Text('💡', style: TextStyle(fontSize: 20)),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        'Quick Tips:',
-                                        style: theme.textTheme.titleSmall?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                          color: theme.colorScheme.onSurface,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  const SizedBox(height: 12),
-                                  _buildTip('Explore Christmas Carols in the Songs section 🎄'),
-                                  const SizedBox(height: 8),
-                                  _buildTip('Add your own carols or upload PDFs 📄'),
-                                  const SizedBox(height: 8),
-                                  _buildTip('Check Settings for more customization options ⚙️'),
-                                ],
-                              ),
                             ),
                             const SizedBox(height: 24),
                             // Action button

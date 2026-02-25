@@ -65,12 +65,14 @@ void main() async {
   // Initialize Supabase
   try {
     await dotenv.load(fileName: '.env');
-    final url = dotenv.env['SUPABASE_URL'] ?? dotenv.env['SUPABASE_PROJECT_URL'] ?? '';
+    final url =
+        dotenv.env['SUPABASE_URL'] ?? dotenv.env['SUPABASE_PROJECT_URL'] ?? '';
     final anon = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
     if (url.isNotEmpty && anon.isNotEmpty) {
       await SupabaseService().init(url: url, anonKey: anon);
     } else {
-      debugPrint('Supabase credentials not found in .env file. App will run in offline mode.');
+      debugPrint(
+          'Supabase credentials not found in .env file. App will run in offline mode.');
     }
   } catch (e, stackTrace) {
     debugPrint('Supabase init error: $e');
@@ -100,7 +102,7 @@ class MyApp extends StatelessWidget {
     return Consumer2<ThemeState, ChristmasModeService>(
       builder: (context, themeState, christmasService, child) {
         final isChristmas = christmasService.isChristmasTime;
-        
+
         // Build light theme (with or without Christmas theme)
         final lightTheme = isChristmas
             ? createChristmasLightTheme()
@@ -126,14 +128,16 @@ class MyApp extends StatelessWidget {
                   elevation: 0,
                 ),
               );
-        
+
         // Build dark theme (with or without Christmas theme)
         final darkTheme = isChristmas
-            ? createChristmasDarkTheme(blackThemeEnabled: themeState.blackThemeEnabled)
+            ? createChristmasDarkTheme(
+                blackThemeEnabled: themeState.blackThemeEnabled)
             : ThemeData(
                 useMaterial3: true,
                 fontFamily: 'plusJakartaSans',
-                scaffoldBackgroundColor: themeState.blackThemeEnabled ? Colors.black : null,
+                scaffoldBackgroundColor:
+                    themeState.blackThemeEnabled ? Colors.black : null,
                 colorScheme: ColorScheme.fromSeed(
                   seedColor: themeState.seedColor,
                   brightness: Brightness.dark,
@@ -177,7 +181,8 @@ class MainScreen extends StatefulWidget {
   _MainScreenState createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateMixin {
+class _MainScreenState extends State<MainScreen>
+    with SingleTickerProviderStateMixin {
   final GlobalKey _menuButtonKey = GlobalKey();
   int _selectedIndex = 0;
   late AnimationController _animationController;
@@ -207,24 +212,27 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
   @override
   void initState() {
     super.initState();
-    _animationController = AnimationController(vsync: this, duration: const Duration(milliseconds: 300));
+    _animationController = AnimationController(
+        vsync: this, duration: const Duration(milliseconds: 300));
     _pageController = PageController(initialPage: _selectedIndex);
-    checkForUpdate();
+    // Delay update check until after first frame so the activity is fully
+    // in the foreground — prevents REQUIRE_FOREGROUND_ACTIVITY error.
+    WidgetsBinding.instance.addPostFrameCallback((_) => checkForUpdate());
     _initOneSignalWithCount();
     _checkFirstRunAndShowCase();
     _listenToSupabaseAuth();
     _checkAndShowWelcomeChangelog();
   }
-  
+
   Future<void> _checkAndShowWelcomeChangelog() async {
     // Wait for the first frame to ensure context is ready
     await Future.delayed(const Duration(milliseconds: 500));
-    
+
     if (!mounted) return;
-    
+
     final changelogService = ChangelogService();
     final shouldShow = await changelogService.shouldShowChangelog();
-    
+
     if (shouldShow && mounted) {
       final changelog = await changelogService.getLatestChangelog();
       if (changelog != null && mounted) {
@@ -246,7 +254,8 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
   Future<void> checkForUpdate() async {
     try {
       final info = await InAppUpdate.checkForUpdate();
-      if (mounted && info.updateAvailability == UpdateAvailability.updateAvailable) {
+      if (mounted &&
+          info.updateAvailability == UpdateAvailability.updateAvailable) {
         update();
       }
     } catch (e) {
@@ -321,32 +330,40 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
               TextField(
                 controller: pass2,
                 obscureText: true,
-                decoration: const InputDecoration(labelText: 'Confirm password'),
+                decoration:
+                    const InputDecoration(labelText: 'Confirm password'),
               ),
             ],
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancel')),
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Cancel')),
             TextButton(
               onPressed: () async {
                 final p1 = pass1.text;
                 final p2 = pass2.text;
                 if (p1.length < 6) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password must be at least 6 characters')));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Password must be at least 6 characters')));
                   return;
                 }
                 if (p1 != p2) {
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Passwords do not match')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Passwords do not match')));
                   return;
                 }
                 try {
-                  await Supabase.instance.client.auth.updateUser(UserAttributes(password: p1));
+                  await Supabase.instance.client.auth
+                      .updateUser(UserAttributes(password: p1));
                   if (!mounted) return;
                   Navigator.pop(ctx);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Password updated successfully')));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      content: Text('Password updated successfully')));
                 } catch (e) {
                   if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Update failed: $e')));
+                  ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Update failed: $e')));
                 }
               },
               child: const Text('Save'),
@@ -379,7 +396,8 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     int promptCount = prefs.getInt('notificationPromptCount') ?? 0;
 
     // Get the current native notification permission status
-    OSNotificationPermission nativePermissionStatus = await OneSignal.Notifications.permissionNative();
+    OSNotificationPermission nativePermissionStatus =
+        await OneSignal.Notifications.permissionNative();
 
     // 1. If permission is already authorized, reset prompt count and return.
     if (nativePermissionStatus == OSNotificationPermission.authorized) {
@@ -388,8 +406,10 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     }
 
     // 2. If permission is denied AND we've already prompted twice or more, do not prompt again.
-    if (nativePermissionStatus == OSNotificationPermission.denied && promptCount >= 2) {
-      debugPrint("User has denied notification permissions multiple times. Not prompting again.");
+    if (nativePermissionStatus == OSNotificationPermission.denied &&
+        promptCount >= 2) {
+      debugPrint(
+          "User has denied notification permissions multiple times. Not prompting again.");
       return;
     }
 
@@ -412,7 +432,8 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     });
 
     OneSignal.Notifications.addClickListener((event) {
-      print('NOTIFICATION CLICK LISTENER: ${jsonEncode(event.notification.jsonRepresentation())}');
+      print(
+          'NOTIFICATION CLICK LISTENER: ${jsonEncode(event.notification.jsonRepresentation())}');
     });
 
     // iOS-only event listener for notification permissions
@@ -428,15 +449,15 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     // Check Christmas mode from provider
     final christmasService = context.watch<ChristmasModeService>();
     final isChristmasMode = christmasService.isChristmasTime;
-    
+
     // Get the appropriate screens and tab count
     final screens = isChristmasMode ? _christmasScreens : _normalScreens;
     final tabCount = screens.length;
-    
+
     // Clamp selected index if switching modes
     if (_selectedIndex >= tabCount) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -451,17 +472,22 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
       appBar: AppBar(
         title: Text(
           isChristmasMode ? '🎄 CSI Hymns Book' : 'CSI Kannada Hymns Book',
-          style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, color: colorScheme.onSurface),
+          style: textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold, color: colorScheme.onSurface),
         ),
         leading: Builder(
           builder: (context) {
             return Showcase(
               key: _menuButtonKey,
               title: 'Sidebar',
-              description: 'Tap here to open the menu for categories and settings.',
+              description:
+                  'Tap here to open the menu for categories and settings.',
               targetShapeBorder: const CircleBorder(),
               overlayColor: Colors.black.withOpacity(0.7),
-              titleTextStyle: TextStyle(color: colorScheme.onPrimaryContainer, fontSize: 20, fontWeight: FontWeight.bold),
+              titleTextStyle: TextStyle(
+                  color: colorScheme.onPrimaryContainer,
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold),
               child: IconButton(
                 icon: Icon(Icons.menu, color: colorScheme.onSurface, size: 26),
                 onPressed: () => Scaffold.of(context).openDrawer(),
@@ -519,18 +545,27 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
                             children: isChristmasMode
                                 ? [
                                     // Christmas mode: 4 tabs
-                                    _buildTabButton(context, 0, Icons.music_note, 'Songs', tabCount),
-                                    _buildTabButton(context, 1, Icons.event_note, 'Service', tabCount),
-                                    _buildTabButton(context, 2, Icons.category, 'Categories', tabCount),
-                                    _buildTabButton(context, 3, Icons.favorite, 'Favorites', tabCount),
+                                    _buildTabButton(context, 0,
+                                        Icons.music_note, 'Songs', tabCount),
+                                    _buildTabButton(context, 1,
+                                        Icons.event_note, 'Service', tabCount),
+                                    _buildTabButton(context, 2, Icons.category,
+                                        'Categories', tabCount),
+                                    _buildTabButton(context, 3, Icons.favorite,
+                                        'Favorites', tabCount),
                                   ]
                                 : [
                                     // Normal mode: 5 tabs
-                                    _buildTabButton(context, 0, Icons.music_note, 'Hymns', tabCount),
-                                    _buildTabButton(context, 1, Icons.album, 'Keerthane', tabCount),
-                                    _buildTabButton(context, 2, Icons.event_note, 'Service', tabCount),
-                                    _buildTabButton(context, 3, Icons.category, 'Categories', tabCount),
-                                    _buildTabButton(context, 4, Icons.favorite, 'Favorites', tabCount),
+                                    _buildTabButton(context, 0,
+                                        Icons.music_note, 'Hymns', tabCount),
+                                    _buildTabButton(context, 1, Icons.album,
+                                        'Keerthane', tabCount),
+                                    _buildTabButton(context, 2,
+                                        Icons.event_note, 'Service', tabCount),
+                                    _buildTabButton(context, 3, Icons.category,
+                                        'Categories', tabCount),
+                                    _buildTabButton(context, 4, Icons.favorite,
+                                        'Favorites', tabCount),
                                   ],
                           ),
                         ),
@@ -538,7 +573,8 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
                         AnimatedPositioned(
                           duration: const Duration(milliseconds: 300),
                           curve: Curves.easeInOutCubic,
-                          left: _selectedIndex.clamp(0, tabCount - 1) * tabWidth,
+                          left:
+                              _selectedIndex.clamp(0, tabCount - 1) * tabWidth,
                           bottom: 2,
                           child: Container(
                             width: tabWidth,
@@ -568,7 +604,8 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
     );
   }
 
-  Widget _buildTabButton(BuildContext context, int index, IconData icon, String label, int tabCount) {
+  Widget _buildTabButton(BuildContext context, int index, IconData icon,
+      String label, int tabCount) {
     final colorScheme = Theme.of(context).colorScheme;
     final isSelected = _selectedIndex == index;
     return Expanded(
@@ -583,19 +620,27 @@ class _MainScreenState extends State<MainScreen> with SingleTickerProviderStateM
           padding: const EdgeInsets.symmetric(vertical: 4),
           margin: const EdgeInsets.symmetric(vertical: 2, horizontal: 4),
           decoration: BoxDecoration(
-            color: isSelected ? colorScheme.primary.withOpacity(0.12) : Colors.transparent,
+            color: isSelected
+                ? colorScheme.primary.withOpacity(0.12)
+                : Colors.transparent,
             borderRadius: BorderRadius.circular(16),
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant, size: 24),
+              Icon(icon,
+                  color: isSelected
+                      ? colorScheme.primary
+                      : colorScheme.onSurfaceVariant,
+                  size: 24),
               const SizedBox(height: 1),
               Text(
                 label,
                 style: TextStyle(
                   fontSize: 10,
-                  color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                  color: isSelected
+                      ? colorScheme.primary
+                      : colorScheme.onSurfaceVariant,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                   letterSpacing: 0.1,
                   height: 1.0,
