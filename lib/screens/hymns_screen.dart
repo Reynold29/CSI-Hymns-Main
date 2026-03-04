@@ -34,17 +34,18 @@ class _HymnsScreenState extends State<HymnsScreen> {
   @override
   void initState() {
     super.initState();
-    loadHymns().then((data) => setState(() {
-          hymns = data;
-          _sortHymns();
-          _scrollController.addListener(_scrollListener);
-        }));
-
+    loadHymns().then((data) {
+      if (!mounted) return;
+      setState(() {
+        hymns = data;
+        _applySortAndFilter();
+        _scrollController.addListener(_scrollListener);
+      });
+    });
     checkAndUpdateLyricsOnOpen();
   }
 
   Future<void> checkAndUpdateLyricsOnOpen() async {
-    // Auto Lyrics Update Check
     final prefs = await SharedPreferences.getInstance();
     final lastUpdateTimestamp = prefs.getInt('lastLyricsUpdate') ?? 0;
     final now = DateTime.now().millisecondsSinceEpoch;
@@ -59,13 +60,15 @@ class _HymnsScreenState extends State<HymnsScreen> {
           final List<Hymn> updatedHymns =
               await loadHymnsFromNetwork(response.body);
 
+          if (!mounted) return;
           setState(() {
             hymns = updatedHymns;
-            _sortHymns();
+            _applySortAndFilter();
           });
 
           await prefs.setInt('lastLyricsUpdate', now);
 
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Lyrics updated successfully!'),
           ));
@@ -73,6 +76,7 @@ class _HymnsScreenState extends State<HymnsScreen> {
           throw Exception('Failed to fetch data from cloud');
         }
       } catch (e) {
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
           content: Text('Failed to update lyrics. Please try again later.'),
         ));
@@ -263,58 +267,61 @@ class _HymnsScreenState extends State<HymnsScreen> {
     }
   }
 
-  void _sortHymns() {
-    setState(() {
-      if (_selectedOrder == 'number') {
-        hymns.sort((a, b) => a.number.compareTo(b.number));
-        filteredHymns = hymns;
-      } else if (_selectedOrder == 'title') {
-        hymns.sort((a, b) => a.title.compareTo(b.title));
-        filteredHymns = hymns;
-      } else if (_selectedOrder == 'time_signature') {
-        hymns.sort((a, b) => a.signature.compareTo(b.signature));
-        _groupHymnsBySignature();
-      }
-      _filterHymns();
-    });
+  /// Sorts hymns and re-applies the current filter. Call inside setState.
+  void _applySortAndFilter() {
+    _sortHymns();
+    _applyFilter();
   }
 
-  void _filterHymns() {
-    setState(() {
-      if (_searchQuery == null || _searchQuery!.isEmpty) {
-        filteredHymns = List.from(hymns);
-        if (_selectedOrder == 'time_signature') {
-          _groupHymnsBySignature();
-        }
+  /// Mutates sort order. Must be called inside setState.
+  void _sortHymns() {
+    if (_selectedOrder == 'number') {
+      hymns.sort((a, b) => a.number.compareTo(b.number));
+      filteredHymns = List.from(hymns);
+    } else if (_selectedOrder == 'title') {
+      hymns.sort((a, b) => a.title.compareTo(b.title));
+      filteredHymns = List.from(hymns);
+    } else if (_selectedOrder == 'time_signature') {
+      hymns.sort((a, b) => a.signature.compareTo(b.signature));
+      _groupHymnsBySignature(); // builds groupedHymns
+      filteredHymns = groupedHymns.values.expand((x) => x).toList();
+    }
+  }
+
+  /// Mutates filteredHymns / groupedHymns based on current query. Must be called inside setState.
+  void _applyFilter() {
+    if (_searchQuery == null || _searchQuery!.isEmpty) {
+      if (_selectedOrder == 'time_signature') {
+        // Groups already built by _sortHymns — just expose all hymns.
+        filteredHymns = groupedHymns.values.expand((x) => x).toList();
       } else {
-        final query = _searchQuery!.toLowerCase().trim();
-        if (_selectedOrder == 'time_signature') {
-          final Map<String, List<Hymn>> filtered = {};
-          for (final entry in groupedHymns.entries) {
-            // Exact group-key match only (prevents "C.M" hitting "D.C.M").
-            final keyMatches = entry.key.toLowerCase() == query;
-            final matchingHymns = entry.value
-                .where((hymn) =>
-                    keyMatches ||
-                    hymn.title.toLowerCase().contains(query) ||
-                    hymn.number.toString().contains(query))
-                .toList();
-            if (matchingHymns.isNotEmpty) {
-              filtered[entry.key] = matchingHymns;
-            }
-          }
-          groupedHymns = filtered;
-          filteredHymns = groupedHymns.values.expand((x) => x).toList();
-        } else {
-          filteredHymns = hymns.where((hymn) {
-            final hymnSignature = hymn.signature.toLowerCase();
-            return hymn.title.toLowerCase().contains(query) ||
-                hymn.number.toString().contains(query) ||
-                hymnSignature.contains(query);
-          }).toList();
-        }
+        filteredHymns = List.from(hymns);
       }
-    });
+    } else {
+      final query = _searchQuery!.toLowerCase().trim();
+      if (_selectedOrder == 'time_signature') {
+        final Map<String, List<Hymn>> filtered = {};
+        for (final entry in groupedHymns.entries) {
+          // Exact group-key match prevents "C.M" hitting "D.C.M".
+          final keyMatches = entry.key.toLowerCase() == query;
+          final matchingHymns = entry.value
+              .where((hymn) =>
+                  keyMatches ||
+                  hymn.title.toLowerCase().contains(query) ||
+                  hymn.number.toString().contains(query))
+              .toList();
+          if (matchingHymns.isNotEmpty) filtered[entry.key] = matchingHymns;
+        }
+        groupedHymns = filtered;
+        filteredHymns = groupedHymns.values.expand((x) => x).toList();
+      } else {
+        filteredHymns = hymns.where((hymn) {
+          return hymn.title.toLowerCase().contains(query) ||
+              hymn.number.toString().contains(query) ||
+              hymn.signature.toLowerCase().contains(query);
+        }).toList();
+      }
+    }
   }
 
   /// Returns true if a signature part is a tune reference (not a real meter).
@@ -538,16 +545,14 @@ class _HymnsScreenState extends State<HymnsScreen> {
                       onChanged: (searchQuery) {
                         setState(() {
                           _searchQuery = searchQuery;
-                          _filterHymns();
+                          _applyFilter();
                         });
                       },
                       focusNode: _searchFocusNode,
                       onQueryCleared: () {
                         setState(() {
                           _searchQuery = null;
-                          _filterHymns();
-                          if (_selectedOrder == 'time_signature')
-                            _groupHymnsBySignature();
+                          _applySortAndFilter();
                           Future.delayed(const Duration(milliseconds: 100), () {
                             _searchFocusNode.unfocus();
                           });

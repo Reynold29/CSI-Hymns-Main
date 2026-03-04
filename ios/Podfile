@@ -37,8 +37,46 @@ target 'Runner' do
   end
 end
 
+target 'OneSignalNotificationServiceExtension' do
+  use_frameworks!
+  use_modular_headers!
+  pod 'OneSignalXCFramework', '>= 5.0.0', '< 6.0.0'
+end
+
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+  end
+
+  # Fix Xcode build phase cycle caused by adding OneSignalNotificationServiceExtension.
+  # Moves "[CP] Embed Pods Frameworks" before "Thin Binary" in the Runner target's
+  # build phases to break the circular dependency introduced by the app extension.
+  installer.aggregate_targets.each do |aggregate_target|
+    aggregate_target.user_project.native_targets.each do |native_target|
+      next unless native_target.name == 'Runner'
+      phases = native_target.build_phases
+      embed_phase = phases.find { |bp| bp.respond_to?(:name) && bp.name == '[CP] Embed Pods Frameworks' }
+      thin_phase  = phases.find { |bp| bp.respond_to?(:name) && bp.name == 'Thin Binary' }
+      next unless embed_phase && thin_phase
+      embed_idx = phases.index(embed_phase)
+      thin_idx  = phases.index(thin_phase)
+      if embed_idx > thin_idx
+        phases.delete(embed_phase)
+        phases.insert(thin_idx, embed_phase)
+      end
+    end
+    aggregate_target.user_project.save
+  end
+
+  # Fix CocoaPods warning about CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER
+  # being overridden in the OneSignalNotificationServiceExtension target in Runner.xcodeproj.
+  installer.aggregate_targets.each do |aggregate_target|
+    aggregate_target.user_project.native_targets.each do |native_target|
+      next unless native_target.name == 'OneSignalNotificationServiceExtension'
+      native_target.build_configurations.each do |config|
+        config.build_settings.delete('CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER')
+      end
+    end
+    aggregate_target.user_project.save
   end
 end

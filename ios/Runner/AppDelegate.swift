@@ -1,7 +1,7 @@
 import UIKit
 import Flutter
 import FirebaseCore
-import OneSignalFramework
+import UserNotifications
 
 @main
 @objc class AppDelegate: FlutterAppDelegate {
@@ -9,8 +9,15 @@ import OneSignalFramework
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    // Configure Firebase before plugins that might depend on it.
     FirebaseApp.configure()
-    OneSignal.initialize("29f2a6ba-3f56-4ffe-8075-3b70d7440b13", withLaunchOptions: launchOptions)
+
+    // Ensure all Flutter plugins (Firebase, OneSignal, etc.) are registered on iOS.
+    GeneratedPluginRegistrant.register(with: self)
+
+    // Needed so notification-related plugins can receive foreground notifications on iOS.
+    UNUserNotificationCenter.current().delegate = self
+
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 }

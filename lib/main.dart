@@ -1,29 +1,32 @@
+import 'dart:async';
 import 'dart:convert';
+
 import 'theme_state.dart';
 import 'widgets/sidebar.dart';
 import 'screens/categories.dart';
 import 'screens/hymns_landing_screen.dart';
 import 'screens/keerthane_screen.dart';
 import 'screens/order_of_service_screen.dart';
-import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+
 import 'package:flutter/foundation.dart';
-import 'package:showcaseview/showcaseview.dart';
+import 'package:flutter/material.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
-import 'package:hymns_latest/screens/favorites_screen.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
-import 'package:hymns_latest/services/supabase_service.dart';
-import 'package:hymns_latest/services/christmas_mode_service.dart';
-import 'package:hymns_latest/services/christmas_carols_service.dart';
-import 'package:hymns_latest/services/changelog_service.dart';
-import 'package:hymns_latest/widgets/welcome_changelog_dialog.dart';
-import 'package:hymns_latest/theme/christmas_theme.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'package:provider/provider.dart';
+import 'package:showcaseview/showcaseview.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'package:hymns_latest/screens/favorites_screen.dart';
+import 'package:hymns_latest/services/changelog_service.dart';
+import 'package:hymns_latest/services/christmas_carols_service.dart';
+import 'package:hymns_latest/services/christmas_mode_service.dart';
+import 'package:hymns_latest/services/supabase_service.dart';
+import 'package:hymns_latest/theme/christmas_theme.dart';
+import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
+import 'package:hymns_latest/widgets/welcome_changelog_dialog.dart';
 
 class LightSwipePagePhysics extends PageScrollPhysics {
   const LightSwipePagePhysics({ScrollPhysics? parent}) : super(parent: parent);
