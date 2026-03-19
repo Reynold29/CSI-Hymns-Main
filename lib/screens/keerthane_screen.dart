@@ -52,10 +52,12 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
 
     if (now - lastUpdateTimestamp >= updateInterval) {
       try {
-        final response = await http.get(Uri.parse('https://raw.githubusercontent.com/Reynold29/csi-hymns-vault/main/keerthane_data.json'));
+        final response = await http.get(Uri.parse(
+            'https://raw.githubusercontent.com/Reynold29/csi-hymns-vault/main/keerthane_data.json'));
 
         if (response.statusCode == 200) {
-          final List<Keerthane> updatedKeerthane = await loadKeerthaneFromNetwork(response.body);
+          final List<Keerthane> updatedKeerthane =
+              await loadKeerthaneFromNetwork(response.body);
           if (mounted) {
             setState(() {
               keerthane = updatedKeerthane;
@@ -63,9 +65,10 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
             });
             await prefs.setInt('lastLyricsUpdateKeerthane', now);
             if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-                  content: Text('Keerthane lyrics updated successfully!'),
-                ));
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    duration: const Duration(milliseconds: 1500),
+                    content: Text('Keerthane lyrics updated successfully!'),
+                  ));
             }
           }
         } else {
@@ -73,9 +76,11 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
         }
       } catch (e) {
         if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-              content: Text('Failed to update Keerthane lyrics. Please try again later.'),
-            ));
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                duration: const Duration(milliseconds: 1500),
+                content: Text(
+                    'Failed to update Keerthane lyrics. Please try again later.'),
+              ));
         }
       }
     }
@@ -88,7 +93,8 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
         final colorScheme = Theme.of(context).colorScheme;
         return AlertDialog(
           backgroundColor: colorScheme.surfaceContainerHigh,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
           contentPadding: const EdgeInsets.fromLTRB(20, 10, 20, 0),
           actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -140,7 +146,8 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
         final colorScheme = Theme.of(context).colorScheme;
         return AlertDialog(
           backgroundColor: colorScheme.surfaceContainerHigh,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           titlePadding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
           contentPadding: const EdgeInsets.fromLTRB(20, 10, 20, 20),
           title: Row(
@@ -148,7 +155,9 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
               SizedBox(
                 width: 20,
                 height: 20,
-                child: _isLoading ? const CircularProgressIndicator(strokeWidth: 2) : const SizedBox(),
+                child: _isLoading
+                    ? const CircularProgressIndicator(strokeWidth: 2)
+                    : const SizedBox(),
               ),
               const SizedBox(width: 8),
               const Text('Updating Keerthane'),
@@ -160,7 +169,8 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
             child: Center(
               child: _isLoading
                   ? const SizedBox.shrink()
-                  : Lottie.asset('lib/assets/icons/tick-animation.json', width: 80, height: 80),
+                  : Lottie.asset('lib/assets/icons/tick-animation.json',
+                      width: 80, height: 80),
             ),
           ),
         );
@@ -175,19 +185,24 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
           context: context,
           barrierDismissible: false,
           builder: (BuildContext context) {
-        final colorScheme = Theme.of(context).colorScheme;
-        return AlertDialog(
-          backgroundColor: colorScheme.surfaceContainerHigh,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Text('Keerthane updated!'),
-          content: SizedBox(height: 110, width: 110, child: Lottie.asset('lib/assets/icons/tick-animation.json', width: 80, height: 80)),
-          actions: [
-            FilledButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Done'),
-            ),
-          ],
-        );
+            final colorScheme = Theme.of(context).colorScheme;
+            return AlertDialog(
+              backgroundColor: colorScheme.surfaceContainerHigh,
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
+              title: const Text('Keerthane updated!'),
+              content: SizedBox(
+                  height: 110,
+                  width: 110,
+                  child: Lottie.asset('lib/assets/icons/tick-animation.json',
+                      width: 80, height: 80)),
+              actions: [
+                FilledButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('Done'),
+                ),
+              ],
+            );
           },
         );
       }
@@ -201,9 +216,12 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
             final colorScheme = Theme.of(context).colorScheme;
             return AlertDialog(
               backgroundColor: colorScheme.surfaceContainerHigh,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20)),
               title: const Text('Update failed'),
-              content: Text('Failed to update Keerthane lyrics. Please try again later.', style: TextStyle(color: colorScheme.onSurfaceVariant)),
+              content: Text(
+                  'Failed to update Keerthane lyrics. Please try again later.',
+                  style: TextStyle(color: colorScheme.onSurfaceVariant)),
               actions: [
                 OutlinedButton(
                   onPressed: () => Navigator.of(context).pop(),
@@ -219,10 +237,12 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
 
   Future<void> fetchAndUpdateLyrics() async {
     try {
-      final keerthaneResponse = await http.get(Uri.parse('https://raw.githubusercontent.com/Reynold29/csi-hymns-vault/main/keerthane_data.json'));
+      final keerthaneResponse = await http.get(Uri.parse(
+          'https://raw.githubusercontent.com/Reynold29/csi-hymns-vault/main/keerthane_data.json'));
 
       if (keerthaneResponse.statusCode == 200) {
-        final updatedKeerthanas = await loadKeerthaneFromNetwork(keerthaneResponse.body);
+        final updatedKeerthanas =
+            await loadKeerthaneFromNetwork(keerthaneResponse.body);
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('keerthaneData', jsonEncode(updatedKeerthanas));
         if (mounted) {
@@ -254,18 +274,22 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
 
     // Apply language filter (if selected)
     if (_selectedLanguage == 'English') {
-      currentKeerthane = currentKeerthane.where((k) => k.lyrics.isNotEmpty).toList();
+      currentKeerthane =
+          currentKeerthane.where((k) => k.lyrics.isNotEmpty).toList();
     } else if (_selectedLanguage == 'Kannada') {
-      currentKeerthane = currentKeerthane.where((k) => k.kannadaLyrics != null && k.kannadaLyrics!.isNotEmpty).toList();
+      currentKeerthane = currentKeerthane
+          .where((k) => k.kannadaLyrics != null && k.kannadaLyrics!.isNotEmpty)
+          .toList();
     }
 
     // Apply search query
     if (_searchQuery != null && _searchQuery!.isNotEmpty) {
       final query = _searchQuery!.toLowerCase().trim();
-      currentKeerthane = currentKeerthane.where((k) =>
-        k.title.toLowerCase().contains(query) ||
-        k.number.toString().contains(query)
-      ).toList();
+      currentKeerthane = currentKeerthane
+          .where((k) =>
+              k.title.toLowerCase().contains(query) ||
+              k.number.toString().contains(query))
+          .toList();
     }
 
     setState(() {
@@ -312,7 +336,8 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
         backgroundColor: colorScheme.surface,
         flexibleSpace: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
             child: LayoutBuilder(
               builder: (context, constraints) {
                 return Column(
@@ -340,7 +365,8 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
                       backgroundColor: colorScheme.surfaceContainerHighest,
                       searchIconColor: colorScheme.onSurfaceVariant,
                       clearIconColor: colorScheme.onSurfaceVariant,
-                      textStyle: textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface),
+                      textStyle: textTheme.bodyLarge
+                          ?.copyWith(color: colorScheme.onSurface),
                     ),
                     const SizedBox(height: 4),
                     Row(
@@ -352,26 +378,48 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
                             ChoiceChip(
                               label: const Text('Number'),
                               selected: _orderBy == 'number',
-                              onSelected: (s) async { await HapticFeedbackManager.lightClick(); setState(() { _orderBy = 'number'; _sortAndFilterKeerthanes(); }); },
-                              labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                              labelPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              onSelected: (s) async {
+                                await HapticFeedbackManager.lightClick();
+                                setState(() {
+                                  _orderBy = 'number';
+                                  _sortAndFilterKeerthanes();
+                                });
+                              },
+                              labelStyle: const TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w600),
+                              labelPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 2),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
                               selectedColor: colorScheme.primaryContainer,
                               backgroundColor: colorScheme.surfaceContainerHigh,
-                              visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: const VisualDensity(
+                                  horizontal: -2, vertical: -2),
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
                             ),
                             ChoiceChip(
                               label: const Text('Title'),
                               selected: _orderBy == 'title',
-                              onSelected: (s) async { await HapticFeedbackManager.lightClick(); setState(() { _orderBy = 'title'; _sortAndFilterKeerthanes(); }); },
-                              labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                              labelPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 2),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              onSelected: (s) async {
+                                await HapticFeedbackManager.lightClick();
+                                setState(() {
+                                  _orderBy = 'title';
+                                  _sortAndFilterKeerthanes();
+                                });
+                              },
+                              labelStyle: const TextStyle(
+                                  fontSize: 14, fontWeight: FontWeight.w600),
+                              labelPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 2),
+                              shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(12)),
                               selectedColor: colorScheme.primaryContainer,
                               backgroundColor: colorScheme.surfaceContainerHigh,
-                              visualDensity: const VisualDensity(horizontal: -2, vertical: -2),
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              visualDensity: const VisualDensity(
+                                  horizontal: -2, vertical: -2),
+                              materialTapTargetSize:
+                                  MaterialTapTargetSize.shrinkWrap,
                             ),
                           ],
                         ),
@@ -379,11 +427,17 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
                         ActionChip(
                           label: const Text('Refresh'),
                           avatar: const Icon(Icons.refresh, size: 16),
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 2),
-                          labelStyle: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 2),
+                          labelStyle: const TextStyle(
+                              fontSize: 14, fontWeight: FontWeight.w600),
                           shape: const StadiumBorder(),
-                          backgroundColor: colorScheme.primary.withOpacity(0.10),
-                          onPressed: () async { await HapticFeedbackManager.lightClick(); await checkAndUpdateLyrics(); },
+                          backgroundColor:
+                              colorScheme.primary.withOpacity(0.10),
+                          onPressed: () async {
+                            await HapticFeedbackManager.lightClick();
+                            await checkAndUpdateLyrics();
+                          },
                         ),
                       ],
                     )
@@ -403,14 +457,20 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
                 children: [
                   if (_isLoading && keerthane.isEmpty)
                     const Center(child: CircularProgressIndicator())
-                  else if (filteredKeerthane.isEmpty && (_searchQuery != null && _searchQuery!.isNotEmpty))
+                  else if (filteredKeerthane.isEmpty &&
+                      (_searchQuery != null && _searchQuery!.isNotEmpty))
                     Center(
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Lottie.asset('lib/assets/lottie/search-empty.json', width: 200, height: 200),
+                          Lottie.asset('lib/assets/lottie/search-empty.json',
+                              width: 200, height: 200),
                           const SizedBox(height: 16),
-                          Text('No Keerthane found for "$_searchQuery".', style: textTheme.titleMedium, textAlign: TextAlign.center,),
+                          Text(
+                            'No Keerthane found for "$_searchQuery".',
+                            style: textTheme.titleMedium,
+                            textAlign: TextAlign.center,
+                          ),
                         ],
                       ),
                     )
@@ -421,7 +481,8 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
                       itemCount: filteredKeerthane.length,
                       itemBuilder: (context, index) {
                         final keerthaneItem = filteredKeerthane[index];
-                        return _buildKeerthaneListTile(keerthaneItem, colorScheme, textTheme);
+                        return _buildKeerthaneListTile(
+                            keerthaneItem, colorScheme, textTheme);
                       },
                     ),
                   if (_showScrollToTopButton)
@@ -446,7 +507,8 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
     );
   }
 
-  Widget _buildKeerthaneListTile(Keerthane keerthaneItem, ColorScheme colorScheme, TextTheme textTheme) {
+  Widget _buildKeerthaneListTile(
+      Keerthane keerthaneItem, ColorScheme colorScheme, TextTheme textTheme) {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -465,10 +527,9 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
             ),
           ),
         ),
-        title: Text(
-          'Keerthane ${keerthaneItem.number}: ${keerthaneItem.title}',
-          style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)
-        ),
+        title: Text('Keerthane ${keerthaneItem.number}: ${keerthaneItem.title}',
+            style:
+                textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600)),
         trailing: Icon(Icons.chevron_right, color: colorScheme.secondary),
         onTap: () {
           HapticFeedbackManager.lightClick();
@@ -476,19 +537,23 @@ class _KeerthaneScreenState extends State<KeerthaneScreen> {
             context,
             PageRouteBuilder(
               transitionDuration: const Duration(milliseconds: 300),
-              pageBuilder: (context, animation, secondaryAnimation) => KeerthaneDetailScreen(keerthane: keerthaneItem),
-              transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              pageBuilder: (context, animation, secondaryAnimation) =>
+                  KeerthaneDetailScreen(keerthane: keerthaneItem),
+              transitionsBuilder:
+                  (context, animation, secondaryAnimation, child) {
                 return SharedAxisTransition(
                   animation: animation,
                   secondaryAnimation: secondaryAnimation,
-                  transitionType: SharedAxisTransitionType.horizontal, // Use a suitable transition type like SLIDE
+                  transitionType: SharedAxisTransitionType
+                      .horizontal, // Use a suitable transition type like SLIDE
                   child: child,
                 );
               },
             ),
           );
         },
-        contentPadding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
+        contentPadding:
+            const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
       ),
     );
   }

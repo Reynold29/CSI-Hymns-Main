@@ -4,7 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class AppThemeScreen extends StatefulWidget {
   final bool initialDarkModeState;
 
-  const AppThemeScreen({super.key, required this.initialDarkModeState}); 
+  const AppThemeScreen({super.key, required this.initialDarkModeState});
 
   @override
   _AppThemeScreenState createState() => _AppThemeScreenState();
@@ -16,17 +16,17 @@ class _AppThemeScreenState extends State<AppThemeScreen> {
   @override
   void initState() {
     super.initState();
-    _isDarkMode = widget.initialDarkModeState; 
-    _loadThemePreference(); 
+    _isDarkMode = widget.initialDarkModeState;
+    _loadThemePreference();
   }
 
-    void _loadThemePreference() async {
+  void _loadThemePreference() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _isDarkMode = prefs.getBool('isDarkMode') ?? false; 
+      _isDarkMode = prefs.getBool('isDarkMode') ?? false;
     });
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

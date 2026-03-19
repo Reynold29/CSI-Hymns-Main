@@ -8,7 +8,7 @@ import 'package:crypto/crypto.dart';
 import 'dart:convert';
 
 /// Widget for viewing PDF song sheets with full rendering support.
-/// 
+///
 /// Features:
 /// - Full PDF page rendering on all platforms (iOS, Android, Web, Desktop)
 /// - Aggressive caching for faster loading
@@ -16,7 +16,7 @@ import 'dart:convert';
 /// - Page navigation for multi-page PDFs
 /// - Smooth page transitions
 /// - Loading states and error handling
-/// 
+///
 /// Uses the `pdfx` package for cross-platform PDF rendering.
 class PdfSongViewer extends StatefulWidget {
   final String pdfPath;
@@ -69,12 +69,12 @@ class _PdfSongViewerState extends State<PdfSongViewer> {
 
     try {
       PdfDocument document;
-      
+
       if (widget.pdfPath.startsWith('http')) {
         // Check cache first
         final cacheKey = _getCacheKey(widget.pdfPath);
         String? localPath = _cachedPaths[cacheKey];
-        
+
         if (localPath != null && await File(localPath).exists()) {
           // Use cached file
           setState(() => _loadingStatus = 'Loading from cache...');
@@ -117,30 +117,30 @@ class _PdfSongViewerState extends State<PdfSongViewer> {
     // Use application documents directory for persistent caching
     final directory = await getApplicationDocumentsDirectory();
     final cacheDir = Directory('${directory.path}/pdf_cache');
-    
+
     // Create cache directory if it doesn't exist
     if (!await cacheDir.exists()) {
       await cacheDir.create(recursive: true);
     }
-    
+
     final filePath = '${cacheDir.path}/$cacheKey.pdf';
     final file = File(filePath);
-    
+
     // Check if already cached on disk
     if (await file.exists()) {
       return filePath;
     }
-    
+
     // Download the file
     final response = await http.get(Uri.parse(url));
-    
+
     if (response.statusCode != 200) {
       throw Exception('Failed to download PDF: ${response.statusCode}');
     }
 
     // Save to cache
     await file.writeAsBytes(response.bodyBytes);
-    
+
     return filePath;
   }
 
@@ -208,7 +208,7 @@ class _PdfSongViewerState extends State<PdfSongViewer> {
       children: [
         // Navigation toolbar (only show if multiple pages)
         if (_totalPages > 1) _buildToolbar(colorScheme, textTheme),
-        
+
         // PDF content area
         Expanded(
           child: Container(

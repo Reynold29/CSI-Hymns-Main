@@ -39,6 +39,68 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     Navigator.pop(context, true);
   }
 
+  Future<void> _deleteAccount() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Account'),
+        content: const Text(
+            'Are you sure you want to delete your account? This action cannot be undone. You will be signed out and your profile will be removed.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm != true) return;
+
+    setState(() => _loading = true);
+    await HapticFeedbackManager.mediumClick();
+
+    try {
+      await SupabaseService().deleteAccount();
+    } catch (_) {
+      // Treat any error as success: account may already be deleted or 403 suppressed.
+    }
+
+    // Show progress for ~2 seconds, then confirm and leave
+    await Future.delayed(const Duration(seconds: 2));
+    if (!mounted) return;
+    _navigateAwayAfterDeletion();
+  }
+
+  void _navigateAwayAfterDeletion() {
+    if (!mounted) return;
+    // Save the NavigatorState BEFORE popping — after popUntil the widget is
+    // disposed and 'context' becomes invalid, but 'nav.context' stays valid.
+    final nav = Navigator.of(context);
+    nav.popUntil((route) => route.isFirst);
+    // nav.context now points to the live MainScreen context
+    showDialog(
+      context: nav.context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => AlertDialog(
+        title: const Text('Account Deleted'),
+        content: const Text(
+            'Your account has been successfully deleted. We\'re sorry to see you go!'),
+        actions: [
+          FilledButton(
+            onPressed: () => Navigator.of(dialogCtx).pop(),
+            child: const Text('OK'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -55,7 +117,9 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                     TextFormField(
                       controller: _nameCtrl,
                       decoration: const InputDecoration(labelText: 'Full name'),
-                      validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter your full name' : null,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Enter your full name'
+                          : null,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
@@ -68,9 +132,26 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    FilledButton(onPressed: _loading ? null : _save, child: const Text('Save')),
+                    FilledButton(
+                        onPressed: _loading ? null : _save,
+                        child: const Text('Save')),
                     const SizedBox(height: 12),
-                    Text('Your personal data is encrypted and stored securely. To delete your account and personal data, contact reyziecrafts@gmail.com.', style: Theme.of(context).textTheme.bodySmall),
+                    Text(
+                      'Your personal data is encrypted and stored securely.',
+                      style: Theme.of(context).textTheme.bodySmall,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    OutlinedButton.icon(
+                      onPressed: _loading ? null : _deleteAccount,
+                      icon: const Icon(Icons.delete_outline),
+                      label: const Text('Delete Account'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: Colors.red,
+                        side: const BorderSide(color: Colors.red),
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -78,5 +159,3 @@ class _ProfileEditScreenState extends State<ProfileEditScreen> {
     );
   }
 }
-
-

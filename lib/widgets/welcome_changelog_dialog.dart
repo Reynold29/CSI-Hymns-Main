@@ -29,17 +29,17 @@ class _WelcomeChangelogDialogState extends State<WelcomeChangelogDialog>
   @override
   void initState() {
     super.initState();
-    
+
     _fadeController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 600),
     );
-    
+
     _slideController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 500),
     );
-    
+
     _sparkleController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 2),
@@ -158,22 +158,30 @@ class _WelcomeChangelogDialogState extends State<WelcomeChangelogDialog>
                                     gradient: LinearGradient(
                                       colors: isDark
                                           ? [
-                                              theme.colorScheme.primaryContainer.withOpacity(0.6),
-                                              theme.colorScheme.secondaryContainer.withOpacity(0.4),
+                                              theme.colorScheme.primaryContainer
+                                                  .withOpacity(0.6),
+                                              theme.colorScheme
+                                                  .secondaryContainer
+                                                  .withOpacity(0.4),
                                             ]
                                           : [
-                                              theme.colorScheme.primaryContainer.withOpacity(0.5),
-                                              theme.colorScheme.secondaryContainer.withOpacity(0.3),
+                                              theme.colorScheme.primaryContainer
+                                                  .withOpacity(0.5),
+                                              theme.colorScheme
+                                                  .secondaryContainer
+                                                  .withOpacity(0.3),
                                             ],
                                     ),
                                     shape: BoxShape.circle,
                                     border: Border.all(
-                                      color: theme.colorScheme.primary.withOpacity(0.2),
+                                      color: theme.colorScheme.primary
+                                          .withOpacity(0.2),
                                       width: 1.5,
                                     ),
                                     boxShadow: [
                                       BoxShadow(
-                                        color: theme.colorScheme.primary.withOpacity(0.15),
+                                        color: theme.colorScheme.primary
+                                            .withOpacity(0.15),
                                         blurRadius: 10,
                                         spreadRadius: 1,
                                       ),
@@ -187,19 +195,23 @@ class _WelcomeChangelogDialogState extends State<WelcomeChangelogDialog>
                                 const SizedBox(width: 16),
                                 Expanded(
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'Welcome!',
-                                        style: theme.textTheme.headlineSmall?.copyWith(
+                                        style: theme.textTheme.headlineSmall
+                                            ?.copyWith(
                                           fontWeight: FontWeight.bold,
                                           color: theme.colorScheme.primary,
                                         ),
                                       ),
                                       Text(
                                         'Version ${widget.changelog.version}',
-                                        style: theme.textTheme.bodySmall?.copyWith(
-                                          color: theme.colorScheme.onSurfaceVariant,
+                                        style:
+                                            theme.textTheme.bodySmall?.copyWith(
+                                          color: theme
+                                              .colorScheme.onSurfaceVariant,
                                         ),
                                       ),
                                     ],
@@ -212,10 +224,12 @@ class _WelcomeChangelogDialogState extends State<WelcomeChangelogDialog>
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: theme.colorScheme.primaryContainer.withOpacity(0.3),
+                                color: theme.colorScheme.primaryContainer
+                                    .withOpacity(0.3),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                  color: theme.colorScheme.primary.withOpacity(0.3),
+                                  color: theme.colorScheme.primary
+                                      .withOpacity(0.3),
                                   width: 1.5,
                                 ),
                               ),
@@ -229,7 +243,8 @@ class _WelcomeChangelogDialogState extends State<WelcomeChangelogDialog>
                                   Expanded(
                                     child: Text(
                                       widget.changelog.title,
-                                      style: theme.textTheme.titleLarge?.copyWith(
+                                      style:
+                                          theme.textTheme.titleLarge?.copyWith(
                                         fontWeight: FontWeight.bold,
                                         color: theme.colorScheme.onSurface,
                                       ),
@@ -270,7 +285,8 @@ class _WelcomeChangelogDialogState extends State<WelcomeChangelogDialog>
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Container(
-                                      margin: const EdgeInsets.only(top: 4, right: 12),
+                                      margin: const EdgeInsets.only(
+                                          top: 4, right: 12),
                                       child: Text(
                                         emoji,
                                         style: const TextStyle(fontSize: 20),
@@ -279,7 +295,8 @@ class _WelcomeChangelogDialogState extends State<WelcomeChangelogDialog>
                                     Expanded(
                                       child: Text(
                                         change,
-                                        style: theme.textTheme.bodyMedium?.copyWith(
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
                                           height: 1.5,
                                           color: theme.colorScheme.onSurface,
                                         ),
@@ -296,8 +313,10 @@ class _WelcomeChangelogDialogState extends State<WelcomeChangelogDialog>
                               decoration: BoxDecoration(
                                 gradient: LinearGradient(
                                   colors: [
-                                    theme.colorScheme.secondaryContainer.withOpacity(0.5),
-                                    theme.colorScheme.tertiaryContainer.withOpacity(0.3),
+                                    theme.colorScheme.secondaryContainer
+                                        .withOpacity(0.5),
+                                    theme.colorScheme.tertiaryContainer
+                                        .withOpacity(0.3),
                                   ],
                                 ),
                                 borderRadius: BorderRadius.circular(16),
@@ -330,7 +349,8 @@ class _WelcomeChangelogDialogState extends State<WelcomeChangelogDialog>
                                 style: FilledButton.styleFrom(
                                   backgroundColor: theme.colorScheme.primary,
                                   foregroundColor: theme.colorScheme.onPrimary,
-                                  padding: const EdgeInsets.symmetric(vertical: 16),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 16),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12),
                                   ),
@@ -361,8 +381,8 @@ class _WelcomeChangelogDialogState extends State<WelcomeChangelogDialog>
           child: Text(
             tip,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              height: 1.4,
-            ),
+                  height: 1.4,
+                ),
           ),
         ),
       ],
@@ -387,7 +407,7 @@ class SparklePainter extends CustomPainter {
       final x = random.nextDouble() * size.width;
       final y = random.nextDouble() * size.height;
       final radius = 2 + random.nextDouble() * 3;
-      
+
       canvas.drawCircle(
         Offset(x, y),
         radius,
@@ -401,4 +421,3 @@ class SparklePainter extends CustomPainter {
     return oldDelegate.animationValue != animationValue;
   }
 }
-

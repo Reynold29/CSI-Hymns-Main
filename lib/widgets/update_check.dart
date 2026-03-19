@@ -10,9 +10,10 @@ class UpdateManager {
         try {
           await InAppUpdate.startFlexibleUpdate();
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: const Text("Update downloaded. Restart the app to apply."),
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                duration: const Duration(milliseconds: 1500),
+                content:
+                    const Text("Update downloaded. Restart the app to apply."),
                 action: SnackBarAction(
                   label: 'RESTART',
                   onPressed: () async {
@@ -24,24 +25,29 @@ class UpdateManager {
           }
         } catch (e) {
           if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text("Update check completed. Please update from Play Store.")),
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                  duration: const Duration(milliseconds: 1500),
+                  content: Text(
+                      "Update check completed. Please update from Play Store.")),
             );
           }
         }
       } else {
         // Already up to date or no update available
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text("You're on the latest version!")),
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                duration: const Duration(milliseconds: 1500),
+                content: Text("You're on the latest version!")),
           );
         }
       }
     } catch (e) {
       // Silently handle errors - in-app updates only work for Play Store installs
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Update check unavailable. Please check Play Store for updates.")),
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              duration: const Duration(milliseconds: 1500),
+              content: Text(
+                  "Update check unavailable. Please check Play Store for updates.")),
         );
       }
     }

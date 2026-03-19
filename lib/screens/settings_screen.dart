@@ -28,7 +28,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     // Determine the current visual theme status for the toggle
     bool currentVisualIsDark;
     if (themeState.themeMode == ThemeMode.system) {
-      currentVisualIsDark = MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+      currentVisualIsDark =
+          MediaQuery.platformBrightnessOf(context) == Brightness.dark;
     } else {
       currentVisualIsDark = themeState.themeMode == ThemeMode.dark;
     }
@@ -42,11 +43,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 18.0),
           children: <Widget>[
-            _buildSectionHeader(context, 'Appearance', FontAwesomeIcons.palette),
+            _buildSectionHeader(
+                context, 'Appearance', FontAwesomeIcons.palette),
             Card(
               elevation: 2,
               margin: const EdgeInsets.only(bottom: 18),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18)),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 child: Column(
@@ -56,16 +59,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       value: currentVisualIsDark,
                       onChanged: (bool value) {
                         HapticFeedbackManager.lightClick();
-                        themeState.setThemeMode(value ? ThemeMode.dark : ThemeMode.light);
+                        themeState.setThemeMode(
+                            value ? ThemeMode.dark : ThemeMode.light);
                       },
-                      secondary: Icon(currentVisualIsDark ? FontAwesomeIcons.solidMoon : FontAwesomeIcons.moon),
+                      secondary: Icon(currentVisualIsDark
+                          ? FontAwesomeIcons.solidMoon
+                          : FontAwesomeIcons.moon),
                       activeColor: Theme.of(context).colorScheme.primary,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     if (currentVisualIsDark)
                       SwitchListTile(
                         title: const Text('AMOLED Black Mode'),
-                        subtitle: const Text('Uses true black for dark theme backgrounds'),
+                        subtitle: const Text(
+                            'Uses true black for dark theme backgrounds'),
                         value: themeState.blackThemeEnabled,
                         onChanged: (bool value) {
                           HapticFeedbackManager.lightClick();
@@ -73,11 +81,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         },
                         secondary: const Icon(FontAwesomeIcons.paintRoller),
                         activeColor: Theme.of(context).colorScheme.primary,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                        shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12)),
                       ),
                     ListTile(
                       title: const Text('Theme Color'),
-                      subtitle: const Text('Tap to change the app\'s primary color'),
+                      subtitle:
+                          const Text('Tap to change the app\'s primary color'),
                       trailing: Container(
                         width: 32,
                         height: 32,
@@ -94,17 +104,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         HapticFeedbackManager.lightClick();
                         _showColorPickerDialog(context, themeState);
                       },
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                   ],
                 ),
               ),
             ),
-            _buildSectionHeader(context, 'Special Features', FontAwesomeIcons.star),
+            _buildSectionHeader(
+                context, 'Special Features', FontAwesomeIcons.star),
             Card(
               elevation: 2,
               margin: const EdgeInsets.only(bottom: 18),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18)),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 child: Consumer<ChristmasModeService>(
@@ -131,17 +144,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             : null,
                       ),
                       activeColor: const Color(0xFFB22222),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     );
                   },
                 ),
               ),
             ),
-            _buildSectionHeader(context, 'App Information', FontAwesomeIcons.circleInfo),
+            _buildSectionHeader(
+                context, 'App Information', FontAwesomeIcons.circleInfo),
             Card(
               elevation: 2,
               margin: const EdgeInsets.only(bottom: 18),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(18)),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
                 child: Column(
@@ -166,7 +182,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                 });
                               }
                             },
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     ListTile(
                       leading: const Icon(FontAwesomeIcons.scroll),
@@ -175,10 +192,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         HapticFeedbackManager.lightClick();
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const ChangelogScreen()),
+                          MaterialPageRoute(
+                              builder: (context) => const ChangelogScreen()),
                         );
                       },
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                     ListTile(
                       leading: const Icon(FontAwesomeIcons.book),
@@ -187,10 +206,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         HapticFeedbackManager.lightClick();
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const AboutApp()),
+                          MaterialPageRoute(
+                              builder: (context) => const AboutApp()),
                         );
                       },
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12)),
                     ),
                   ],
                 ),
@@ -202,7 +223,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildSectionHeader(BuildContext context, String title, IconData icon) {
+  Widget _buildSectionHeader(
+      BuildContext context, String title, IconData icon) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
       child: Row(
@@ -222,7 +244,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Future<void> _showColorPickerDialog(BuildContext context, ThemeState themeState) async {
+  Future<void> _showColorPickerDialog(
+      BuildContext context, ThemeState themeState) async {
     Color newColor = themeState.seedColor;
 
     return showDialog<void>(
@@ -286,14 +309,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Future<void> _showRemoteJsonDialog(BuildContext context, ChristmasCarolsService service) async {
+  Future<void> _showRemoteJsonDialog(
+      BuildContext context, ChristmasCarolsService service) async {
     final currentUrl = await service.getRemoteJsonUrl();
     final prefs = await SharedPreferences.getInstance();
     final customUrl = prefs.getString('remote_carols_json_url');
     final isUsingDefault = customUrl == null || customUrl.isEmpty;
-    
-    final urlController = TextEditingController(text: isUsingDefault ? service.defaultRemoteJsonUrl : (currentUrl ?? ''));
-    
+
+    final urlController = TextEditingController(
+        text:
+            isUsingDefault ? service.defaultRemoteJsonUrl : (currentUrl ?? ''));
+
     await showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -335,14 +361,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 await service.setRemoteJsonUrl(null);
                 if (context.mounted) {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Reverted to default remote JSON URL')),
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                        duration: const Duration(milliseconds: 1500),
+                        content: Text('Reverted to default remote JSON URL')),
                   );
                   // Refresh carols
                   await service.loadAllCarols();
                 }
               },
-              child: const Text('Use Default', style: TextStyle(color: Colors.blue)),
+              child: const Text('Use Default',
+                  style: TextStyle(color: Colors.blue)),
             ),
           FilledButton(
             onPressed: () async {
@@ -355,8 +383,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   final uri = Uri.parse(url);
                   if (!uri.hasScheme || (!uri.scheme.startsWith('http'))) {
                     if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Please enter a valid HTTP/HTTPS URL')),
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                            duration: const Duration(milliseconds: 1500),
+                            content:
+                                Text('Please enter a valid HTTP/HTTPS URL')),
                       );
                     }
                     return;
@@ -364,19 +394,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   await service.setRemoteJsonUrl(url);
                 } catch (e) {
                   if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Invalid URL: $e')),
+                    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          duration: const Duration(milliseconds: 1500),
+                          content: Text('Invalid URL: $e')),
                     );
                   }
                   return;
                 }
               }
-              
+
               if (context.mounted) {
                 Navigator.pop(context);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(url.isEmpty 
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                    duration: const Duration(milliseconds: 1500),
+                    content: Text(url.isEmpty
                         ? 'Remote JSON URL removed'
                         : 'Remote JSON URL set. Refreshing...'),
                   ),
@@ -392,7 +423,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Future<void> _importJsonFile(BuildContext context, ChristmasCarolsService service) async {
+  Future<void> _importJsonFile(
+      BuildContext context, ChristmasCarolsService service) async {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -405,8 +437,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       final file = result.files.first;
       if (file.path == null) {
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not access the file')),
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                duration: const Duration(milliseconds: 1500),
+                content: Text('Could not access the file')),
           );
         }
         return;
@@ -437,12 +470,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       try {
         final imported = await service.importFromJsonFile(file.path!);
-        
+
         if (context.mounted) {
           Navigator.pop(context); // Close loading
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Imported ${imported.length} carol(s) successfully'),
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              duration: const Duration(milliseconds: 1500),
+              content:
+                  Text('Imported ${imported.length} carol(s) successfully'),
               backgroundColor: Colors.green,
             ),
           );
@@ -450,21 +484,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
       } catch (e) {
         if (context.mounted) {
           Navigator.pop(context); // Close loading
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Import failed: $e')),
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                duration: const Duration(milliseconds: 1500),
+                content: Text('Import failed: $e')),
           );
         }
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              duration: const Duration(milliseconds: 1500),
+              content: Text('Error: $e')),
         );
       }
     }
   }
 
-  Future<void> _exportJsonFile(BuildContext context, ChristmasCarolsService service) async {
+  Future<void> _exportJsonFile(
+      BuildContext context, ChristmasCarolsService service) async {
     try {
       // Show loading
       if (context.mounted) {
@@ -491,11 +528,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
       try {
         final filePath = await service.exportToJsonFile();
-        
+
         if (context.mounted) {
           Navigator.pop(context); // Close loading
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text('Exported to: $filePath'),
               duration: const Duration(seconds: 4),
               action: SnackBarAction(
@@ -508,15 +544,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       } catch (e) {
         if (context.mounted) {
           Navigator.pop(context); // Close loading
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Export failed: $e')),
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                duration: const Duration(milliseconds: 1500),
+                content: Text('Export failed: $e')),
           );
         }
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              duration: const Duration(milliseconds: 1500),
+              content: Text('Error: $e')),
         );
       }
     }

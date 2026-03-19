@@ -12,7 +12,7 @@ import 'package:hymns_latest/screens/auth_screen.dart';
 import 'package:file_picker/file_picker.dart';
 
 /// Screen displaying the list of Churches/Groups with Christmas Carols.
-/// 
+///
 /// Features:
 /// - List of churches/groups
 /// - Each church shows its uploaded carols
@@ -50,13 +50,14 @@ class _ChristmasCarolsScreenState extends State<ChristmasCarolsScreen> {
   Future<void> _loadCarols({bool checkGitHub = true}) async {
     if (!mounted) return;
     setState(() => _isLoading = true);
-    
+
     try {
       final carolsService = context.read<ChristmasCarolsService>();
-      final carols = await carolsService.loadAllCarols(checkGitHub: checkGitHub);
-      
+      final carols =
+          await carolsService.loadAllCarols(checkGitHub: checkGitHub);
+
       if (!mounted) return;
-      
+
       // Group carols by church name
       final Map<String, List<ChristmasCarol>> groups = {};
       for (final carol in carols) {
@@ -66,7 +67,7 @@ class _ChristmasCarolsScreenState extends State<ChristmasCarolsScreen> {
         }
         groups[churchName]!.add(carol);
       }
-      
+
       setState(() {
         _churchGroups = groups;
         _isLoading = false;
@@ -74,8 +75,9 @@ class _ChristmasCarolsScreenState extends State<ChristmasCarolsScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() => _isLoading = false);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error loading carols: $e')),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            duration: const Duration(milliseconds: 1500),
+            content: Text('Error loading carols: $e')),
       );
     }
   }
@@ -89,16 +91,15 @@ class _ChristmasCarolsScreenState extends State<ChristmasCarolsScreen> {
       if (church.toLowerCase().contains(lowerQuery)) return true;
       // Also search in carols of this church
       final carols = _churchGroups[church] ?? [];
-      return carols.any((c) => 
-        c.title.toLowerCase().contains(lowerQuery) ||
-        c.scale.toLowerCase().contains(lowerQuery)
-      );
+      return carols.any((c) =>
+          c.title.toLowerCase().contains(lowerQuery) ||
+          c.scale.toLowerCase().contains(lowerQuery));
     }).toList();
   }
 
   Future<void> _showAddChurchDialog() async {
     final user = SupabaseService().currentUser;
-    
+
     if (user == null) {
       final result = await showDialog<bool>(
         context: context,
@@ -124,7 +125,7 @@ class _ChristmasCarolsScreenState extends State<ChristmasCarolsScreen> {
           ],
         ),
       );
-      
+
       if (result == true && mounted) {
         await Navigator.push(
           context,
@@ -196,15 +197,15 @@ class _ChristmasCarolsScreenState extends State<ChristmasCarolsScreen> {
               Text(
                 'Add to "$churchName"',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               const SizedBox(height: 8),
               Text(
                 'Choose what you want to add:',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
               ),
               const SizedBox(height: 20),
               // Add Song option
@@ -265,8 +266,8 @@ class _ChristmasCarolsScreenState extends State<ChristmasCarolsScreen> {
 
     if (newCarol != null && mounted) {
       await _loadCarols();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          duration: const Duration(milliseconds: 1500),
           content: Text('Added "${newCarol.title}"'),
           backgroundColor: ChristmasColors.christmasGreen,
         ),
@@ -287,8 +288,9 @@ class _ChristmasCarolsScreenState extends State<ChristmasCarolsScreen> {
     final file = result.files.first;
     if (file.path == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not access the file')),
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              duration: const Duration(milliseconds: 1500),
+              content: Text('Could not access the file')),
         );
       }
       return;
@@ -297,7 +299,7 @@ class _ChristmasCarolsScreenState extends State<ChristmasCarolsScreen> {
     // Get song title from file name or ask user
     final fileName = file.name.replaceAll('.pdf', '');
     final titleController = TextEditingController(text: fileName);
-    
+
     final songTitle = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -364,8 +366,8 @@ class _ChristmasCarolsScreenState extends State<ChristmasCarolsScreen> {
       if (mounted) {
         Navigator.pop(context); // Close loading dialog
         await _loadCarols();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            duration: const Duration(milliseconds: 1500),
             content: Text('Uploaded "${carol.title}"'),
             backgroundColor: ChristmasColors.christmasGreen,
           ),
@@ -374,8 +376,9 @@ class _ChristmasCarolsScreenState extends State<ChristmasCarolsScreen> {
     } catch (e) {
       if (mounted) {
         Navigator.pop(context); // Close loading dialog
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error uploading PDF: $e')),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              duration: const Duration(milliseconds: 1500),
+              content: Text('Error uploading PDF: $e')),
         );
       }
     }
@@ -397,7 +400,8 @@ class _ChristmasCarolsScreenState extends State<ChristmasCarolsScreen> {
             const Text('🎄 '),
             Text(
               'Christmas Carols',
-              style: textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              style:
+                  textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
           ],
         ),
@@ -412,8 +416,7 @@ class _ChristmasCarolsScreenState extends State<ChristmasCarolsScreen> {
               await HapticFeedbackManager.lightClick();
               await _loadCarols(checkGitHub: false);
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                     content: Text('Refreshed from server'),
                     duration: Duration(seconds: 2),
                   ),
@@ -428,47 +431,48 @@ class _ChristmasCarolsScreenState extends State<ChristmasCarolsScreen> {
           await _loadCarols(checkGitHub: false);
         },
         child: Column(
-        children: [
-          // Search bar
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _searchController,
-              focusNode: _searchFocusNode,
-              onChanged: (query) => setState(() => _searchQuery = query),
-              decoration: InputDecoration(
-                hintText: 'Search churches or songs...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() => _searchQuery = '');
-                          _searchFocusNode.unfocus();
-                        },
-                      )
-                    : null,
-                filled: true,
-                fillColor: colorScheme.surfaceContainerHighest,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  borderSide: BorderSide.none,
+          children: [
+            // Search bar
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: TextField(
+                controller: _searchController,
+                focusNode: _searchFocusNode,
+                onChanged: (query) => setState(() => _searchQuery = query),
+                decoration: InputDecoration(
+                  hintText: 'Search churches or songs...',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = '');
+                            _searchFocusNode.unfocus();
+                          },
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerHighest,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 ),
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               ),
             ),
-          ),
 
-          // Churches list
-          Expanded(
-            child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : churches.isEmpty
-                    ? _buildEmptyState(colorScheme, textTheme)
-                    : _buildChurchesList(churches, colorScheme, textTheme),
-          ),
-        ],
+            // Churches list
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : churches.isEmpty
+                      ? _buildEmptyState(colorScheme, textTheme)
+                      : _buildChurchesList(churches, colorScheme, textTheme),
+            ),
+          ],
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
@@ -527,9 +531,10 @@ class _ChristmasCarolsScreenState extends State<ChristmasCarolsScreen> {
     );
   }
 
-  Widget _buildChurchesList(List<String> churches, ColorScheme colorScheme, TextTheme textTheme) {
+  Widget _buildChurchesList(
+      List<String> churches, ColorScheme colorScheme, TextTheme textTheme) {
     final carolsService = context.read<ChristmasCarolsService>();
-    
+
     return ListView.builder(
       padding: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
       itemCount: churches.length,
@@ -561,50 +566,57 @@ class _ChristmasCarolsScreenState extends State<ChristmasCarolsScreen> {
             await HapticFeedbackManager.lightClick();
             final user = SupabaseService().currentUser;
             if (user == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Please login to add content')),
+              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    duration: const Duration(milliseconds: 1500),
+                    content: Text('Please login to add content')),
               );
               return;
             }
             await _showAddContentOptions(churchName);
           },
-          onDeleteTap: carolsService.canDeleteChurch(churchName) ? () async {
-            await HapticFeedbackManager.mediumClick();
-            final confirmed = await showDialog<bool>(
-              context: context,
-              builder: (context) => AlertDialog(
-                title: const Text('Delete Church?'),
-                content: Text(
-                  'Are you sure you want to delete "$churchName" and ALL its carols?\n\n'
-                  'This action cannot be undone.',
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text('Cancel'),
-                  ),
-                  FilledButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    style: FilledButton.styleFrom(backgroundColor: Colors.red),
-                    child: const Text('Delete All'),
-                  ),
-                ],
-              ),
-            );
-            
-            if (confirmed == true && mounted) {
-              try {
-                await carolsService.deleteChurch(churchName);
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Deleted "$churchName" and all its carols')),
-                );
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Error: $e')),
-                );
-              }
-            }
-          } : null,
+          onDeleteTap: carolsService.canDeleteChurch(churchName)
+              ? () async {
+                  await HapticFeedbackManager.mediumClick();
+                  final confirmed = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Delete Church?'),
+                      content: Text(
+                        'Are you sure you want to delete "$churchName" and ALL its carols?\n\n'
+                        'This action cannot be undone.',
+                      ),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text('Cancel'),
+                        ),
+                        FilledButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          style: FilledButton.styleFrom(
+                              backgroundColor: Colors.red),
+                          child: const Text('Delete All'),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (confirmed == true && mounted) {
+                    try {
+                      await carolsService.deleteChurch(churchName);
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            duration: const Duration(milliseconds: 1500),
+                            content: Text(
+                                'Deleted "$churchName" and all its carols')),
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            duration: const Duration(milliseconds: 1500),
+                            content: Text('Error: $e')),
+                      );
+                    }
+                  }
+                }
+              : null,
         );
       },
     );
@@ -776,7 +788,7 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
     _carols = _sortCarols(List.from(widget.carols));
     _searchController.addListener(_onSearchChanged);
   }
-  
+
   List<ChristmasCarol> _sortCarols(List<ChristmasCarol> carols) {
     if (_sortOrder == 'newest') {
       // Sort by newest to oldest
@@ -810,7 +822,7 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
     }
     return carols;
   }
-  
+
   String _sortOrder = 'number'; // 'number' or 'newest'
 
   @override
@@ -833,11 +845,12 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
     } else {
       filtered = _carols.where((carol) {
         final titleMatch = carol.title.toLowerCase().contains(_searchQuery);
-        final numberMatch = carol.songNumber?.toLowerCase().contains(_searchQuery) ?? false;
+        final numberMatch =
+            carol.songNumber?.toLowerCase().contains(_searchQuery) ?? false;
         return titleMatch || numberMatch;
       }).toList();
     }
-    
+
     // Always sort by song number first, then by date
     return _sortCarols(filtered);
   }
@@ -853,7 +866,7 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
       _carols = _sortCarols(churchCarols);
     });
   }
-  
+
   Future<void> _showFilterDialog() async {
     await showDialog(
       context: context,
@@ -903,8 +916,9 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
   Future<void> _showAddContentOptions() async {
     final user = SupabaseService().currentUser;
     if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please login to add content')),
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            duration: const Duration(milliseconds: 1500),
+            content: Text('Please login to add content')),
       );
       return;
     }
@@ -924,8 +938,8 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
               Text(
                 'Add to "${widget.churchName}"',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+                      fontWeight: FontWeight.bold,
+                    ),
               ),
               const SizedBox(height: 20),
               ListTile(
@@ -947,13 +961,14 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
                   Navigator.pop(context);
                   final newCarol = await showDialog<ChristmasCarol>(
                     context: context,
-                    builder: (context) => AddCarolDialog(prefilledChurchName: widget.churchName),
+                    builder: (context) =>
+                        AddCarolDialog(prefilledChurchName: widget.churchName),
                   );
                   if (newCarol != null) {
                     await _refreshCarols();
                     if (mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
+                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                          duration: const Duration(milliseconds: 1500),
                           content: Text('Added "${newCarol.title}"'),
                           backgroundColor: ChristmasColors.christmasGreen,
                         ),
@@ -1002,8 +1017,9 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
     final file = result.files.first;
     if (file.path == null) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not access the file')),
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              duration: const Duration(milliseconds: 1500),
+              content: Text('Could not access the file')),
         );
       }
       return;
@@ -1011,7 +1027,7 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
 
     final fileName = file.name.replaceAll('.pdf', '');
     final titleController = TextEditingController(text: fileName);
-    
+
     final songTitle = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -1077,8 +1093,8 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
       if (mounted) {
         Navigator.pop(context); // Close loading dialog
         await _refreshCarols();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            duration: const Duration(milliseconds: 1500),
             content: Text('Uploaded "${carol.title}"'),
             backgroundColor: ChristmasColors.christmasGreen,
           ),
@@ -1087,8 +1103,9 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
     } catch (e) {
       if (mounted) {
         Navigator.pop(context); // Close loading dialog
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error uploading PDF: $e')),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              duration: const Duration(milliseconds: 1500),
+              content: Text('Error uploading PDF: $e')),
         );
       }
     }
@@ -1096,10 +1113,12 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
 
   Future<void> _deleteChurch() async {
     final service = context.read<ChristmasCarolsService>();
-    
+
     if (!service.canDeleteChurch(widget.churchName)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Only admins or church creators can delete churches')),
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            duration: const Duration(milliseconds: 1500),
+            content:
+                Text('Only admins or church creators can delete churches')),
       );
       return;
     }
@@ -1131,14 +1150,16 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
         await service.deleteChurch(widget.churchName);
         if (mounted) {
           Navigator.pop(context); // Go back to church list
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Deleted "${widget.churchName}"')),
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                duration: const Duration(milliseconds: 1500),
+                content: Text('Deleted "${widget.churchName}"')),
           );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error: $e')),
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                duration: const Duration(milliseconds: 1500),
+                content: Text('Error: $e')),
           );
         }
       }
@@ -1169,7 +1190,8 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
                 Expanded(
                   child: ScrollingText(
                     text: widget.churchName,
-                    style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                    style: textTheme.titleMedium
+                        ?.copyWith(fontWeight: FontWeight.bold),
                     scrollDuration: const Duration(seconds: 8),
                     pauseDuration: const Duration(seconds: 1),
                   ),
@@ -1177,7 +1199,8 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
                 if (isAdmin)
                   Container(
                     margin: const EdgeInsets.only(left: 8),
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                     decoration: BoxDecoration(
                       color: Colors.purple.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(4),
@@ -1212,8 +1235,7 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
               await HapticFeedbackManager.lightClick();
               await _refreshCarols();
               if (mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
                     content: Text('Refreshed from server'),
                     duration: Duration(seconds: 2),
                   ),
@@ -1231,8 +1253,9 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
             },
             itemBuilder: (context) {
               final items = <PopupMenuEntry<String>>[];
-              final canDelete = carolsService.canDeleteChurch(widget.churchName);
-              
+              final canDelete =
+                  carolsService.canDeleteChurch(widget.churchName);
+
               if (canDelete) {
                 items.add(
                   const PopupMenuItem(
@@ -1243,7 +1266,8 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
                         SizedBox(width: 12),
                         Text(
                           'Delete Church',
-                          style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+                          style: TextStyle(
+                              color: Colors.red, fontWeight: FontWeight.w500),
                         ),
                       ],
                     ),
@@ -1258,7 +1282,7 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
                   ),
                 );
               }
-              
+
               return items;
             },
           ),
@@ -1272,86 +1296,88 @@ class _ChurchCarolsScreenState extends State<ChurchCarolsScreen> {
           children: [
             // Search bar
             Padding(
-            padding: const EdgeInsets.all(16),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search by song name or number...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+              padding: const EdgeInsets.all(16),
+              child: TextField(
+                controller: _searchController,
+                decoration: InputDecoration(
+                  hintText: 'Search by song name or number...',
+                  prefixIcon: const Icon(Icons.search),
+                  suffixIcon: _searchQuery.isNotEmpty
+                      ? IconButton(
+                          icon: const Icon(Icons.clear),
+                          onPressed: () {
+                            _searchController.clear();
+                          },
+                        )
+                      : null,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerHighest,
                 ),
-                filled: true,
-                fillColor: colorScheme.surfaceContainerHighest,
               ),
             ),
-          ),
-          // Carols list
-          Expanded(
-            child: _filteredCarols.isEmpty
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          _searchQuery.isNotEmpty
-                              ? Icons.search_off_rounded
-                              : Icons.music_off_rounded,
-                          size: 64,
-                          color: colorScheme.outline,
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          _searchQuery.isNotEmpty
-                              ? 'No carols found'
-                              : 'No carols yet',
-                          style: textTheme.titleMedium?.copyWith(
-                            color: colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          _searchQuery.isNotEmpty
-                              ? 'Try a different search term'
-                              : 'Add the first carol!',
-                          style: textTheme.bodyMedium?.copyWith(
+            // Carols list
+            Expanded(
+              child: _filteredCarols.isEmpty
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            _searchQuery.isNotEmpty
+                                ? Icons.search_off_rounded
+                                : Icons.music_off_rounded,
+                            size: 64,
                             color: colorScheme.outline,
                           ),
-                        ),
-                      ],
-                    ),
-                  )
-                : ListView.builder(
-                    padding: const EdgeInsets.only(left: 16, right: 16, bottom: 80),
-                    itemCount: _filteredCarols.length,
-                    itemBuilder: (context, index) {
-                      final carol = _filteredCarols[index];
-                return _CarolListTile(
-                  carol: carol,
-                  onTap: () async {
-                    await HapticFeedbackManager.lightClick();
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => CarolDetailScreen(carol: carol),
+                          const SizedBox(height: 16),
+                          Text(
+                            _searchQuery.isNotEmpty
+                                ? 'No carols found'
+                                : 'No carols yet',
+                            style: textTheme.titleMedium?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _searchQuery.isNotEmpty
+                                ? 'Try a different search term'
+                                : 'Add the first carol!',
+                            style: textTheme.bodyMedium?.copyWith(
+                              color: colorScheme.outline,
+                            ),
+                          ),
+                        ],
                       ),
-                    );
-                    // Refresh after returning
-                    _refreshCarols();
-                  },
-                );
-              },
+                    )
+                  : ListView.builder(
+                      padding: const EdgeInsets.only(
+                          left: 16, right: 16, bottom: 80),
+                      itemCount: _filteredCarols.length,
+                      itemBuilder: (context, index) {
+                        final carol = _filteredCarols[index];
+                        return _CarolListTile(
+                          carol: carol,
+                          onTap: () async {
+                            await HapticFeedbackManager.lightClick();
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    CarolDetailScreen(carol: carol),
+                              ),
+                            );
+                            // Refresh after returning
+                            _refreshCarols();
+                          },
+                        );
+                      },
+                    ),
             ),
-          ),
-        ],
+          ],
         ),
       ),
       floatingActionButton: Column(
@@ -1414,9 +1440,10 @@ class _CarolListTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final textTheme = Theme.of(context).textTheme;
-    
+
     // Calculate original scale for songs (not PDFs)
-    final originalScale = MusicalScales.getOriginalScale(carol.scale, carol.transpose);
+    final originalScale =
+        MusicalScales.getOriginalScale(carol.scale, carol.transpose);
     final hasTranspose = carol.transpose != 0;
 
     return Card(
@@ -1441,15 +1468,17 @@ class _CarolListTile extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: carol.hasPdf 
+                  color: carol.hasPdf
                       ? ChristmasColors.christmasRed.withOpacity(0.1)
                       : ChristmasColors.christmasGreen.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  carol.hasPdf ? Icons.picture_as_pdf : Icons.music_note_rounded,
-                  color: carol.hasPdf 
-                      ? ChristmasColors.christmasRed 
+                  carol.hasPdf
+                      ? Icons.picture_as_pdf
+                      : Icons.music_note_rounded,
+                  color: carol.hasPdf
+                      ? ChristmasColors.christmasRed
                       : ChristmasColors.christmasGreen,
                 ),
               ),
@@ -1463,7 +1492,8 @@ class _CarolListTile extends StatelessWidget {
                       children: [
                         if (carol.songNumber != null) ...[
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 6, vertical: 3),
                             decoration: BoxDecoration(
                               color: colorScheme.primary,
                               borderRadius: BorderRadius.circular(5),
@@ -1495,7 +1525,8 @@ class _CarolListTile extends StatelessWidget {
                     // For PDFs: just show "PDF" badge
                     if (carol.hasPdf && !carol.hasLyrics) ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
                           color: ChristmasColors.christmasRed.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(6),
@@ -1503,7 +1534,8 @@ class _CarolListTile extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(Icons.picture_as_pdf, size: 12, color: ChristmasColors.christmasRed),
+                            Icon(Icons.picture_as_pdf,
+                                size: 12, color: ChristmasColors.christmasRed),
                             const SizedBox(width: 4),
                             Text(
                               'PDF Document',
@@ -1534,7 +1566,9 @@ class _CarolListTile extends StatelessWidget {
                               color: Colors.blue,
                             ),
                             _ScaleChip(
-                              label: carol.transpose > 0 ? '+${carol.transpose}' : '${carol.transpose}',
+                              label: carol.transpose > 0
+                                  ? '+${carol.transpose}'
+                                  : '${carol.transpose}',
                               color: Colors.orange,
                               icon: Icons.swap_vert,
                             ),

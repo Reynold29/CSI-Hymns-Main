@@ -22,7 +22,10 @@ class SidebarOptions {
         ),
         title: Text(
           "Christmas",
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
+          style: Theme.of(context)
+              .textTheme
+              .bodyLarge
+              ?.copyWith(color: Theme.of(context).colorScheme.onSurface),
         ),
       ),
       ListTile(
@@ -39,7 +42,10 @@ class SidebarOptions {
         ),
         title: Text(
           "Lent and Good Friday",
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
+          style: Theme.of(context)
+              .textTheme
+              .bodyLarge
+              ?.copyWith(color: Theme.of(context).colorScheme.onSurface),
         ),
       ),
       ListTile(
@@ -56,7 +62,10 @@ class SidebarOptions {
         ),
         title: Text(
           "Easter",
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
+          style: Theme.of(context)
+              .textTheme
+              .bodyLarge
+              ?.copyWith(color: Theme.of(context).colorScheme.onSurface),
         ),
       ),
       ListTile(
@@ -73,7 +82,10 @@ class SidebarOptions {
         ),
         title: Text(
           "Jesus' Ascension and His Kingdom",
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
+          style: Theme.of(context)
+              .textTheme
+              .bodyLarge
+              ?.copyWith(color: Theme.of(context).colorScheme.onSurface),
         ),
       ),
       ListTile(
@@ -90,7 +102,10 @@ class SidebarOptions {
         ),
         title: Text(
           "Jesus' Coming Again",
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: Theme.of(context).colorScheme.onSurface),
+          style: Theme.of(context)
+              .textTheme
+              .bodyLarge
+              ?.copyWith(color: Theme.of(context).colorScheme.onSurface),
         ),
       ),
     ];

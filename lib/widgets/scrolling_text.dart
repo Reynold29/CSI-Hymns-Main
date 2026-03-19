@@ -57,7 +57,7 @@ class _ScrollingTextState extends State<ScrollingText>
 
   void _checkIfNeedsScroll([BoxConstraints? constraints]) {
     if (!mounted) return;
-    
+
     // Measure text's intrinsic width using TextPainter
     final textPainter = TextPainter(
       text: TextSpan(text: widget.text, style: widget.style),
@@ -66,10 +66,10 @@ class _ScrollingTextState extends State<ScrollingText>
     );
     textPainter.layout();
     final textWidth = textPainter.size.width;
-    
+
     // Get container width from constraints or RenderBox
     double containerWidth = 0;
-    
+
     if (constraints != null) {
       containerWidth = constraints.maxWidth;
     } else {
@@ -78,13 +78,14 @@ class _ScrollingTextState extends State<ScrollingText>
         containerWidth = containerBox.size.width;
       }
     }
-    
+
     // Only update if values actually changed
     if (textWidth > 0 && containerWidth > 0) {
       final needsScroll = textWidth > containerWidth + 2; // Add 2px tolerance
-      
-      if (needsScroll != _needsScroll || 
-          (needsScroll && (textWidth != _textWidth || containerWidth != _containerWidth))) {
+
+      if (needsScroll != _needsScroll ||
+          (needsScroll &&
+              (textWidth != _textWidth || containerWidth != _containerWidth))) {
         setState(() {
           _textWidth = textWidth;
           _containerWidth = containerWidth;
@@ -103,10 +104,10 @@ class _ScrollingTextState extends State<ScrollingText>
 
   void _startScrolling() {
     if (!_needsScroll || !mounted) return;
-    
+
     _controller.stop();
     _controller.reset();
-    
+
     Future.delayed(widget.pauseDuration, () {
       if (mounted && _needsScroll) {
         _controller.forward();
@@ -167,7 +168,8 @@ class _ScrollingTextState extends State<ScrollingText>
             child: AnimatedBuilder(
               animation: _animation,
               builder: (context, child) {
-                final scrollOffset = (_textWidth - _containerWidth) * _animation.value;
+                final scrollOffset =
+                    (_textWidth - _containerWidth) * _animation.value;
                 return Transform.translate(
                   offset: Offset(-scrollOffset, 0),
                   child: textWidget,

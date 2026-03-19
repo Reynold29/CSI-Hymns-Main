@@ -34,7 +34,10 @@ class _CategoriesState extends State<Categories> {
                 padding: const EdgeInsets.only(bottom: 12.0),
                 child: Text(
                   'Common Hymns',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleLarge
+                      ?.copyWith(fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -61,16 +64,60 @@ class _CategoriesState extends State<Categories> {
                 final customCats = (snap.data ?? []);
                 final children = <Widget>[
                   _buildCategoryCard(context, "Birthday", [361], [215]),
-                  _buildCategoryCard(context, "Marriage", [358, 359, 360], [188, 189, 190]),
-                  _buildCategoryCard(context, "House Warming", [362], [227, 228, 229, 230, 231, 232, 233, 234]),
-                  _buildCategoryCard(context, "Funeral", [310, 311,312], []),
-                  _buildCategoryCard(context, "Mangala", null, [227, 228, 229, 230, 231, 232, 233, 234]),
-                  _buildCategoryCard(context, "Children's Prayer", [328, 329, 330, 331, 332, 333, 334, 335, 336, 337, 338, 339, 340, 341, 342, 343, 344, 345, 346, 347, 348, 349], [200, 201, 202, 203, 204, 205, 206, 207, 208, 209]),
-                  _buildCategoryCard(context, "Lord's Supper", [273, 274, 275, 276, 277, 278, 279], [184, 185, 186, 187]),
+                  _buildCategoryCard(
+                      context, "Marriage", [358, 359, 360], [188, 189, 190]),
+                  _buildCategoryCard(context, "House Warming", [362],
+                      [227, 228, 229, 230, 231, 232, 233, 234]),
+                  _buildCategoryCard(context, "Funeral", [310, 311, 312], []),
+                  _buildCategoryCard(context, "Mangala", null,
+                      [227, 228, 229, 230, 231, 232, 233, 234]),
+                  _buildCategoryCard(context, "Children's Prayer", [
+                    328,
+                    329,
+                    330,
+                    331,
+                    332,
+                    333,
+                    334,
+                    335,
+                    336,
+                    337,
+                    338,
+                    339,
+                    340,
+                    341,
+                    342,
+                    343,
+                    344,
+                    345,
+                    346,
+                    347,
+                    348,
+                    349
+                  ], [
+                    200,
+                    201,
+                    202,
+                    203,
+                    204,
+                    205,
+                    206,
+                    207,
+                    208,
+                    209
+                  ]),
+                  _buildCategoryCard(
+                      context,
+                      "Lord's Supper",
+                      [273, 274, 275, 276, 277, 278, 279],
+                      [184, 185, 186, 187]),
                   _buildCategoryCard(context, "Travelling", [363], []),
                   _buildCategoryCard(context, "Sickness", [367], []),
                   // Dynamic custom categories cards
-                  ...customCats.map((c) => _buildCustomCategoryRuntimeCard(context, (c['name'] as String), (c['id'] as num).toInt())),
+                  ...customCats.map((c) => _buildCustomCategoryRuntimeCard(
+                      context,
+                      (c['name'] as String),
+                      (c['id'] as num).toInt())),
                   // Persistent create card
                   _buildCustomCategoriesCard(context),
                 ];
@@ -93,7 +140,8 @@ class _CategoriesState extends State<Categories> {
 
   // Legacy chip builder removed in favor of grid cards
 
-  Widget _buildCategoryCard(BuildContext context, String category, List<int>? hymnNumbers, List<int>? keerthaneNumbers) {
+  Widget _buildCategoryCard(BuildContext context, String category,
+      List<int>? hymnNumbers, List<int>? keerthaneNumbers) {
     final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: () async {
@@ -119,7 +167,10 @@ class _CategoriesState extends State<Categories> {
         child: Center(
           child: Text(
             category,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
+            style: Theme.of(context)
+                .textTheme
+                .titleSmall
+                ?.copyWith(fontWeight: FontWeight.w600),
             textAlign: TextAlign.center,
           ),
         ),
@@ -149,7 +200,10 @@ class _CategoriesState extends State<Categories> {
               Ink(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [colorScheme.primaryContainer, colorScheme.secondaryContainer],
+                    colors: [
+                      colorScheme.primaryContainer,
+                      colorScheme.secondaryContainer
+                    ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
@@ -162,7 +216,11 @@ class _CategoriesState extends State<Categories> {
                     children: [
                       Icon(Icons.add, color: colorScheme.onPrimaryContainer),
                       const SizedBox(width: 8),
-                      Text('Custom', style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800)),
+                      Text('Custom',
+                          style: Theme.of(context)
+                              .textTheme
+                              .titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w800)),
                     ],
                   ),
                 ),
@@ -172,13 +230,16 @@ class _CategoriesState extends State<Categories> {
                   top: 6,
                   right: 6,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color: colorScheme.surface,
                       borderRadius: BorderRadius.circular(999),
                       border: Border.all(color: colorScheme.outlineVariant),
                     ),
-                    child: Text('$remaining/${SupabaseService.localCategoryLimit}', style: Theme.of(context).textTheme.labelSmall),
+                    child: Text(
+                        '$remaining/${SupabaseService.localCategoryLimit}',
+                        style: Theme.of(context).textTheme.labelSmall),
                   ),
                 ),
             ],
@@ -188,7 +249,8 @@ class _CategoriesState extends State<Categories> {
     );
   }
 
-  Widget _buildCustomCategoryRuntimeCard(BuildContext context, String name, int categoryId) {
+  Widget _buildCustomCategoryRuntimeCard(
+      BuildContext context, String name, int categoryId) {
     final colorScheme = Theme.of(context).colorScheme;
     return InkWell(
       onTap: () async {
@@ -196,7 +258,8 @@ class _CategoriesState extends State<Categories> {
         await Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => CustomCategoryViewerScreen(categoryId: categoryId, categoryName: name),
+            builder: (_) => CustomCategoryViewerScreen(
+                categoryId: categoryId, categoryName: name),
           ),
         );
         if (mounted) setState(() => _reloadToken++);
@@ -209,7 +272,12 @@ class _CategoriesState extends State<Categories> {
           border: Border.all(color: colorScheme.outlineVariant),
         ),
         child: Center(
-          child: Text(name, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700), textAlign: TextAlign.center),
+          child: Text(name,
+              style: Theme.of(context)
+                  .textTheme
+                  .titleSmall
+                  ?.copyWith(fontWeight: FontWeight.w700),
+              textAlign: TextAlign.center),
         ),
       ),
     );
@@ -220,6 +288,7 @@ class _CategoriesState extends State<Categories> {
     if (svc.currentUser != null) return null; // hide badge for logged-in users
     final rows = await svc.fetchCustomCategoriesUnified();
     final active = rows.where((e) => (e['deleted'] ?? 0) == 0).length;
-    return (SupabaseService.localCategoryLimit - active).clamp(0, SupabaseService.localCategoryLimit);
+    return (SupabaseService.localCategoryLimit - active)
+        .clamp(0, SupabaseService.localCategoryLimit);
   }
 }

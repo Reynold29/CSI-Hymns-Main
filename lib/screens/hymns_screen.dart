@@ -70,16 +70,18 @@ class _HymnsScreenState extends State<HymnsScreen> {
 
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-            content: Text('Lyrics updated successfully!'),
-          ));
+                duration: const Duration(milliseconds: 1500),
+                content: Text('Lyrics updated successfully!'),
+              ));
         } else {
           throw Exception('Failed to fetch data from cloud');
         }
       } catch (e) {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Failed to update lyrics. Please try again later.'),
-        ));
+              duration: const Duration(milliseconds: 1500),
+              content: Text('Failed to update lyrics. Please try again later.'),
+            ));
       }
     }
   }
@@ -262,7 +264,7 @@ class _HymnsScreenState extends State<HymnsScreen> {
         throw Exception('Failed to fetch data from GitHub');
       }
     } catch (e) {
-      print('Error updating lyrics: $e');
+      debugPrint('HymnsScreen: Error updating lyrics: $e');
       rethrow;
     }
   }

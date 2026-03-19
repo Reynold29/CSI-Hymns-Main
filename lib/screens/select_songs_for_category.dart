@@ -7,13 +7,16 @@ import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 class SelectSongsForCategoryScreen extends StatefulWidget {
   final int categoryId;
   final String categoryName;
-  const SelectSongsForCategoryScreen({super.key, required this.categoryId, required this.categoryName});
+  const SelectSongsForCategoryScreen(
+      {super.key, required this.categoryId, required this.categoryName});
 
   @override
-  State<SelectSongsForCategoryScreen> createState() => _SelectSongsForCategoryScreenState();
+  State<SelectSongsForCategoryScreen> createState() =>
+      _SelectSongsForCategoryScreenState();
 }
 
-class _SelectSongsForCategoryScreenState extends State<SelectSongsForCategoryScreen> with TickerProviderStateMixin {
+class _SelectSongsForCategoryScreenState
+    extends State<SelectSongsForCategoryScreen> with TickerProviderStateMixin {
   late TabController _tabController;
   List<Hymn> _hymns = [];
   List<Keerthane> _keerthanes = [];
@@ -48,10 +51,12 @@ class _SelectSongsForCategoryScreenState extends State<SelectSongsForCategoryScr
     await HapticFeedbackManager.mediumClick();
     final service = SupabaseService();
     for (final n in _selectedHymns) {
-      await service.addSongToCategoryUnified(categoryId: widget.categoryId, songId: n, songType: 'hymn');
+      await service.addSongToCategoryUnified(
+          categoryId: widget.categoryId, songId: n, songType: 'hymn');
     }
     for (final n in _selectedKeerthanes) {
-      await service.addSongToCategoryUnified(categoryId: widget.categoryId, songId: n, songType: 'keerthane');
+      await service.addSongToCategoryUnified(
+          categoryId: widget.categoryId, songId: n, songType: 'keerthane');
     }
     if (mounted) Navigator.pop(context, true);
   }
@@ -65,15 +70,14 @@ class _SelectSongsForCategoryScreenState extends State<SelectSongsForCategoryScr
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Add to ${widget.categoryName}')
-      ),
+      appBar: AppBar(title: Text('Add to ${widget.categoryName}')),
       bottomNavigationBar: SafeArea(
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
           child: FilledButton(
             onPressed: _addSelected,
-            child: Text('Add ${_selectedHymns.length + _selectedKeerthanes.length} selected'),
+            child: Text(
+                'Add ${_selectedHymns.length + _selectedKeerthanes.length} selected'),
           ),
         ),
       ),
@@ -89,7 +93,8 @@ class _SelectSongsForCategoryScreenState extends State<SelectSongsForCategoryScr
                       prefixIcon: Icon(Icons.search),
                       border: OutlineInputBorder(),
                     ),
-                    onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
+                    onChanged: (v) =>
+                        setState(() => _query = v.trim().toLowerCase()),
                   ),
                 ),
                 TabBar(
@@ -114,7 +119,8 @@ class _SelectSongsForCategoryScreenState extends State<SelectSongsForCategoryScr
     final filtered = _hymns.where((h) {
       if (_query.isEmpty) return true;
       final q = _query;
-      return h.number.toString().contains(q) || h.title.toLowerCase().contains(q);
+      return h.number.toString().contains(q) ||
+          h.title.toLowerCase().contains(q);
     }).toList();
     return ListView.builder(
       itemCount: filtered.length,
@@ -143,7 +149,8 @@ class _SelectSongsForCategoryScreenState extends State<SelectSongsForCategoryScr
     final filtered = _keerthanes.where((k) {
       if (_query.isEmpty) return true;
       final q = _query;
-      return k.number.toString().contains(q) || k.title.toLowerCase().contains(q);
+      return k.number.toString().contains(q) ||
+          k.title.toLowerCase().contains(q);
     }).toList();
     return ListView.builder(
       itemCount: filtered.length,
@@ -168,5 +175,3 @@ class _SelectSongsForCategoryScreenState extends State<SelectSongsForCategoryScr
     );
   }
 }
-
-

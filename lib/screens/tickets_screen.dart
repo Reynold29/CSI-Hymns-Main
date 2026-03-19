@@ -52,8 +52,9 @@ class _TicketsScreenState extends State<TicketsScreen> {
         });
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading tickets: $e')),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              duration: const Duration(milliseconds: 1500),
+              content: Text('Error loading tickets: $e')),
         );
       }
     }
@@ -74,8 +75,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
       await _loadTickets(); // Reload to show updated statuses
       debugPrint('TicketsScreen: Sync completed, tickets reloaded');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Ticket statuses synced successfully'),
             duration: Duration(seconds: 2),
           ),
@@ -85,8 +85,7 @@ class _TicketsScreenState extends State<TicketsScreen> {
       debugPrint('TicketsScreen: Error syncing statuses: $e');
       debugPrint('TicketsScreen: Stack trace: $stackTrace');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Error syncing statuses: $e'),
             duration: const Duration(seconds: 4),
           ),
@@ -145,10 +144,12 @@ class _TicketsScreenState extends State<TicketsScreen> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Icon(Icons.refresh),
-            onPressed: _isSyncing ? null : () async {
-              await HapticFeedbackManager.lightClick();
-              await _syncStatuses();
-            },
+            onPressed: _isSyncing
+                ? null
+                : () async {
+                    await HapticFeedbackManager.lightClick();
+                    await _syncStatuses();
+                  },
             tooltip: 'Sync Statuses',
           ),
         ],
@@ -201,7 +202,8 @@ class _TicketsScreenState extends State<TicketsScreen> {
                             await HapticFeedbackManager.lightClick();
                             final uri = Uri.parse(ticket.ticketUrl);
                             if (await canLaunchUrl(uri)) {
-                              await launchUrl(uri, mode: LaunchMode.externalApplication);
+                              await launchUrl(uri,
+                                  mode: LaunchMode.externalApplication);
                             }
                           },
                           borderRadius: BorderRadius.circular(12),
@@ -228,11 +230,13 @@ class _TicketsScreenState extends State<TicketsScreen> {
                                         vertical: 6,
                                       ),
                                       decoration: BoxDecoration(
-                                        color: _getStatusColor(ticket.jiraStatus)
-                                            .withOpacity(0.2),
+                                        color:
+                                            _getStatusColor(ticket.jiraStatus)
+                                                .withOpacity(0.2),
                                         borderRadius: BorderRadius.circular(12),
                                         border: Border.all(
-                                          color: _getStatusColor(ticket.jiraStatus),
+                                          color: _getStatusColor(
+                                              ticket.jiraStatus),
                                           width: 1,
                                         ),
                                       ),
@@ -241,7 +245,8 @@ class _TicketsScreenState extends State<TicketsScreen> {
                                         style: TextStyle(
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
-                                          color: _getStatusColor(ticket.jiraStatus),
+                                          color: _getStatusColor(
+                                              ticket.jiraStatus),
                                         ),
                                       ),
                                     ),
@@ -315,5 +320,4 @@ class _TicketsScreenState extends State<TicketsScreen> {
                 ),
     );
   }
-
 }

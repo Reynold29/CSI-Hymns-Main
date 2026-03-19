@@ -5,13 +5,16 @@ import 'package:hymns_latest/services/supabase_service.dart';
 class CustomCategoryViewerScreen extends StatefulWidget {
   final int categoryId;
   final String categoryName;
-  const CustomCategoryViewerScreen({super.key, required this.categoryId, required this.categoryName});
+  const CustomCategoryViewerScreen(
+      {super.key, required this.categoryId, required this.categoryName});
 
   @override
-  State<CustomCategoryViewerScreen> createState() => _CustomCategoryViewerScreenState();
+  State<CustomCategoryViewerScreen> createState() =>
+      _CustomCategoryViewerScreenState();
 }
 
-class _CustomCategoryViewerScreenState extends State<CustomCategoryViewerScreen> {
+class _CustomCategoryViewerScreenState
+    extends State<CustomCategoryViewerScreen> {
   List<int> _hymnNumbers = const [];
   List<int> _keerthaneNumbers = const [];
   bool _loading = true;
@@ -25,13 +28,16 @@ class _CustomCategoryViewerScreenState extends State<CustomCategoryViewerScreen>
 
   Future<void> _load() async {
     try {
-      final rows = await SupabaseService().fetchSongsInCategoryUnified(widget.categoryId);
+      final rows = await SupabaseService()
+          .fetchSongsInCategoryUnified(widget.categoryId);
       final hymns = <int>[];
       final keers = <int>[];
       for (final r in rows) {
         final id = (r['song_id'] as num).toInt();
         final t = (r['song_type'] as String).toLowerCase();
-        if (t == 'hymn') hymns.add(id); else if (t == 'keerthane') keers.add(id);
+        if (t == 'hymn')
+          hymns.add(id);
+        else if (t == 'keerthane') keers.add(id);
       }
       if (!mounted) return;
       setState(() {
@@ -51,10 +57,14 @@ class _CustomCategoryViewerScreenState extends State<CustomCategoryViewerScreen>
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return Scaffold(appBar: AppBar(title: Text(widget.categoryName)), body: const Center(child: CircularProgressIndicator()));
+      return Scaffold(
+          appBar: AppBar(title: Text(widget.categoryName)),
+          body: const Center(child: CircularProgressIndicator()));
     }
     if (_error != null) {
-      return Scaffold(appBar: AppBar(title: Text(widget.categoryName)), body: Center(child: Text('Error: $_error')));
+      return Scaffold(
+          appBar: AppBar(title: Text(widget.categoryName)),
+          body: Center(child: Text('Error: $_error')));
     }
     return DynamicCategoryScreen(
       category: widget.categoryName,
@@ -63,5 +73,3 @@ class _CustomCategoryViewerScreenState extends State<CustomCategoryViewerScreen>
     );
   }
 }
-
-

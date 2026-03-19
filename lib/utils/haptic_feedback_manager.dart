@@ -7,7 +7,8 @@ class HapticFeedbackManager {
 
   static Future<void> _vibrate({int durationMs = 20, int? amplitude}) async {
     final now = DateTime.now();
-    if (_last != null && now.difference(_last!).inMilliseconds < _minIntervalMs) return;
+    if (_last != null && now.difference(_last!).inMilliseconds < _minIntervalMs)
+      return;
     _last = now;
     final hasVibrator = await Vibration.hasVibrator();
     if (hasVibrator == true) {
@@ -33,6 +34,7 @@ class HapticFeedbackManager {
   }
 
   static Future<void> error() async {
-    await Vibration.vibrate(pattern: [0, 22, 30, 22, 30, 22], intensities: [120, 120, 120]);
+    await Vibration.vibrate(
+        pattern: [0, 22, 30, 22, 30, 22], intensities: [120, 120, 120]);
   }
-} 
+}

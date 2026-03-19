@@ -40,7 +40,9 @@ class _AuthEmailScreenState extends State<AuthEmailScreen> {
       if (mounted) Navigator.of(context).pop(true);
     } catch (e) {
       final message = e.toString().toLowerCase();
-      if (message.contains('invalid login') || message.contains('invalid_credentials') || message.contains('email not confirmed')) {
+      if (message.contains('invalid login') ||
+          message.contains('invalid_credentials') ||
+          message.contains('email not confirmed')) {
         _showErrorDialog('Incorrect email or password');
       } else if (message.contains('password')) {
         _showErrorDialog('Incorrect password');
@@ -78,7 +80,9 @@ class _AuthEmailScreenState extends State<AuthEmailScreen> {
   Future<void> _forgotPassword() async {
     final email = _emailController.text.trim();
     if (email.isEmpty || !email.contains('@')) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter your email first')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              duration: const Duration(milliseconds: 1500),
+              content: Text('Enter your email first')));
       return;
     }
     try {
@@ -98,7 +102,9 @@ class _AuthEmailScreenState extends State<AuthEmailScreen> {
         ),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Reset failed: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              duration: const Duration(milliseconds: 1500),
+              content: Text('Reset failed: $e')));
     }
   }
 
@@ -106,7 +112,8 @@ class _AuthEmailScreenState extends State<AuthEmailScreen> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     return Scaffold(
-      appBar: AppBar(title: Text(_isLogin ? 'Login with Email' : 'Sign up with Email')),
+      appBar: AppBar(
+          title: Text(_isLogin ? 'Login with Email' : 'Sign up with Email')),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -118,18 +125,28 @@ class _AuthEmailScreenState extends State<AuthEmailScreen> {
                 TextFormField(
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email', prefixIcon: Icon(Icons.alternate_email)),
-                  validator: (v) => (v == null || !v.contains('@')) ? 'Enter a valid email' : null,
+                  decoration: const InputDecoration(
+                      labelText: 'Email',
+                      prefixIcon: Icon(Icons.alternate_email)),
+                  validator: (v) => (v == null || !v.contains('@'))
+                      ? 'Enter a valid email'
+                      : null,
                 ),
                 if (!_isLogin) ...[
                   const SizedBox(height: 12),
                   TextFormField(
                     controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Full name', prefixIcon: Icon(Icons.person_outline)),
-                    validator: (v) => (v == null || v.trim().isEmpty) ? 'Enter your full name' : null,
+                    decoration: const InputDecoration(
+                        labelText: 'Full name',
+                        prefixIcon: Icon(Icons.person_outline)),
+                    validator: (v) => (v == null || v.trim().isEmpty)
+                        ? 'Enter your full name'
+                        : null,
                   ),
                   const SizedBox(height: 4),
-                  Text('Use your full name. You will use email to log in. Your personal data is encrypted and never shared.', style: Theme.of(context).textTheme.bodySmall),
+                  Text(
+                      'Use your full name. You will use email to log in. Your personal data is encrypted and never shared.',
+                      style: Theme.of(context).textTheme.bodySmall),
                 ],
                 const SizedBox(height: 12),
                 TextFormField(
@@ -138,30 +155,40 @@ class _AuthEmailScreenState extends State<AuthEmailScreen> {
                     labelText: 'Password',
                     prefixIcon: const Icon(Icons.lock_outline),
                     suffixIcon: IconButton(
-                      onPressed: () => setState(() => _hidePassword = !_hidePassword),
-                      icon: Icon(_hidePassword ? Icons.visibility : Icons.visibility_off),
+                      onPressed: () =>
+                          setState(() => _hidePassword = !_hidePassword),
+                      icon: Icon(_hidePassword
+                          ? Icons.visibility
+                          : Icons.visibility_off),
                     ),
                   ),
                   obscureText: _hidePassword,
-                  validator: (v) => (v == null || v.length < 6) ? 'Min 6 characters' : null,
+                  validator: (v) =>
+                      (v == null || v.length < 6) ? 'Min 6 characters' : null,
                 ),
                 const SizedBox(height: 16),
                 FilledButton(
                   onPressed: _loading ? null : _submit,
-                  style: FilledButton.styleFrom(padding: const EdgeInsets.symmetric(vertical: 14)),
+                  style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 14)),
                   child: Text(_isLogin ? 'Login' : 'Create account'),
                 ),
                 const SizedBox(height: 8),
                 TextButton(
-                  onPressed: _loading ? null : () => setState(() => _isLogin = !_isLogin),
-                  child: Text(_isLogin ? 'No account? Sign up' : 'Have an account? Login'),
+                  onPressed: _loading
+                      ? null
+                      : () => setState(() => _isLogin = !_isLogin),
+                  child: Text(_isLogin
+                      ? 'No account? Sign up'
+                      : 'Have an account? Login'),
                 ),
                 const SizedBox(height: 8),
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: _loading ? null : _forgotPassword,
-                    child: Text('Forgot password?', style: TextStyle(color: colorScheme.primary)),
+                    child: Text('Forgot password?',
+                        style: TextStyle(color: colorScheme.primary)),
                   ),
                 ),
                 if (_loading)
@@ -177,4 +204,3 @@ class _AuthEmailScreenState extends State<AuthEmailScreen> {
     );
   }
 }
-

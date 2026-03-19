@@ -32,7 +32,8 @@ class _CustomCategoriesScreenState extends State<CustomCategoriesScreen> {
         _loading = false;
         if (SupabaseService().currentUser == null) {
           final active = rows.where((e) => (e['deleted'] ?? 0) == 0).length;
-          _guestRemaining = (SupabaseService.localCategoryLimit - active).clamp(0, SupabaseService.localCategoryLimit);
+          _guestRemaining = (SupabaseService.localCategoryLimit - active)
+              .clamp(0, SupabaseService.localCategoryLimit);
         }
       });
     } catch (e) {
@@ -57,8 +58,12 @@ class _CustomCategoriesScreenState extends State<CustomCategoriesScreen> {
           decoration: const InputDecoration(hintText: 'Category name'),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          FilledButton(onPressed: () => Navigator.pop(context, controller.text.trim()), child: const Text('Create')),
+          TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel')),
+          FilledButton(
+              onPressed: () => Navigator.pop(context, controller.text.trim()),
+              child: const Text('Create')),
         ],
       ),
     );
@@ -70,8 +75,12 @@ class _CustomCategoriesScreenState extends State<CustomCategoriesScreen> {
         context: context,
         builder: (c) => AlertDialog(
           title: const Text('Limit reached'),
-          content: const Text('Create an account and log in to create unlimited custom categories. Guests can create up to 5 locally.'),
-          actions: [TextButton(onPressed: () => Navigator.pop(c), child: const Text('OK'))],
+          content: const Text(
+              'Create an account and log in to create unlimited custom categories. Guests can create up to 5 locally.'),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(c), child: const Text('OK'))
+          ],
         ),
       );
       return;
@@ -79,18 +88,23 @@ class _CustomCategoriesScreenState extends State<CustomCategoriesScreen> {
     await HapticFeedbackManager.success();
     await _load();
     // After creation, if guest has hit 0 remaining, nudge to sign in
-    if (mounted && SupabaseService().currentUser == null && _guestRemaining == 0) {
+    if (mounted &&
+        SupabaseService().currentUser == null &&
+        _guestRemaining == 0) {
       showDialog(
         context: context,
         builder: (c) => AlertDialog(
           title: const Text('All guest slots used'),
-          content: const Text('You\'ve created 5 local categories. Sign in to sync them and create unlimited categories.'),
+          content: const Text(
+              'You\'ve created 5 local categories. Sign in to sync them and create unlimited categories.'),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(c), child: const Text('Later')),
+            TextButton(
+                onPressed: () => Navigator.pop(c), child: const Text('Later')),
             FilledButton(
               onPressed: () {
                 Navigator.pop(c);
-                Navigator.push(context, MaterialPageRoute(builder: (_) => const AuthScreen()));
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (_) => const AuthScreen()));
               },
               child: const Text('Sign in'),
             ),
@@ -104,7 +118,9 @@ class _CustomCategoriesScreenState extends State<CustomCategoriesScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => CategoryDetailScreen(categoryId: (cat['id'] as num).toInt(), categoryName: cat['name'] as String),
+        builder: (_) => CategoryDetailScreen(
+            categoryId: (cat['id'] as num).toInt(),
+            categoryName: cat['name'] as String),
       ),
     );
   }
@@ -129,7 +145,12 @@ class _CustomCategoriesScreenState extends State<CustomCategoriesScreen> {
                         children: [
                           const Text('No custom categories yet'),
                           const SizedBox(height: 8),
-                          FilledButton(onPressed: () async { await HapticFeedbackManager.lightClick(); await _createCategory(); }, child: const Text('Create one')),
+                          FilledButton(
+                              onPressed: () async {
+                                await HapticFeedbackManager.lightClick();
+                                await _createCategory();
+                              },
+                              child: const Text('Create one')),
                         ],
                       ),
                     )
@@ -143,13 +164,20 @@ class _CustomCategoriesScreenState extends State<CustomCategoriesScreen> {
                             children: [
                               if (SupabaseService().currentUser == null)
                                 Padding(
-                                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                                  padding:
+                                      const EdgeInsets.fromLTRB(16, 8, 16, 0),
                                   child: Row(
                                     children: [
-                                      Chip(label: Text('Guest slots left: $_guestRemaining/${SupabaseService.localCategoryLimit}')),
+                                      Chip(
+                                          label: Text(
+                                              'Guest slots left: $_guestRemaining/${SupabaseService.localCategoryLimit}')),
                                       const Spacer(),
                                       TextButton.icon(
-                                        onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const AuthScreen())),
+                                        onPressed: () => Navigator.push(
+                                            context,
+                                            MaterialPageRoute(
+                                                builder: (_) =>
+                                                    const AuthScreen())),
                                         icon: const Icon(Icons.login),
                                         label: const Text('Sign in'),
                                       )
@@ -159,7 +187,10 @@ class _CustomCategoriesScreenState extends State<CustomCategoriesScreen> {
                               ListTile(
                                 leading: const Icon(Icons.add),
                                 title: const Text('Create new category'),
-                                onTap: () async { await HapticFeedbackManager.lightClick(); await _createCategory(); },
+                                onTap: () async {
+                                  await HapticFeedbackManager.lightClick();
+                                  await _createCategory();
+                                },
                               ),
                             ],
                           );
@@ -171,40 +202,55 @@ class _CustomCategoriesScreenState extends State<CustomCategoriesScreen> {
                           trailing: PopupMenuButton<String>(
                             onSelected: (value) async {
                               if (value == 'rename') {
-                                final ctrl = TextEditingController(text: cat['name'] as String);
+                                final ctrl = TextEditingController(
+                                    text: cat['name'] as String);
                                 final newName = await showDialog<String>(
                                   context: context,
                                   builder: (context) => AlertDialog(
                                     title: const Text('Rename category'),
                                     content: TextField(controller: ctrl),
                                     actions: [
-                                      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-                                      FilledButton(onPressed: () => Navigator.pop(context, ctrl.text.trim()), child: const Text('Save')),
+                                      TextButton(
+                                          onPressed: () =>
+                                              Navigator.pop(context),
+                                          child: const Text('Cancel')),
+                                      FilledButton(
+                                          onPressed: () => Navigator.pop(
+                                              context, ctrl.text.trim()),
+                                          child: const Text('Save')),
                                     ],
                                   ),
                                 );
                                 if (newName != null && newName.isNotEmpty) {
-                                  await SupabaseService().renameCustomCategoryUnified((cat['id'] as num).toInt(), newName);
+                                  await SupabaseService()
+                                      .renameCustomCategoryUnified(
+                                          (cat['id'] as num).toInt(), newName);
                                   await _load();
                                 }
                               } else if (value == 'delete') {
                                 try {
-                                  await SupabaseService().softDeleteCustomCategoryUnified((cat['id'] as num).toInt());
+                                  await SupabaseService()
+                                      .softDeleteCustomCategoryUnified(
+                                          (cat['id'] as num).toInt());
                                   if (!mounted) return;
                                   setState(() {
                                     _categories.removeAt(index - 1);
                                   });
                                 } catch (e) {
                                   if (!mounted) return;
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Failed to delete: $e')),
+                                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                        duration:
+                                            const Duration(milliseconds: 1500),
+                                        content: Text('Failed to delete: $e')),
                                   );
                                 }
                               }
                             },
                             itemBuilder: (context) => const [
-                              PopupMenuItem(value: 'rename', child: Text('Rename')),
-                              PopupMenuItem(value: 'delete', child: Text('Delete')),
+                              PopupMenuItem(
+                                  value: 'rename', child: Text('Rename')),
+                              PopupMenuItem(
+                                  value: 'delete', child: Text('Delete')),
                             ],
                           ),
                           onTap: () => _openCategory(cat),
@@ -218,7 +264,8 @@ class _CustomCategoriesScreenState extends State<CustomCategoriesScreen> {
 class CategoryDetailScreen extends StatefulWidget {
   final int categoryId;
   final String categoryName;
-  const CategoryDetailScreen({super.key, required this.categoryId, required this.categoryName});
+  const CategoryDetailScreen(
+      {super.key, required this.categoryId, required this.categoryName});
 
   @override
   State<CategoryDetailScreen> createState() => _CategoryDetailScreenState();
@@ -235,7 +282,8 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
   }
 
   Future<void> _load() async {
-    final rows = await SupabaseService().fetchSongsInCategoryUnified(widget.categoryId);
+    final rows =
+        await SupabaseService().fetchSongsInCategoryUnified(widget.categoryId);
     if (!mounted) return;
     setState(() {
       _songs = rows;
@@ -296,5 +344,3 @@ class _CategoryDetailScreenState extends State<CategoryDetailScreen> {
     );
   }
 }
-
-

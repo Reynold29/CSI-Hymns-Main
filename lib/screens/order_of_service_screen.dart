@@ -43,7 +43,8 @@ class _OrderOfServiceScreenState extends State<OrderOfServiceScreen> {
       final int last = prefs.getInt('lastOrderOfServiceUpdate') ?? 0;
       final now = DateTime.now().millisecondsSinceEpoch;
       final interval = const Duration(days: 3).inMilliseconds;
-      _log('startup: last=$last now=$now delta=${now - last} interval=$interval');
+      _log(
+          'startup: last=$last now=$now delta=${now - last} interval=$interval');
       if (now - last < interval) {
         _log('within cache window, skipping remote fetch');
         return;
@@ -53,8 +54,12 @@ class _OrderOfServiceScreenState extends State<OrderOfServiceScreen> {
       await prefs.setInt('lastOrderOfServiceUpdate', now);
       _log('remote fetch complete, cached');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Order of Service updated')));
-    } catch (e) { _log('startup update failed: $e'); }
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              duration: const Duration(milliseconds: 1500),
+              content: Text('Order of Service updated')));
+    } catch (e) {
+      _log('startup update failed: $e');
+    }
   }
 
   Future<void> _manualRefreshOrderOfService() async {
@@ -64,16 +69,21 @@ class _OrderOfServiceScreenState extends State<OrderOfServiceScreen> {
       await _fetchAndCacheOrderOfService();
       _log('manual refresh success');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Order of Service refreshed')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              duration: const Duration(milliseconds: 1500),
+              content: Text('Order of Service refreshed')));
     } catch (e) {
       _log('manual refresh failed: $e');
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Refresh failed: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              duration: const Duration(milliseconds: 1500),
+              content: Text('Refresh failed: $e')));
     }
   }
 
   Future<void> _fetchAndCacheOrderOfService() async {
-    const url = 'https://raw.githubusercontent.com/Reynold29/csi-hymns-vault/refs/heads/main/order-of-service_data.json';
+    const url =
+        'https://raw.githubusercontent.com/Reynold29/csi-hymns-vault/refs/heads/main/order-of-service_data.json';
     _log('GET $url');
     final resp = await http.get(Uri.parse(url));
     _log('status ${resp.statusCode} bytes=${resp.bodyBytes.length}');
@@ -87,7 +97,8 @@ class _OrderOfServiceScreenState extends State<OrderOfServiceScreen> {
       throw Exception('Unexpected JSON format');
     }
     if (decoded is List) _log('parsed list length=${decoded.length}');
-    if (decoded is Map<String, dynamic>) _log('parsed legacy map keys=${decoded.length}');
+    if (decoded is Map<String, dynamic>)
+      _log('parsed legacy map keys=${decoded.length}');
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('orderOfServiceData', body);
     _log('cached to SharedPreferences key=orderOfServiceData');
@@ -123,14 +134,18 @@ class _OrderOfServiceScreenState extends State<OrderOfServiceScreen> {
                         englishTitle: 'Regular Sunday – Order of Service',
                         kannadaTitle: 'ಭಾನುವಾರದ ದೇವರಾರಾಧನೆ',
                         showEnglish: _showEnglishPrimary,
-                        gradient: [const Color(0xFFFFC66A), const Color(0xFFFFD48C)],
+                        gradient: [
+                          const Color(0xFFFFC66A),
+                          const Color(0xFFFFD48C)
+                        ],
                         onTap: () async {
                           await HapticFeedbackManager.lightClick();
                           Navigator.of(context).push(
                             MaterialPageRoute(
                               builder: (_) => const _OrderOfServiceReaderRoute(
                                 key: ValueKey('regular-sunday-reader'),
-                                englishHeader: 'Regular Sunday Order of Service',
+                                englishHeader:
+                                    'Regular Sunday Order of Service',
                                 kannadaHeader: 'ಭಾನುವಾರದ ದೇವರಾರಾಧನೆ',
                                 type: 'regular',
                               ),
@@ -138,12 +153,15 @@ class _OrderOfServiceScreenState extends State<OrderOfServiceScreen> {
                           );
                         },
                       ),
-                       _OrderCard(
+                      _OrderCard(
                         leadingIcon: Icons.south_west_rounded,
                         englishTitle: 'Festival – Order of Service',
                         kannadaTitle: 'ಹಬ್ಬದ ಆರಾಧನೆ',
                         showEnglish: _showEnglishPrimary,
-                        gradient: [const Color(0xFFBCEBFF), const Color(0xFFD7F4FF)],
+                        gradient: [
+                          const Color(0xFFBCEBFF),
+                          const Color(0xFFD7F4FF)
+                        ],
                         onTap: () async {
                           await HapticFeedbackManager.lightClick();
                           Navigator.of(context).push(
@@ -161,19 +179,23 @@ class _OrderOfServiceScreenState extends State<OrderOfServiceScreen> {
                     ],
                   ),
                 ),
-                  const SizedBox(height: 8),
-                  Center(
-                    child: FilledButton.tonalIcon(
-                      onPressed: _manualRefreshOrderOfService,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Refresh Order of Service'),
-                      style: FilledButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
-                        textStyle: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
-                        shape: const StadiumBorder(),
-                      ),
+                const SizedBox(height: 8),
+                Center(
+                  child: FilledButton.tonalIcon(
+                    onPressed: _manualRefreshOrderOfService,
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Refresh Order of Service'),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 14),
+                      textStyle: Theme.of(context)
+                          .textTheme
+                          .titleMedium
+                          ?.copyWith(fontWeight: FontWeight.w800),
+                      shape: const StadiumBorder(),
                     ),
                   ),
+                ),
               ],
             );
           },
@@ -206,22 +228,31 @@ class _OrderCard extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double targetHeight = (constraints.maxWidth * 0.42).clamp(160.0, 240.0);
+        final double targetHeight =
+            (constraints.maxWidth * 0.42).clamp(160.0, 240.0);
         return SizedBox(
           height: targetHeight,
           child: InkWell(
-            onTap: () async { await HapticFeedbackManager.lightClick(); onTap(); },
+            onTap: () async {
+              await HapticFeedbackManager.lightClick();
+              onTap();
+            },
             borderRadius: BorderRadius.circular(16),
             child: Ink(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
-                  colors: gradient ?? [scheme.secondaryContainer, scheme.secondaryContainer.withOpacity(0.85)],
+                  colors: gradient ??
+                      [
+                        scheme.secondaryContainer,
+                        scheme.secondaryContainer.withOpacity(0.85)
+                      ],
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
                 borderRadius: BorderRadius.circular(28),
-                border: Border.all(color: scheme.outlineVariant.withOpacity(0.7)),
+                border:
+                    Border.all(color: scheme.outlineVariant.withOpacity(0.7)),
                 boxShadow: [
                   BoxShadow(
                     color: scheme.shadow.withOpacity(0.08),
@@ -236,7 +267,8 @@ class _OrderCard extends StatelessWidget {
                   Expanded(
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 450),
-                      transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+                      transitionBuilder: (child, anim) =>
+                          FadeTransition(opacity: anim, child: child),
                       child: Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
@@ -269,7 +301,8 @@ class _OrderCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    child: Icon(Icons.north_east_rounded, color: Colors.black, size: 20),
+                    child: Icon(Icons.north_east_rounded,
+                        color: Colors.black, size: 20),
                   ),
                 ],
               ),
@@ -322,7 +355,8 @@ class OrderOfServiceReader extends StatefulWidget {
 
 class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
   late PageController _pageController;
-  int _controllerEpoch = 0; // forces PageView to rebuild when controller is swapped
+  int _controllerEpoch =
+      0; // forces PageView to rebuild when controller is swapped
   final TextEditingController _jumpController = TextEditingController();
   int _currentPageIndex = 0;
   List<_OrderPage> _pages = const [];
@@ -396,7 +430,8 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
             if (block is List) {
               for (final item in block) {
                 if (item is Map<String, dynamic>) {
-                  final withType = Map<String, dynamic>.from(item)..['type'] = key;
+                  final withType = Map<String, dynamic>.from(item)
+                    ..['type'] = key;
                   pages.add(_OrderPage.fromJson(withType));
                 }
               }
@@ -407,7 +442,11 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
           // Backwards compatibility: {"183": "content"}
           parsed.forEach((k, v) {
             final no = int.tryParse(k) ?? 0;
-            pages.add(_OrderPage(pageNo: no, title: null, content: (v ?? '').toString(), type: 'regular'));
+            pages.add(_OrderPage(
+                pageNo: no,
+                title: null,
+                content: (v ?? '').toString(),
+                type: 'regular'));
           });
           pages.sort((a, b) => a.pageNo.compareTo(b.pageNo));
         }
@@ -437,12 +476,15 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
     const legacy = 'lib/assets/order-of-serice_data.json';
     try {
       final manifestJson = await rootBundle.loadString('AssetManifest.json');
-      final Map<String, dynamic> manifest = jsonDecode(manifestJson) as Map<String, dynamic>;
+      final Map<String, dynamic> manifest =
+          jsonDecode(manifestJson) as Map<String, dynamic>;
       if (manifest.containsKey(primary)) return primary;
       if (manifest.containsKey(legacy)) return legacy;
       // Try to find by suffix just in case
       final match = manifest.keys.firstWhere(
-        (k) => k.endsWith('order-of-service_data.json') || k.endsWith('order-of-serice_data.json'),
+        (k) =>
+            k.endsWith('order-of-service_data.json') ||
+            k.endsWith('order-of-serice_data.json'),
         orElse: () => '',
       );
       if (match.isNotEmpty) return match;
@@ -475,8 +517,9 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
         _currentPageIndex = idx;
       });
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Page $target not found')),
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+            duration: const Duration(milliseconds: 1500),
+            content: Text('Page $target not found')),
       );
     }
     FocusScope.of(context).unfocus();
@@ -484,8 +527,10 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
 
   List<int> _visiblePageNumbers() {
     if (_pages.isEmpty) return const [];
-    final int startIndex = (_currentPageIndex - _chipWindowRadius).clamp(0, _pages.length - 1);
-    final int endIndex = (_currentPageIndex + _chipWindowRadius).clamp(0, _pages.length - 1);
+    final int startIndex =
+        (_currentPageIndex - _chipWindowRadius).clamp(0, _pages.length - 1);
+    final int endIndex =
+        (_currentPageIndex + _chipWindowRadius).clamp(0, _pages.length - 1);
     return [for (int i = startIndex; i <= endIndex; i++) _pages[i].pageNo];
   }
 
@@ -504,7 +549,9 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('All Pages', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+              Text('All Pages',
+                  style: theme.textTheme.titleMedium
+                      ?.copyWith(fontWeight: FontWeight.w700)),
               const SizedBox(height: 8),
               Expanded(
                 child: SingleChildScrollView(
@@ -536,11 +583,11 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
   Future<void> _showReportDialog() async {
     if (_pages.isEmpty) return;
     await HapticFeedbackManager.lightClick();
-    
+
     final descriptionController = TextEditingController();
     final int pageNo = _pages[_currentPageIndex].pageNo;
     final String type = widget.type;
-    
+
     // Dialog with optional text field
     final action = await showDialog<String>(
       context: context,
@@ -549,7 +596,8 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
         final colorScheme = Theme.of(context).colorScheme;
         return AlertDialog(
           backgroundColor: colorScheme.surfaceContainerHigh,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           title: const Text(
             'Found something wrong?',
             style: TextStyle(fontWeight: FontWeight.bold),
@@ -594,9 +642,10 @@ class _OrderOfServiceReaderState extends State<OrderOfServiceReader> {
         );
       },
     );
-    
+
     if (action == 'send' && mounted) {
-      await _sendReportEmail(context, descriptionController.text.trim(), pageNo, type);
+      await _sendReportEmail(
+          context, descriptionController.text.trim(), pageNo, type);
     }
   }
 
@@ -623,7 +672,8 @@ ${description.isNotEmpty ? 'Issue Description:\n$description\n\n' : ''}Submitted
 
       final Email email = Email(
         body: emailBody,
-        subject: 'Order of Service issue (${type == 'regular' ? 'Regular' : 'Festival'}) - Page $pageNo',
+        subject:
+            'Order of Service issue (${type == 'regular' ? 'Regular' : 'Festival'}) - Page $pageNo',
         recipients: ['support@reyziecrafts.atlassian.net'],
         isHTML: false,
       );
@@ -631,8 +681,7 @@ ${description.isNotEmpty ? 'Issue Description:\n$description\n\n' : ''}Submitted
       await FlutterEmailSender.send(email);
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Issue report sent successfully!'),
             duration: Duration(seconds: 3),
           ),
@@ -640,8 +689,7 @@ ${description.isNotEmpty ? 'Issue Description:\n$description\n\n' : ''}Submitted
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Error sending email: ${e.toString()}'),
             duration: const Duration(seconds: 4),
           ),
@@ -657,7 +705,8 @@ ${description.isNotEmpty ? 'Issue Description:\n$description\n\n' : ''}Submitted
   @override
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
-    final double bottomReservePadding = (_hasSelectedPage ? 96.0 : 72.0) + MediaQuery.of(context).padding.bottom;
+    final double bottomReservePadding = (_hasSelectedPage ? 96.0 : 72.0) +
+        MediaQuery.of(context).padding.bottom;
     return WillPopScope(
       onWillPop: () async {
         if (_hasSelectedPage) {
@@ -669,7 +718,8 @@ ${description.isNotEmpty ? 'Issue Description:\n$description\n\n' : ''}Submitted
       child: Scaffold(
         appBar: !_hasSelectedPage
             ? AppBar(
-                title: Text('${widget.kannadaHeader} / ${widget.englishHeader}'),
+                title:
+                    Text('${widget.kannadaHeader} / ${widget.englishHeader}'),
               )
             : AppBar(
                 toolbarHeight: 64,
@@ -691,7 +741,12 @@ ${description.isNotEmpty ? 'Issue Description:\n$description\n\n' : ''}Submitted
                       overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.w800,
-                            fontSize: (Theme.of(context).textTheme.titleMedium?.fontSize ?? 16) + 4,
+                            fontSize: (Theme.of(context)
+                                        .textTheme
+                                        .titleMedium
+                                        ?.fontSize ??
+                                    16) +
+                                4,
                           ),
                     );
                   },
@@ -702,7 +757,9 @@ ${description.isNotEmpty ? 'Issue Description:\n$description\n\n' : ''}Submitted
                     child: Center(
                       child: Chip(
                         label: Text(
-                          _pages.isNotEmpty ? 'Page ${_pages[_currentPageIndex].pageNo}' : 'Page',
+                          _pages.isNotEmpty
+                              ? 'Page ${_pages[_currentPageIndex].pageNo}'
+                              : 'Page',
                         ),
                         visualDensity: VisualDensity.compact,
                       ),
@@ -711,252 +768,361 @@ ${description.isNotEmpty ? 'Issue Description:\n$description\n\n' : ''}Submitted
                 ],
               ),
         body: Stack(
-        children: [
-          Column(
-            children: [
-              if (_error != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Text(
-                    'Failed to load: $_error',
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.redAccent),
+          children: [
+            Column(
+              children: [
+                if (_error != null)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Text(
+                      'Failed to load: $_error',
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: Colors.redAccent),
+                    ),
                   ),
-                ),
-              Expanded(
-                child: _loading
-                    ? const Center(child: CircularProgressIndicator())
-                    : (_pages.isEmpty)
-                        ? const Center(child: Text('No pages found in data'))
-                        : (!_hasSelectedPage)
-                        ? Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    // Heading and helper text
-                                    Text(
-                                      widget.type == 'festival'
-                                          ? 'Habbada Aaradhana Krama'
-                                          : 'Huduvada Aaradhana Krama',
-                                      textAlign: TextAlign.center,
-                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                            fontWeight: FontWeight.w900,
-                                          ),
-                                    ),
-                                    const SizedBox(height: 6),
-                                    Text(
-                                      'Enter a page number to jump directly to that page',
-                                      textAlign: TextAlign.center,
-                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                            color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8),
-                                          ),
-                                    ),
-                                    const SizedBox(height: 16),
-                                    ConstrainedBox(
-                                      constraints: const BoxConstraints(maxWidth: 520),
-                                      child: TextField(
-                                        controller: _jumpController,
-                                        keyboardType: TextInputType.number,
-                                        textInputAction: TextInputAction.go,
-                                        decoration: InputDecoration(
-                                          hintText: 'Jump to page number (e.g., 1, 98, 100)',
-                                          prefixIcon: const Icon(Icons.search),
-                                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(28)),
-                                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                                        ),
-                                        onSubmitted: (value) async {
-                                          final target = int.tryParse(value);
-                                          if (target != null) {
-                                            await HapticFeedbackManager.mediumClick();
-                                            _jumpTo(target);
-                                          }
-                                        },
-                                      ),
-                                    ),
-                                    const SizedBox(height: 20),
-                                    ConstrainedBox(
-                                      constraints: const BoxConstraints(maxWidth: 320),
-                                      child: _MorphingCTAButton(
-                                        label: 'Open Full Book',
-                                        icon: Icons.menu_book_rounded,
-                                        onPressed: () async { await HapticFeedbackManager.lightClick(); setState(() => _hasSelectedPage = true); },
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : PageView.builder(
-                                key: ValueKey(_controllerEpoch),
-                                controller: _pageController,
-                                scrollDirection: Axis.vertical,
-                                onPageChanged: (i) => setState(() => _currentPageIndex = i),
-                                itemCount: _pages.length,
-                                itemBuilder: (context, index) {
-                                  final page = _pages[index];
-                                  final bool hasPrev = index > 0;
-                                  final bool hasNext = index < _pages.length - 1;
-                                  final int? prevNo = hasPrev ? _pages[index - 1].pageNo : null;
-                                  final int? nextNo = hasNext ? _pages[index + 1].pageNo : null;
-                                  const double topBadgeReserve = 8.0; // AppBar is used; no extra header padding needed
-                                  return Padding(
-                                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
-                                    child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Expanded(
-                                          child: SingleChildScrollView(
-                                            padding: EdgeInsets.only(
-                                              top: topBadgeReserve,
-                                              bottom: bottomReservePadding,
-                                            ),
-                                            child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
-                                              children: [
-                                                Align(
-                                                  alignment: Alignment.centerRight,
-                                                  child: OutlinedButton.icon(
-                                                    style: OutlinedButton.styleFrom(
-                                                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                                                      minimumSize: const Size(0, 40),
-                                                      textStyle: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                                            fontWeight: FontWeight.w700,
-                                                            height: 1.0,
-                                                            fontSize: (Theme.of(context).textTheme.titleSmall?.fontSize ?? 12) + 2,
-                                                          ),
-                                                      shape: const StadiumBorder(),
-                                                    ),
-                                                    onPressed: _reportIssue,
-                                                    icon: Padding(
-                                                      padding: const EdgeInsets.only(bottom: 0.5),
-                                                      child: const Icon(Icons.bug_report, size: 20),
-                                                    ),
-                                                    label: const Text('Report', style: TextStyle(height: 1.0)),
-                                                  ),
-                                                ),
-                                                const SizedBox(height: 8),
-                                                SelectableText(
-                                                  page.content,
-                                                  style: textTheme.bodyLarge?.copyWith(height: 1.45),
-                                                ),
-                                                const SizedBox(height: 16),
-                                                Row(
-                                                  children: [
-                                                    Expanded(
-                                                      child: FilledButton.tonalIcon(
-                                                        style: _tonalExpressive(context),
-                                                         onPressed: hasPrev ? () async { await HapticFeedbackManager.lightClick(); _jumpTo(prevNo!); } : null,
-                                                        icon: const Icon(Icons.arrow_back),
-                                                        label: Text(hasPrev ? 'Previous Page - ${prevNo!}' : 'Previous Page'),
-                                                      ),
-                                                    ),
-                                                    const SizedBox(width: 12),
-                                                    Expanded(
-                                                      child: FilledButton.icon(
-                                                        style: _primaryExpressive(context),
-                                                         onPressed: hasNext ? () async { await HapticFeedbackManager.lightClick(); _jumpTo(nextNo!); } : null,
-                                                        icon: const Icon(Icons.arrow_forward),
-                                                        label: Text(hasNext ? 'Next Page - ${nextNo!}' : 'Next Page'),
-                                                      ),
-                                                    ),
-                                                  ],
-                                                ),
-                                              ],
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                              ),
-              ),
-            ],
-          ),
-          // AppBar provides persistent header in reader mode
-
-          // Bottom: landing mode -> chips; book mode -> nav bar with arrows
-          if (_pages.isNotEmpty)
-            Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
-              child: SafeArea(
-                top: false,
-                child: Material(
-                  elevation: 8,
-                  color: Theme.of(context).colorScheme.surface,
-                  surfaceTintColor: Theme.of(context).colorScheme.surfaceTint,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
-                    child: !_hasSelectedPage
-                        ? Row(
-                            children: [
-                               TextButton.icon(
-                                 onPressed: () async { await HapticFeedbackManager.lightClick(); await _openAllPagesSheet(); },
-                                icon: const Icon(Icons.grid_view_rounded, size: 18),
-                                label: const Text('All pages'),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: SingleChildScrollView(
-                                  scrollDirection: Axis.horizontal,
-                                  child: Row(
+                Expanded(
+                  child: _loading
+                      ? const Center(child: CircularProgressIndicator())
+                      : (_pages.isEmpty)
+                          ? const Center(child: Text('No pages found in data'))
+                          : (!_hasSelectedPage)
+                              ? Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20.0),
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
                                     children: [
-                                      for (final no in _visiblePageNumbers())
-                                        Padding(
-                                          padding: const EdgeInsets.symmetric(horizontal: 4),
-                                          child: _PageChip(
-                                            label: no.toString(),
-                                            selected: false,
-                                            onTap: () async { await HapticFeedbackManager.lightClick(); _jumpTo(no); },
+                                      // Heading and helper text
+                                      Text(
+                                        widget.type == 'festival'
+                                            ? 'Habbada Aaradhana Krama'
+                                            : 'Huduvada Aaradhana Krama',
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .titleLarge
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 6),
+                                      Text(
+                                        'Enter a page number to jump directly to that page',
+                                        textAlign: TextAlign.center,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodyMedium
+                                            ?.copyWith(
+                                              color: Theme.of(context)
+                                                  .textTheme
+                                                  .bodyMedium
+                                                  ?.color
+                                                  ?.withOpacity(0.8),
+                                            ),
+                                      ),
+                                      const SizedBox(height: 16),
+                                      ConstrainedBox(
+                                        constraints:
+                                            const BoxConstraints(maxWidth: 520),
+                                        child: TextField(
+                                          controller: _jumpController,
+                                          keyboardType: TextInputType.number,
+                                          textInputAction: TextInputAction.go,
+                                          decoration: InputDecoration(
+                                            hintText:
+                                                'Jump to page number (e.g., 1, 98, 100)',
+                                            prefixIcon:
+                                                const Icon(Icons.search),
+                                            border: OutlineInputBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(28)),
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                    horizontal: 20,
+                                                    vertical: 18),
                                           ),
+                                          onSubmitted: (value) async {
+                                            final target = int.tryParse(value);
+                                            if (target != null) {
+                                              await HapticFeedbackManager
+                                                  .mediumClick();
+                                              _jumpTo(target);
+                                            }
+                                          },
                                         ),
+                                      ),
+                                      const SizedBox(height: 20),
+                                      ConstrainedBox(
+                                        constraints:
+                                            const BoxConstraints(maxWidth: 320),
+                                        child: _MorphingCTAButton(
+                                          label: 'Open Full Book',
+                                          icon: Icons.menu_book_rounded,
+                                          onPressed: () async {
+                                            await HapticFeedbackManager
+                                                .lightClick();
+                                            setState(
+                                                () => _hasSelectedPage = true);
+                                          },
+                                        ),
+                                      ),
                                     ],
                                   ),
+                                )
+                              : PageView.builder(
+                                  key: ValueKey(_controllerEpoch),
+                                  controller: _pageController,
+                                  scrollDirection: Axis.vertical,
+                                  onPageChanged: (i) =>
+                                      setState(() => _currentPageIndex = i),
+                                  itemCount: _pages.length,
+                                  itemBuilder: (context, index) {
+                                    final page = _pages[index];
+                                    final bool hasPrev = index > 0;
+                                    final bool hasNext =
+                                        index < _pages.length - 1;
+                                    final int? prevNo = hasPrev
+                                        ? _pages[index - 1].pageNo
+                                        : null;
+                                    final int? nextNo = hasNext
+                                        ? _pages[index + 1].pageNo
+                                        : null;
+                                    const double topBadgeReserve =
+                                        8.0; // AppBar is used; no extra header padding needed
+                                    return Padding(
+                                      padding: const EdgeInsets.fromLTRB(
+                                          20, 12, 20, 20),
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Expanded(
+                                            child: SingleChildScrollView(
+                                              padding: EdgeInsets.only(
+                                                top: topBadgeReserve,
+                                                bottom: bottomReservePadding,
+                                              ),
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Align(
+                                                    alignment:
+                                                        Alignment.centerRight,
+                                                    child: OutlinedButton.icon(
+                                                      style: OutlinedButton
+                                                          .styleFrom(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .symmetric(
+                                                                horizontal: 14,
+                                                                vertical: 10),
+                                                        minimumSize:
+                                                            const Size(0, 40),
+                                                        textStyle:
+                                                            Theme.of(context)
+                                                                .textTheme
+                                                                .titleSmall
+                                                                ?.copyWith(
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w700,
+                                                                  height: 1.0,
+                                                                  fontSize: (Theme.of(context)
+                                                                              .textTheme
+                                                                              .titleSmall
+                                                                              ?.fontSize ??
+                                                                          12) +
+                                                                      2,
+                                                                ),
+                                                        shape:
+                                                            const StadiumBorder(),
+                                                      ),
+                                                      onPressed: _reportIssue,
+                                                      icon: Padding(
+                                                        padding:
+                                                            const EdgeInsets
+                                                                .only(
+                                                                bottom: 0.5),
+                                                        child: const Icon(
+                                                            Icons.bug_report,
+                                                            size: 20),
+                                                      ),
+                                                      label: const Text(
+                                                          'Report',
+                                                          style: TextStyle(
+                                                              height: 1.0)),
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 8),
+                                                  SelectableText(
+                                                    page.content,
+                                                    style: textTheme.bodyLarge
+                                                        ?.copyWith(
+                                                            height: 1.45),
+                                                  ),
+                                                  const SizedBox(height: 16),
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: FilledButton
+                                                            .tonalIcon(
+                                                          style:
+                                                              _tonalExpressive(
+                                                                  context),
+                                                          onPressed: hasPrev
+                                                              ? () async {
+                                                                  await HapticFeedbackManager
+                                                                      .lightClick();
+                                                                  _jumpTo(
+                                                                      prevNo!);
+                                                                }
+                                                              : null,
+                                                          icon: const Icon(
+                                                              Icons.arrow_back),
+                                                          label: Text(hasPrev
+                                                              ? 'Previous Page - ${prevNo!}'
+                                                              : 'Previous Page'),
+                                                        ),
+                                                      ),
+                                                      const SizedBox(width: 12),
+                                                      Expanded(
+                                                        child:
+                                                            FilledButton.icon(
+                                                          style:
+                                                              _primaryExpressive(
+                                                                  context),
+                                                          onPressed: hasNext
+                                                              ? () async {
+                                                                  await HapticFeedbackManager
+                                                                      .lightClick();
+                                                                  _jumpTo(
+                                                                      nextNo!);
+                                                                }
+                                                              : null,
+                                                          icon: const Icon(Icons
+                                                              .arrow_forward),
+                                                          label: Text(hasNext
+                                                              ? 'Next Page - ${nextNo!}'
+                                                              : 'Next Page'),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
                                 ),
-                              ),
-                            ],
-                          )
-                        : Row(
-                            children: [
-                              _NavIconButton(
-                                icon: Icons.chevron_left,
-                                onTap: _currentPageIndex > 0
-                                    ? () => _pageController.previousPage(
-                                          duration: const Duration(milliseconds: 200),
-                                          curve: Curves.easeOut,
-                                        )
-                                    : null,
-                              ),
-                              const SizedBox(width: 8),
-                               Expanded(
-                                child: OutlinedButton(
-                                   onPressed: () async { await HapticFeedbackManager.lightClick(); await _openAllPagesSheet(); },
-                                  child: Text('Page ${_pages[_currentPageIndex].pageNo}'),
+                ),
+              ],
+            ),
+            // AppBar provides persistent header in reader mode
+
+            // Bottom: landing mode -> chips; book mode -> nav bar with arrows
+            if (_pages.isNotEmpty)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: SafeArea(
+                  top: false,
+                  child: Material(
+                    elevation: 8,
+                    color: Theme.of(context).colorScheme.surface,
+                    surfaceTintColor: Theme.of(context).colorScheme.surfaceTint,
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(8, 8, 8, 8),
+                      child: !_hasSelectedPage
+                          ? Row(
+                              children: [
+                                TextButton.icon(
+                                  onPressed: () async {
+                                    await HapticFeedbackManager.lightClick();
+                                    await _openAllPagesSheet();
+                                  },
+                                  icon: const Icon(Icons.grid_view_rounded,
+                                      size: 18),
+                                  label: const Text('All pages'),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              _NavIconButton(
-                                icon: Icons.chevron_right,
-                                onTap: _currentPageIndex < _pages.length - 1
-                                    ? () => _pageController.nextPage(
-                                          duration: const Duration(milliseconds: 200),
-                                          curve: Curves.easeOut,
-                                        )
-                                    : null,
-                              ),
-                            ],
-                          ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    child: Row(
+                                      children: [
+                                        for (final no in _visiblePageNumbers())
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 4),
+                                            child: _PageChip(
+                                              label: no.toString(),
+                                              selected: false,
+                                              onTap: () async {
+                                                await HapticFeedbackManager
+                                                    .lightClick();
+                                                _jumpTo(no);
+                                              },
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            )
+                          : Row(
+                              children: [
+                                _NavIconButton(
+                                  icon: Icons.chevron_left,
+                                  onTap: _currentPageIndex > 0
+                                      ? () => _pageController.previousPage(
+                                            duration: const Duration(
+                                                milliseconds: 200),
+                                            curve: Curves.easeOut,
+                                          )
+                                      : null,
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: () async {
+                                      await HapticFeedbackManager.lightClick();
+                                      await _openAllPagesSheet();
+                                    },
+                                    child: Text(
+                                        'Page ${_pages[_currentPageIndex].pageNo}'),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                _NavIconButton(
+                                  icon: Icons.chevron_right,
+                                  onTap: _currentPageIndex < _pages.length - 1
+                                      ? () => _pageController.nextPage(
+                                            duration: const Duration(
+                                                milliseconds: 200),
+                                            curve: Curves.easeOut,
+                                          )
+                                      : null,
+                                ),
+                              ],
+                            ),
+                    ),
                   ),
                 ),
               ),
-            ),
 
-          // Floating "Go to book" action for landing
-          // Inline button shown in landing section; no floating action needed
-        ],
+            // Floating "Go to book" action for landing
+            // Inline button shown in landing section; no floating action needed
+          ],
+        ),
       ),
-    ),
     );
   }
 }
@@ -967,11 +1133,17 @@ class _OrderPage {
   final String content;
   final String type; // 'regular' | 'festival'
 
-  _OrderPage({required this.pageNo, required this.title, required this.content, required this.type});
+  _OrderPage(
+      {required this.pageNo,
+      required this.title,
+      required this.content,
+      required this.type});
 
   factory _OrderPage.fromJson(Map<String, dynamic> json) {
     return _OrderPage(
-      pageNo: json['page_no'] is int ? json['page_no'] as int : int.tryParse('${json['page_no']}') ?? 0,
+      pageNo: json['page_no'] is int
+          ? json['page_no'] as int
+          : int.tryParse('${json['page_no']}') ?? 0,
       title: json['title'] as String?,
       content: (json['content'] ?? '').toString(),
       type: (json['type'] ?? 'regular').toString(),
@@ -984,7 +1156,8 @@ class _PageChip extends StatelessWidget {
   final bool selected;
   final VoidCallback onTap;
 
-  const _PageChip({required this.label, required this.selected, required this.onTap});
+  const _PageChip(
+      {required this.label, required this.selected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -1015,16 +1188,26 @@ class _NavIconButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final enabled = onTap != null;
     return InkResponse(
-      onTap: enabled ? () async { await HapticFeedbackManager.lightClick(); onTap!(); } : null,
+      onTap: enabled
+          ? () async {
+              await HapticFeedbackManager.lightClick();
+              onTap!();
+            }
+          : null,
       radius: 24,
       child: Container(
         width: 44,
         height: 44,
         decoration: BoxDecoration(
-          color: enabled ? Theme.of(context).colorScheme.surfaceVariant : Theme.of(context).disabledColor.withOpacity(0.1),
+          color: enabled
+              ? Theme.of(context).colorScheme.surfaceVariant
+              : Theme.of(context).disabledColor.withOpacity(0.1),
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, color: enabled ? Theme.of(context).colorScheme.onSurface : Theme.of(context).disabledColor),
+        child: Icon(icon,
+            color: enabled
+                ? Theme.of(context).colorScheme.onSurface
+                : Theme.of(context).disabledColor),
       ),
     );
   }
@@ -1035,13 +1218,15 @@ class _MorphingCTAButton extends StatefulWidget {
   final IconData icon;
   final VoidCallback onPressed;
 
-  const _MorphingCTAButton({required this.label, required this.icon, required this.onPressed});
+  const _MorphingCTAButton(
+      {required this.label, required this.icon, required this.onPressed});
 
   @override
   State<_MorphingCTAButton> createState() => _MorphingCTAButtonState();
 }
 
-class _MorphingCTAButtonState extends State<_MorphingCTAButton> with SingleTickerProviderStateMixin {
+class _MorphingCTAButtonState extends State<_MorphingCTAButton>
+    with SingleTickerProviderStateMixin {
   late Timer _timer;
   int _styleIndex = 0;
 
@@ -1063,7 +1248,10 @@ class _MorphingCTAButtonState extends State<_MorphingCTAButton> with SingleTicke
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final textStyle = Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800);
+    final textStyle = Theme.of(context)
+        .textTheme
+        .titleMedium
+        ?.copyWith(fontWeight: FontWeight.w800);
 
     final ButtonStyle style;
     switch (_styleIndex) {
@@ -1079,7 +1267,8 @@ class _MorphingCTAButtonState extends State<_MorphingCTAButton> with SingleTicke
         style = FilledButton.styleFrom(
           minimumSize: const Size(0, 56),
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
           textStyle: textStyle,
           backgroundColor: scheme.secondaryContainer,
           foregroundColor: scheme.onSecondaryContainer,
@@ -1090,14 +1279,16 @@ class _MorphingCTAButtonState extends State<_MorphingCTAButton> with SingleTicke
           minimumSize: const Size(0, 56),
           padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 18),
           side: BorderSide(color: scheme.primary),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
           textStyle: textStyle,
         );
     }
 
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 350),
-      transitionBuilder: (child, anim) => FadeTransition(opacity: anim, child: child),
+      transitionBuilder: (child, anim) =>
+          FadeTransition(opacity: anim, child: child),
       child: switch (_styleIndex) {
         0 => FilledButton.icon(
             key: const ValueKey('style0'),
@@ -1124,4 +1315,3 @@ class _MorphingCTAButtonState extends State<_MorphingCTAButton> with SingleTicke
     );
   }
 }
-

@@ -52,10 +52,13 @@ class AudioErrorDialog extends StatelessWidget {
                           type: FileType.audio,
                           allowMultiple: false,
                         );
-                        if (result != null && result.files.single.path != null) {
+                        if (result != null &&
+                            result.files.single.path != null) {
                           // Use path for file system access, or path for content URIs
-                          selectedFilePath = result.files.single.path ?? result.files.single.path;
-                          debugPrint('AudioErrorDialog: Selected file path: $selectedFilePath');
+                          selectedFilePath = result.files.single.path ??
+                              result.files.single.path;
+                          debugPrint(
+                              'AudioErrorDialog: Selected file path: $selectedFilePath');
                           setDialogState(() {});
                         }
                       },
@@ -113,16 +116,20 @@ class AudioErrorDialog extends StatelessWidget {
     );
 
     debugPrint('AudioErrorDialog: Dialog result: $result');
-    
-    if (result != null && result['action'] == 'send' && result['filePath'] != null) {
-      debugPrint('AudioErrorDialog: Calling _sendAudioEmail with file: ${result['filePath']}');
+
+    if (result != null &&
+        result['action'] == 'send' &&
+        result['filePath'] != null) {
+      debugPrint(
+          'AudioErrorDialog: Calling _sendAudioEmail with file: ${result['filePath']}');
       await _sendAudioEmail(
         context,
         result['filePath'] as String,
         result['description'] as String,
       );
     } else {
-      debugPrint('AudioErrorDialog: Dialog result is null or invalid. Result: $result');
+      debugPrint(
+          'AudioErrorDialog: Dialog result is null or invalid. Result: $result');
     }
   }
 
@@ -131,8 +138,9 @@ class AudioErrorDialog extends StatelessWidget {
     String filePath,
     String description,
   ) async {
-    debugPrint('AudioErrorDialog: _sendAudioEmail called with filePath: $filePath');
-    
+    debugPrint(
+        'AudioErrorDialog: _sendAudioEmail called with filePath: $filePath');
+
     try {
       debugPrint('AudioErrorDialog: Starting email preparation...');
       final packageInfo = await PackageInfo.fromPlatform();
@@ -152,30 +160,33 @@ ${description.isNotEmpty ? 'Additional Notes:\n$description\n\n' : ''}Submitted 
 
       final Email email = Email(
         body: emailBody,
-        subject: '[$itemType] $itemNumber Audio Submission${songTitle != null ? ' - $songTitle' : ''}',
+        subject:
+            '[$itemType] $itemNumber Audio Submission${songTitle != null ? ' - $songTitle' : ''}',
         recipients: ['support@reyziecrafts.atlassian.net'],
         attachmentPaths: [filePath],
         isHTML: false,
       );
 
-      debugPrint('AudioErrorDialog: Attempting to open email app with attachment: $filePath');
+      debugPrint(
+          'AudioErrorDialog: Attempting to open email app with attachment: $filePath');
       debugPrint('AudioErrorDialog: Email recipients: ${email.recipients}');
       debugPrint('AudioErrorDialog: Email subject: ${email.subject}');
-      
+
       // Verify file exists (only if it's a file path, not a content URI)
       if (!filePath.startsWith('content://')) {
         final file = File(filePath);
         if (!await file.exists()) {
           throw Exception('Selected file does not exist: $filePath');
         }
-        debugPrint('AudioErrorDialog: File exists, size: ${await file.length()} bytes');
+        debugPrint(
+            'AudioErrorDialog: File exists, size: ${await file.length()} bytes');
       } else {
         debugPrint('AudioErrorDialog: Using content URI: $filePath');
       }
-      
+
       // Open email app - this will switch to the email app
       await FlutterEmailSender.send(email);
-      
+
       debugPrint('AudioErrorDialog: Email app opened successfully');
 
       // Save pending ticket to Supabase so it shows in tickets list
@@ -190,13 +201,14 @@ ${description.isNotEmpty ? 'Additional Notes:\n$description\n\n' : ''}Submitted 
       // Show success message when user returns to the app
       // Wait a bit for the user to potentially return to the app
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       // Try to show dialog - if context is not mounted, we'll catch it
       try {
         if (context.mounted) {
           _showEmailResultDialog(context, isSuccess: true);
         } else {
-          debugPrint('AudioErrorDialog: Context not mounted, cannot show success dialog');
+          debugPrint(
+              'AudioErrorDialog: Context not mounted, cannot show success dialog');
         }
       } catch (e) {
         debugPrint('AudioErrorDialog: Error showing success dialog: $e');
@@ -204,10 +216,10 @@ ${description.isNotEmpty ? 'Additional Notes:\n$description\n\n' : ''}Submitted 
     } catch (e, stackTrace) {
       debugPrint('AudioErrorDialog: Error opening email app: $e');
       debugPrint('AudioErrorDialog: Stack trace: $stackTrace');
-      
+
       // Wait a bit before showing error dialog
       await Future.delayed(const Duration(milliseconds: 500));
-      
+
       try {
         if (context.mounted) {
           _showEmailResultDialog(
@@ -216,10 +228,12 @@ ${description.isNotEmpty ? 'Additional Notes:\n$description\n\n' : ''}Submitted 
             errorMessage: 'Error opening email app: ${e.toString()}',
           );
         } else {
-          debugPrint('AudioErrorDialog: Context not mounted, cannot show error dialog');
+          debugPrint(
+              'AudioErrorDialog: Context not mounted, cannot show error dialog');
         }
       } catch (dialogError) {
-        debugPrint('AudioErrorDialog: Error showing error dialog: $dialogError');
+        debugPrint(
+            'AudioErrorDialog: Error showing error dialog: $dialogError');
       }
     }
   }
@@ -230,7 +244,7 @@ ${description.isNotEmpty ? 'Additional Notes:\n$description\n\n' : ''}Submitted 
     String? errorMessage,
   }) {
     if (!context.mounted) return;
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -254,7 +268,7 @@ ${description.isNotEmpty ? 'Additional Notes:\n$description\n\n' : ''}Submitted 
     try {
       final supabase = Supabase.instance.client;
       final user = supabase.auth.currentUser;
-      
+
       // Get or create device ID for unregistered users
       final prefs = await SharedPreferences.getInstance();
       String? deviceId = prefs.getString('device_id');
@@ -262,30 +276,36 @@ ${description.isNotEmpty ? 'Additional Notes:\n$description\n\n' : ''}Submitted 
         deviceId = const Uuid().v4();
         await prefs.setString('device_id', deviceId);
       }
-      
+
       // Generate a placeholder ticket key (will be updated when actual ticket is created)
       final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final placeholderKey = 'PENDING-${itemType.toUpperCase()}-$itemNumber-$timestamp';
-      
+      final placeholderKey =
+          'PENDING-${itemType.toUpperCase()}-$itemNumber-$timestamp';
+
       // Use a placeholder URL (will be updated when actual ticket is created)
-      final placeholderUrl = 'https://reyziecrafts.atlassian.net/browse/$placeholderKey';
-      
+      final placeholderUrl =
+          'https://reyziecrafts.atlassian.net/browse/$placeholderKey';
+
       await supabase.from('jira_tickets').insert({
         'ticket_key': placeholderKey,
         'ticket_url': placeholderUrl,
         'song_type': itemType,
         'song_number': itemNumber,
         'song_title': songTitle ?? '',
-        'description': description?.isNotEmpty ?? false ? description : 'Audio file submission',
+        'description': description?.isNotEmpty ?? false
+            ? description
+            : 'Audio file submission',
         'app_version': appVersion,
-        'jira_status': 'Email Sent',  // Special status for pending tickets
+        'jira_status': 'Email Sent', // Special status for pending tickets
         'user_id': user?.id,
         'device_id': user == null ? deviceId : null,
       });
-      
-      debugPrint('AudioErrorDialog: Saved pending ticket $placeholderKey to Supabase');
+
+      debugPrint(
+          'AudioErrorDialog: Saved pending ticket $placeholderKey to Supabase');
     } catch (e) {
-      debugPrint('AudioErrorDialog: Failed to save pending ticket to Supabase: $e');
+      debugPrint(
+          'AudioErrorDialog: Failed to save pending ticket to Supabase: $e');
       // Don't throw - email was sent, just tracking failed
     }
   }

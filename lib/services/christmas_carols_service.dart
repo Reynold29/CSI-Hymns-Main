@@ -11,18 +11,18 @@ import 'package:uuid/uuid.dart';
 import 'package:http/http.dart' as http;
 
 /// Service for managing Christmas Carols data.
-/// 
+///
 /// **Visibility Rules:**
 /// - ALL uploaded carols are PUBLIC and visible to everyone
 /// - Any user (registered or not) can browse and view all carols
 /// - Only AUTHENTICATED users can add, edit, or delete carols
 /// - ADMIN users can edit/delete any carol
-/// 
+///
 /// **Data Sources:**
 /// - Bundled assets (seed data) - always available
 /// - Supabase (user-uploaded carols) - public read, authenticated write
 /// - Local storage (fallback when offline)
-/// 
+///
 /// **PDF Storage:**
 /// - PDFs are uploaded to Supabase Storage with public URLs
 /// - Everyone can view PDFs attached to carols
@@ -32,15 +32,16 @@ class ChristmasCarolsService with ChangeNotifier {
   static const String _remoteJsonLastFetchKey = 'remote_carols_last_fetch';
   static const String _supabaseTable = 'christmas_carols';
   static const String _supabaseBucket = 'carol-pdfs';
-  
+
   final ChristmasCarolsDB _db = ChristmasCarolsDB();
-  
+
   // Default remote JSON URL
-  static const String _defaultRemoteJsonUrl = 'https://raw.githubusercontent.com/Reynold29/csi-hymns-vault/main/carols_data.json';
-  
+  static const String _defaultRemoteJsonUrl =
+      'https://raw.githubusercontent.com/Reynold29/csi-hymns-vault/main/carols_data.json';
+
   // Cache duration for remote JSON (24 hours)
   static const Duration _remoteJsonCacheDuration = Duration(hours: 24);
-  
+
   /// Admin emails with full CRUD access to all carols
   static const List<String> adminEmails = [
     'reynoldclare29022902@gmail.com',
@@ -48,7 +49,7 @@ class ChristmasCarolsService with ChangeNotifier {
     'reyziecrafts@gmail.com',
     'reynold.clare29022902@gmail.com'
   ];
-  
+
   /// Check if current user is an admin
   bool get isAdmin {
     try {
@@ -62,7 +63,7 @@ class ChristmasCarolsService with ChangeNotifier {
       return false;
     }
   }
-  
+
   /// Check if current user can edit a specific carol
   bool canEditCarol(ChristmasCarol carol) {
     try {
@@ -77,20 +78,20 @@ class ChristmasCarolsService with ChangeNotifier {
       return false;
     }
   }
-  
+
   /// Check if current user can delete a specific carol
   bool canDeleteCarol(ChristmasCarol carol) {
     return canEditCarol(carol); // Same rules as edit
   }
-  
+
   List<ChristmasCarol> _carols = [];
   bool _isLoading = false;
-  
+
   List<ChristmasCarol> get carols => _carols;
   bool get isLoading => _isLoading;
 
   final Uuid _uuid = const Uuid();
-  
+
   /// Safely get Supabase client, returns null if not initialized
   SupabaseClient? _getSupabaseClient() {
     try {
@@ -110,37 +111,44 @@ class ChristmasCarolsService with ChangeNotifier {
 
     try {
       final List<ChristmasCarol> allCarols = [];
-      
+
       // Get list of hidden churches (for bundled/remote carols)
       final hiddenChurches = await _getHiddenChurches();
-      
+
       // 1. Load bundled seed carols (filter out hidden churches)
       final bundledCarols = await _loadBundledCarols();
-      final visibleBundled = bundledCarols.where((c) => !hiddenChurches.contains(c.churchName)).toList();
+      final visibleBundled = bundledCarols
+          .where((c) => !hiddenChurches.contains(c.churchName))
+          .toList();
       allCarols.addAll(visibleBundled);
-      
+
       // 2. Load remote JSON carols (if URL is configured)
       final remoteJsonCarols = await _loadRemoteJsonCarols();
-      final visibleRemoteJson = remoteJsonCarols.where((c) => !hiddenChurches.contains(c.churchName)).toList();
+      final visibleRemoteJson = remoteJsonCarols
+          .where((c) => !hiddenChurches.contains(c.churchName))
+          .toList();
       allCarols.addAll(visibleRemoteJson);
-      
+
       // 3. Load user carols from Supabase
       List<ChristmasCarol> userCarols = [];
       List<ChristmasCarol> remoteCarols = [];
-      
+
       // Try Supabase first
       try {
         remoteCarols = await _loadFromSupabase();
-        debugPrint('ChristmasCarolsService: Loaded ${remoteCarols.length} carols from Supabase');
-        
+        debugPrint(
+            'ChristmasCarolsService: Loaded ${remoteCarols.length} carols from Supabase');
+
         // On web: always use Supabase, skip local DB
         // On mobile: save to local DB for offline access
         if (!kIsWeb && remoteCarols.isNotEmpty) {
           try {
             await _db.upsertCarols(remoteCarols);
-            debugPrint('ChristmasCarolsService: Saved ${remoteCarols.length} carols to local DB');
+            debugPrint(
+                'ChristmasCarolsService: Saved ${remoteCarols.length} carols to local DB');
           } catch (dbError) {
-            debugPrint('ChristmasCarolsService: Failed to save to local DB: $dbError');
+            debugPrint(
+                'ChristmasCarolsService: Failed to save to local DB: $dbError');
             // Continue even if DB save fails
           }
         }
@@ -149,17 +157,19 @@ class ChristmasCarolsService with ChangeNotifier {
         debugPrint('ChristmasCarolsService: Supabase load failed: $e');
         if (kIsWeb) {
           // On web, if Supabase fails, we have no fallback - return what we have
-          debugPrint('ChristmasCarolsService: Web version requires online connection');
+          debugPrint(
+              'ChristmasCarolsService: Web version requires online connection');
         }
       }
-      
+
       // On mobile: try to load from local DB (for offline access or as fallback)
       // On web: skip local DB entirely
       if (!kIsWeb) {
         try {
           final localCarols = await _loadFromLocalDB();
-          debugPrint('ChristmasCarolsService: Loaded ${localCarols.length} carols from local DB');
-          
+          debugPrint(
+              'ChristmasCarolsService: Loaded ${localCarols.length} carols from local DB');
+
           // Merge: prefer remote if available, otherwise use local
           if (remoteCarols.isNotEmpty) {
             userCarols = remoteCarols;
@@ -175,10 +185,11 @@ class ChristmasCarolsService with ChangeNotifier {
         // Web: always use remote (Supabase)
         userCarols = remoteCarols;
       }
-      
+
       allCarols.addAll(userCarols);
-      debugPrint('ChristmasCarolsService: Total carols after loading: ${allCarols.length} (bundled: ${visibleBundled.length}, remote JSON: ${visibleRemoteJson.length}, user: ${userCarols.length})');
-      
+      debugPrint(
+          'ChristmasCarolsService: Total carols after loading: ${allCarols.length} (bundled: ${visibleBundled.length}, remote JSON: ${visibleRemoteJson.length}, user: ${userCarols.length})');
+
       // Remove duplicates (keep the one with latest updatedAt)
       final Map<String, ChristmasCarol> uniqueCarols = {};
       for (final carol in allCarols) {
@@ -194,7 +205,7 @@ class ChristmasCarolsService with ChangeNotifier {
           }
         }
       }
-      
+
       // Sort by created date (newest first) then by title
       final sortedCarols = uniqueCarols.values.toList();
       sortedCarols.sort((a, b) {
@@ -202,11 +213,11 @@ class ChristmasCarolsService with ChangeNotifier {
         if (dateCompare != 0) return dateCompare;
         return a.title.compareTo(b.title);
       });
-      
+
       _carols = sortedCarols;
       _isLoading = false;
       notifyListeners();
-      
+
       return sortedCarols;
     } catch (e) {
       _isLoading = false;
@@ -215,12 +226,12 @@ class ChristmasCarolsService with ChangeNotifier {
       rethrow;
     }
   }
-  
+
   /// Refreshes carols from all sources
   Future<void> refreshCarols() async {
     await loadAllCarols(checkGitHub: false);
   }
-  
+
   /// Gets list of hidden churches (for bundled carols)
   Future<Set<String>> _getHiddenChurches() async {
     try {
@@ -231,7 +242,7 @@ class ChristmasCarolsService with ChangeNotifier {
       return {};
     }
   }
-  
+
   /// Marks a church as hidden (for bundled carols)
   Future<void> _hideChurch(String churchName) async {
     try {
@@ -259,18 +270,18 @@ class ChristmasCarolsService with ChangeNotifier {
       return [];
     }
   }
-  
+
   /// Loads carols from remote JSON URL (with caching)
   Future<List<ChristmasCarol>> _loadRemoteJsonCarols() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       String? remoteUrl = prefs.getString(_remoteJsonUrlKey);
-      
+
       // Use default URL if none is configured
       if (remoteUrl == null || remoteUrl.isEmpty) {
         remoteUrl = _defaultRemoteJsonUrl;
       }
-      
+
       // Check cache
       final lastFetchStr = prefs.getString(_remoteJsonLastFetchKey);
       if (lastFetchStr != null) {
@@ -285,20 +296,23 @@ class ChristmasCarolsService with ChangeNotifier {
           }
         }
       }
-      
+
       // Fetch from remote URL
       final response = await http.get(Uri.parse(remoteUrl));
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
-        final carols = data.map((item) => ChristmasCarol.fromJson(item)).toList();
-        
+        final carols =
+            data.map((item) => ChristmasCarol.fromJson(item)).toList();
+
         // Cache the data
         await prefs.setString('remote_carols_cached', response.body);
-        await prefs.setString(_remoteJsonLastFetchKey, DateTime.now().toIso8601String());
-        
+        await prefs.setString(
+            _remoteJsonLastFetchKey, DateTime.now().toIso8601String());
+
         return carols;
       } else {
-        debugPrint('ChristmasCarolsService: Remote JSON fetch failed: ${response.statusCode}');
+        debugPrint(
+            'ChristmasCarolsService: Remote JSON fetch failed: ${response.statusCode}');
         // Return cached data if available
         final cachedData = prefs.getString('remote_carols_cached');
         if (cachedData != null) {
@@ -321,7 +335,7 @@ class ChristmasCarolsService with ChangeNotifier {
       return [];
     }
   }
-  
+
   /// Sets the remote JSON URL for carols
   Future<void> setRemoteJsonUrl(String? url) async {
     try {
@@ -341,7 +355,7 @@ class ChristmasCarolsService with ChangeNotifier {
       debugPrint('ChristmasCarolsService: Failed to set remote JSON URL: $e');
     }
   }
-  
+
   /// Gets the current remote JSON URL (returns default if none set)
   Future<String?> getRemoteJsonUrl() async {
     try {
@@ -353,10 +367,10 @@ class ChristmasCarolsService with ChangeNotifier {
       return _defaultRemoteJsonUrl;
     }
   }
-  
+
   /// Gets the default remote JSON URL
   String get defaultRemoteJsonUrl => _defaultRemoteJsonUrl;
-  
+
   /// Imports carols from a local JSON file
   Future<List<ChristmasCarol>> importFromJsonFile(String filePath) async {
     try {
@@ -364,40 +378,41 @@ class ChristmasCarolsService with ChangeNotifier {
       if (!await file.exists()) {
         throw Exception('File not found: $filePath');
       }
-      
+
       final jsonData = await file.readAsString();
       final List<dynamic> data = jsonDecode(jsonData);
       final carols = data.map((item) => ChristmasCarol.fromJson(item)).toList();
-      
+
       // Save to local database
       await _db.upsertCarols(carols);
-      
+
       // Refresh
       await loadAllCarols();
-      
+
       return carols;
     } catch (e) {
       debugPrint('ChristmasCarolsService: Import from JSON failed: $e');
       rethrow;
     }
   }
-  
+
   /// Exports all carols to JSON file
   Future<String> exportToJsonFile() async {
     try {
       final directory = await getApplicationDocumentsDirectory();
-      final file = File('${directory.path}/christmas_carols_export_${DateTime.now().millisecondsSinceEpoch}.json');
-      
+      final file = File(
+          '${directory.path}/christmas_carols_export_${DateTime.now().millisecondsSinceEpoch}.json');
+
       final jsonData = jsonEncode(_carols.map((c) => c.toJson()).toList());
       await file.writeAsString(jsonData);
-      
+
       return file.path;
     } catch (e) {
       debugPrint('ChristmasCarolsService: Export to JSON failed: $e');
       rethrow;
     }
   }
-  
+
   /// Forces refresh of remote JSON (bypasses cache)
   Future<void> refreshRemoteJson() async {
     try {
@@ -410,7 +425,6 @@ class ChristmasCarolsService with ChangeNotifier {
     }
   }
 
-
   /// Loads ALL carols from Supabase - PUBLIC ACCESS
   /// No authentication required to read carols.
   /// All uploaded carols are visible to everyone.
@@ -418,13 +432,13 @@ class ChristmasCarolsService with ChangeNotifier {
     try {
       final supabase = _getSupabaseClient();
       if (supabase == null) return [];
-      
+
       // Fetch ALL carols - no user filter, everyone can see everything
       final response = await supabase
           .from(_supabaseTable)
           .select()
           .order('created_at', ascending: false);
-      
+
       return (response as List)
           .map((item) => ChristmasCarol.fromJson(item))
           .toList();
@@ -442,12 +456,13 @@ class ChristmasCarolsService with ChangeNotifier {
     if (kIsWeb) {
       return [];
     }
-    
+
     try {
       final count = await _db.getCarolCount();
       debugPrint('ChristmasCarolsService: Local DB has $count carols');
       final carols = await _db.getAllCarols();
-      debugPrint('ChristmasCarolsService: Successfully loaded ${carols.length} carols from local DB');
+      debugPrint(
+          'ChristmasCarolsService: Successfully loaded ${carols.length} carols from local DB');
       return carols;
     } catch (e, stackTrace) {
       debugPrint('ChristmasCarolsService: Local DB load failed: $e');
@@ -455,7 +470,6 @@ class ChristmasCarolsService with ChangeNotifier {
       return [];
     }
   }
-
 
   /// Adds a new carol
   Future<ChristmasCarol> addCarol({
@@ -472,7 +486,7 @@ class ChristmasCarolsService with ChangeNotifier {
     if (supabase == null) {
       throw Exception('Supabase not initialized');
     }
-    
+
     final user = supabase.auth.currentUser;
     if (user == null) {
       throw Exception('User must be authenticated to add carols');
@@ -508,7 +522,8 @@ class ChristmasCarolsService with ChangeNotifier {
         try {
           await _db.upsertCarol(carol);
         } catch (dbError) {
-          debugPrint('ChristmasCarolsService: Failed to save to local DB: $dbError');
+          debugPrint(
+              'ChristmasCarolsService: Failed to save to local DB: $dbError');
         }
       }
     } catch (e) {
@@ -518,14 +533,15 @@ class ChristmasCarolsService with ChangeNotifier {
         debugPrint('ChristmasCarolsService: Supabase insert failed on web: $e');
         rethrow;
       } else {
-        debugPrint('ChristmasCarolsService: Supabase insert failed, saving locally: $e');
+        debugPrint(
+            'ChristmasCarolsService: Supabase insert failed, saving locally: $e');
         await _db.upsertCarol(carol);
       }
     }
 
     // Refresh the list
     await loadAllCarols();
-    
+
     return carol;
   }
 
@@ -536,19 +552,20 @@ class ChristmasCarolsService with ChangeNotifier {
       if (supabase == null) return null;
       final fileName = '$carolId.pdf';
       final bytes = await pdfFile.readAsBytes();
-      
+
       // Try Supabase storage first
       try {
         await supabase.storage.from(_supabaseBucket).uploadBinary(
-          fileName,
-          bytes,
-          fileOptions: const FileOptions(
-            contentType: 'application/pdf',
-            upsert: true,
-          ),
-        );
-        
-        final publicUrl = supabase.storage.from(_supabaseBucket).getPublicUrl(fileName);
+              fileName,
+              bytes,
+              fileOptions: const FileOptions(
+                contentType: 'application/pdf',
+                upsert: true,
+              ),
+            );
+
+        final publicUrl =
+            supabase.storage.from(_supabaseBucket).getPublicUrl(fileName);
         return publicUrl;
       } catch (e) {
         debugPrint('ChristmasCarolsService: Supabase upload failed: $e');
@@ -566,14 +583,14 @@ class ChristmasCarolsService with ChangeNotifier {
     try {
       final directory = await getApplicationDocumentsDirectory();
       final pdfDir = Directory('${directory.path}/carol_pdfs');
-      
+
       if (!await pdfDir.exists()) {
         await pdfDir.create(recursive: true);
       }
-      
+
       final localPath = '${pdfDir.path}/$carolId.pdf';
       await pdfFile.copy(localPath);
-      
+
       return localPath;
     } catch (e) {
       debugPrint('ChristmasCarolsService: Local PDF save failed: $e');
@@ -589,11 +606,11 @@ class ChristmasCarolsService with ChangeNotifier {
       throw Exception('Supabase not initialized');
     }
     final user = supabase.auth.currentUser;
-    
+
     if (user == null) {
       throw Exception('User must be authenticated to update carols');
     }
-    
+
     if (!canEditCarol(carol)) {
       throw Exception('You can only update your own carols');
     }
@@ -635,7 +652,8 @@ class ChristmasCarolsService with ChangeNotifier {
         try {
           await _db.upsertCarol(updatedCarol);
         } catch (dbError) {
-          debugPrint('ChristmasCarolsService: Failed to update local DB: $dbError');
+          debugPrint(
+              'ChristmasCarolsService: Failed to update local DB: $dbError');
         }
       }
     } catch (e) {
@@ -660,11 +678,11 @@ class ChristmasCarolsService with ChangeNotifier {
       throw Exception('Supabase not initialized');
     }
     final user = supabase.auth.currentUser;
-    
+
     if (user == null) {
       throw Exception('User must be authenticated to delete carols');
     }
-    
+
     // Check permissions if carol object provided
     if (carol != null && !canDeleteCarol(carol)) {
       throw Exception('You can only delete your own carols');
@@ -680,10 +698,7 @@ class ChristmasCarolsService with ChangeNotifier {
 
       if (isAdmin) {
         // Admins can delete any carol
-        await supabase
-            .from(_supabaseTable)
-            .delete()
-            .eq('id', carolId);
+        await supabase.from(_supabaseTable).delete().eq('id', carolId);
       } else {
         // Regular users can only delete their own
         await supabase
@@ -697,7 +712,8 @@ class ChristmasCarolsService with ChangeNotifier {
         try {
           await _db.deleteCarol(carolId);
         } catch (dbError) {
-          debugPrint('ChristmasCarolsService: Failed to delete from local DB: $dbError');
+          debugPrint(
+              'ChristmasCarolsService: Failed to delete from local DB: $dbError');
         }
       }
     } catch (e) {
@@ -708,7 +724,7 @@ class ChristmasCarolsService with ChangeNotifier {
 
     await loadAllCarols();
   }
-  
+
   /// Deletes an entire church and all its carols
   /// Only admins or the user who created the first carol in the church can do this
   /// For bundled churches, marks them as hidden instead of deleting
@@ -718,92 +734,95 @@ class ChristmasCarolsService with ChangeNotifier {
       throw Exception('Supabase not initialized');
     }
     final user = supabase.auth.currentUser;
-    
+
     if (user == null) {
       throw Exception('User must be authenticated to delete churches');
     }
-    
-      // Get all carols for this church
-      final carols = _carols.where((c) => c.churchName == churchName).toList();
-      
+
+    // Get all carols for this church
+    final carols = _carols.where((c) => c.churchName == churchName).toList();
+
     if (carols.isEmpty) {
       throw Exception('Church not found');
     }
-    
+
     // Check permissions: Admin OR creator of the first carol
     final firstCarol = carols.first;
     final canDelete = isAdmin || firstCarol.createdByUserId == user.id;
-    
+
     if (!canDelete) {
       throw Exception('Only admins or the church creator can delete churches');
     }
-    
+
     try {
       // Separate bundled and user-uploaded carols
-      final bundledCarols = carols.where((c) => c.createdByUserId == 'system').toList();
-      final userCarols = carols.where((c) => c.createdByUserId != 'system').toList();
-      
+      final bundledCarols =
+          carols.where((c) => c.createdByUserId == 'system').toList();
+      final userCarols =
+          carols.where((c) => c.createdByUserId != 'system').toList();
+
       // If there are bundled carols, mark church as hidden
       if (bundledCarols.isNotEmpty) {
         await _hideChurch(churchName);
       }
-      
+
       // Delete user-uploaded carols from Supabase
       if (userCarols.isNotEmpty) {
         // Delete PDFs first
         for (final carol in userCarols) {
           if (carol.hasPdf) {
             try {
-              await supabase.storage.from(_supabaseBucket).remove(['${carol.id}.pdf']);
+              await supabase.storage
+                  .from(_supabaseBucket)
+                  .remove(['${carol.id}.pdf']);
             } catch (e) {
               // Ignore storage errors
             }
           }
         }
-        
+
         // Delete all user carols for this church from database
         final userCarolIds = userCarols.map((c) => c.id).toList();
         for (final carolId in userCarolIds) {
           try {
-            await supabase
-                .from(_supabaseTable)
-                .delete()
-                .eq('id', carolId);
+            await supabase.from(_supabaseTable).delete().eq('id', carolId);
           } catch (e) {
-            debugPrint('ChristmasCarolsService: Failed to delete carol $carolId: $e');
+            debugPrint(
+                'ChristmasCarolsService: Failed to delete carol $carolId: $e');
           }
         }
       }
-      
+
       // On mobile: also delete from local DB
       if (!kIsWeb) {
         try {
           await _db.deleteCarolsByChurch(churchName);
         } catch (dbError) {
-          debugPrint('ChristmasCarolsService: Failed to delete church from local DB: $dbError');
+          debugPrint(
+              'ChristmasCarolsService: Failed to delete church from local DB: $dbError');
         }
       }
     } catch (e) {
       debugPrint('ChristmasCarolsService: Delete church failed: $e');
       rethrow;
     }
-    
+
     await loadAllCarols();
   }
-  
+
   /// Check if current user can delete a church
   bool canDeleteChurch(String churchName) {
     final supabase = _getSupabaseClient();
     if (supabase == null) return false;
     final user = supabase.auth.currentUser;
-    
+
     if (user == null) return false;
     if (isAdmin) return true;
-    
+
     // Check if user created the first carol in this church
     final carols = _carols.where((c) => c.churchName == churchName).toList();
     if (carols.isEmpty) return false;
-    
+
     final firstCarol = carols.first;
     return firstCarol.createdByUserId == user.id;
   }
@@ -842,7 +861,7 @@ class ChristmasCarolsService with ChangeNotifier {
     final supabase = _getSupabaseClient();
     if (supabase == null) return;
     final user = supabase.auth.currentUser;
-    
+
     if (user == null) return;
 
     final localCarols = await _loadFromLocalDB();
@@ -853,7 +872,8 @@ class ChristmasCarolsService with ChangeNotifier {
         final updatedCarol = carol.copyWith(createdByUserId: user.id);
         await supabase.from(_supabaseTable).insert(updatedCarol.toJson());
       } catch (e) {
-        debugPrint('ChristmasCarolsService: Migration failed for ${carol.id}: $e');
+        debugPrint(
+            'ChristmasCarolsService: Migration failed for ${carol.id}: $e');
       }
     }
 
@@ -861,4 +881,3 @@ class ChristmasCarolsService with ChangeNotifier {
     await loadAllCarols();
   }
 }
-

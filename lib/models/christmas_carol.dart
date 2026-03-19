@@ -3,7 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 /// Represents a Christmas Carol song entry.
-/// 
+///
 /// Carols can have either text lyrics or a PDF file (or both).
 /// The PDF can be stored locally or uploaded to Supabase storage.
 class ChristmasCarol {
@@ -46,15 +46,16 @@ class ChristmasCarol {
       churchName: json['church_name'] as String,
       lyrics: json['lyrics'] as String?,
       pdfPath: json['pdf'] as String?,
-      pdfPages: json['pdf_pages'] != null 
+      pdfPages: json['pdf_pages'] != null
           ? List<String>.from(json['pdf_pages'] as List)
           : null,
       transpose: (json['transpose'] as num?)?.toInt() ?? 0,
       scale: json['scale'] as String? ?? 'C Major',
-      hasChords: json['has_chords'] as bool? ?? true, // Default to true for backward compatibility
+      hasChords: json['has_chords'] as bool? ??
+          true, // Default to true for backward compatibility
       createdByUserId: json['created_by_user_id'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: json['updated_at'] != null 
+      updatedAt: json['updated_at'] != null
           ? DateTime.parse(json['updated_at'] as String)
           : null,
     );
@@ -119,7 +120,8 @@ class ChristmasCarol {
   bool get hasLyrics => lyrics != null && lyrics!.isNotEmpty;
 
   @override
-  String toString() => 'ChristmasCarol(id: $id, title: $title, church: $churchName)';
+  String toString() =>
+      'ChristmasCarol(id: $id, title: $title, church: $churchName)';
 
   @override
   bool operator ==(Object other) {
@@ -134,38 +136,71 @@ class ChristmasCarol {
 /// List of common musical scales for the scale picker
 class MusicalScales {
   static const List<String> majorScales = [
-    'C Major', 'C# Major', 'D Major', 'D# Major', 'E Major', 'F Major',
-    'F# Major', 'G Major', 'G# Major', 'A Major', 'A# Major', 'B Major',
+    'C Major',
+    'C# Major',
+    'D Major',
+    'D# Major',
+    'E Major',
+    'F Major',
+    'F# Major',
+    'G Major',
+    'G# Major',
+    'A Major',
+    'A# Major',
+    'B Major',
   ];
 
   static const List<String> minorScales = [
-    'C Minor', 'C# Minor', 'D Minor', 'D# Minor', 'E Minor', 'F Minor',
-    'F# Minor', 'G Minor', 'G# Minor', 'A Minor', 'A# Minor', 'B Minor',
+    'C Minor',
+    'C# Minor',
+    'D Minor',
+    'D# Minor',
+    'E Minor',
+    'F Minor',
+    'F# Minor',
+    'G Minor',
+    'G# Minor',
+    'A Minor',
+    'A# Minor',
+    'B Minor',
   ];
 
   static List<String> get allScales => [...majorScales, ...minorScales];
-  
+
   /// Note names in chromatic order
-  static const List<String> notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-  
+  static const List<String> notes = [
+    'C',
+    'C#',
+    'D',
+    'D#',
+    'E',
+    'F',
+    'F#',
+    'G',
+    'G#',
+    'A',
+    'A#',
+    'B'
+  ];
+
   /// Transposes a scale by the given number of semitones
   static String transposeScale(String scale, int semitones) {
     // Parse the scale
     final isMajor = scale.contains('Major');
     final suffix = isMajor ? ' Major' : ' Minor';
     final notePart = scale.replaceAll(' Major', '').replaceAll(' Minor', '');
-    
+
     // Find current note index
     int noteIndex = notes.indexOf(notePart);
     if (noteIndex == -1) return scale; // Unknown scale
-    
+
     // Transpose
     noteIndex = (noteIndex + semitones) % 12;
     if (noteIndex < 0) noteIndex += 12;
-    
+
     return notes[noteIndex] + suffix;
   }
-  
+
   /// Gets the original scale before transpose was applied
   static String getOriginalScale(String currentScale, int transpose) {
     // To get original, we reverse the transpose
@@ -176,9 +211,12 @@ class MusicalScales {
 /// Loads Christmas carols from local JSON asset
 Future<List<ChristmasCarol>> loadChristmasCarolsFromAsset() async {
   try {
-    final String jsonData = await rootBundle.loadString('lib/assets/data/christmas_carols.json');
+    final String jsonData =
+        await rootBundle.loadString('lib/assets/data/christmas_carols.json');
     final data = jsonDecode(jsonData) as List<dynamic>;
-    return data.map((item) => ChristmasCarol.fromJson(item as Map<String, dynamic>)).toList();
+    return data
+        .map((item) => ChristmasCarol.fromJson(item as Map<String, dynamic>))
+        .toList();
   } catch (e) {
     // Return empty list if file doesn't exist yet
     return [];
@@ -191,9 +229,11 @@ Future<List<ChristmasCarol>> loadChristmasCarolsFromLocal() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonData = prefs.getString('christmas_carols_data');
     if (jsonData == null || jsonData.isEmpty) return [];
-    
+
     final data = jsonDecode(jsonData) as List<dynamic>;
-    return data.map((item) => ChristmasCarol.fromJson(item as Map<String, dynamic>)).toList();
+    return data
+        .map((item) => ChristmasCarol.fromJson(item as Map<String, dynamic>))
+        .toList();
   } catch (e) {
     return [];
   }
@@ -209,4 +249,3 @@ Future<void> saveChristmasCarolsToLocal(List<ChristmasCarol> carols) async {
     rethrow;
   }
 }
-

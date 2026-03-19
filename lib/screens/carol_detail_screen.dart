@@ -9,7 +9,7 @@ import 'package:flutter_email_sender/flutter_email_sender.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 /// Detail screen for viewing a Christmas Carol.
-/// 
+///
 /// Displays:
 /// - Song metadata (title, church, scale, transpose)
 /// - Lyrics text if available
@@ -60,7 +60,7 @@ class _CarolDetailScreenState extends State<CarolDetailScreen> {
     final updatedCarol = carolsService.getCarolById(_carol.id);
     if (updatedCarol != null && mounted) {
       // Only update if the carol has actually changed to avoid unnecessary rebuilds
-      if (updatedCarol.transpose != _carol.transpose || 
+      if (updatedCarol.transpose != _carol.transpose ||
           updatedCarol.scale != _carol.scale ||
           updatedCarol.title != _carol.title ||
           updatedCarol.lyrics != _carol.lyrics) {
@@ -85,7 +85,8 @@ class _CarolDetailScreenState extends State<CarolDetailScreen> {
           children: [
             Text(
               _carol.title,
-              style: textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style:
+                  textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             Text(
               _carol.churchName,
@@ -130,7 +131,8 @@ class _CarolDetailScreenState extends State<CarolDetailScreen> {
               },
             ),
           PopupMenuButton<String>(
-            onSelected: (value) => _handleMenuAction(value, context, carolsService),
+            onSelected: (value) =>
+                _handleMenuAction(value, context, carolsService),
             itemBuilder: (context) => [
               if (canEdit) ...[
                 const PopupMenuItem(
@@ -200,7 +202,8 @@ class _CarolDetailScreenState extends State<CarolDetailScreen> {
                   if (_carol.transpose != 0)
                     _MetadataChip(
                       icon: Icons.swap_vert,
-                      label: 'Transpose: ${_carol.transpose > 0 ? '+' : ''}${_carol.transpose}',
+                      label:
+                          'Transpose: ${_carol.transpose > 0 ? '+' : ''}${_carol.transpose}',
                       color: colorScheme.tertiary,
                     ),
                 ],
@@ -229,7 +232,8 @@ class _CarolDetailScreenState extends State<CarolDetailScreen> {
     );
   }
 
-  Widget _buildContent(ColorScheme colorScheme, TextTheme textTheme, ChristmasCarol carol) {
+  Widget _buildContent(
+      ColorScheme colorScheme, TextTheme textTheme, ChristmasCarol carol) {
     // Show PDF if selected and available
     if (_showPdf && carol.hasPdf) {
       return PdfSongViewer(pdfPath: carol.pdfPath!);
@@ -277,7 +281,8 @@ class _CarolDetailScreenState extends State<CarolDetailScreen> {
     );
   }
 
-  void _handleMenuAction(String action, BuildContext context, ChristmasCarolsService service) async {
+  void _handleMenuAction(String action, BuildContext context,
+      ChristmasCarolsService service) async {
     switch (action) {
       case 'edit':
         await _showEditDialog(context, service);
@@ -293,9 +298,9 @@ class _CarolDetailScreenState extends State<CarolDetailScreen> {
 
   Future<void> _showReportDialog(BuildContext context) async {
     await HapticFeedbackManager.lightClick();
-    
+
     final descriptionController = TextEditingController();
-    
+
     // Dialog with optional text field
     final action = await showDialog<String>(
       context: context,
@@ -341,13 +346,14 @@ class _CarolDetailScreenState extends State<CarolDetailScreen> {
         );
       },
     );
-    
+
     if (action == 'send' && mounted) {
       await _sendReportEmail(context, descriptionController.text.trim());
     }
   }
-  
-  Future<void> _sendReportEmail(BuildContext context, String description) async {
+
+  Future<void> _sendReportEmail(
+      BuildContext context, String description) async {
     try {
       final packageInfo = await PackageInfo.fromPlatform();
       final appVersion = '${packageInfo.version}+${packageInfo.buildNumber}';
@@ -374,8 +380,7 @@ ${description.isNotEmpty ? 'Issue Description:\n$description\n\n' : ''}Submitted
       await FlutterEmailSender.send(email);
 
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
             content: Text('Issue report sent successfully!'),
             duration: Duration(seconds: 3),
           ),
@@ -383,8 +388,7 @@ ${description.isNotEmpty ? 'Issue Description:\n$description\n\n' : ''}Submitted
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
             content: Text('Error sending email: ${e.toString()}'),
             duration: const Duration(seconds: 4),
           ),
@@ -393,9 +397,11 @@ ${description.isNotEmpty ? 'Issue Description:\n$description\n\n' : ''}Submitted
     }
   }
 
-  Future<void> _showEditDialog(BuildContext context, ChristmasCarolsService service) async {
+  Future<void> _showEditDialog(
+      BuildContext context, ChristmasCarolsService service) async {
     final titleController = TextEditingController(text: _carol.title);
-    final songNumberController = TextEditingController(text: _carol.songNumber ?? '');
+    final songNumberController =
+        TextEditingController(text: _carol.songNumber ?? '');
     final lyricsController = TextEditingController(text: _carol.lyrics ?? '');
     String selectedScale = _carol.scale;
     int transpose = _carol.transpose;
@@ -436,7 +442,8 @@ ${description.isNotEmpty ? 'Issue Description:\n$description\n\n' : ''}Submitted
                 // Has Chords checkbox
                 CheckboxListTile(
                   title: const Text('Contains chord notation'),
-                  subtitle: const Text('Uncheck if the PDF/lyrics has no chords'),
+                  subtitle:
+                      const Text('Uncheck if the PDF/lyrics has no chords'),
                   value: hasChords,
                   onChanged: (value) {
                     setDialogState(() => hasChords = value ?? true);
@@ -475,7 +482,9 @@ ${description.isNotEmpty ? 'Issue Description:\n$description\n\n' : ''}Submitted
                             : null,
                       ),
                       Text(
-                        transpose == 0 ? '0' : (transpose > 0 ? '+$transpose' : '$transpose'),
+                        transpose == 0
+                            ? '0'
+                            : (transpose > 0 ? '+$transpose' : '$transpose'),
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       IconButton(
@@ -517,24 +526,26 @@ ${description.isNotEmpty ? 'Issue Description:\n$description\n\n' : ''}Submitted
       try {
         final updatedCarol = _carol.copyWith(
           title: titleController.text.trim(),
-          songNumber: songNumberController.text.trim().isEmpty 
-              ? null 
+          songNumber: songNumberController.text.trim().isEmpty
+              ? null
               : songNumberController.text.trim(),
           scale: selectedScale,
           transpose: transpose,
           hasChords: hasChords,
-          lyrics: lyricsController.text.trim().isEmpty ? null : lyricsController.text.trim(),
+          lyrics: lyricsController.text.trim().isEmpty
+              ? null
+              : lyricsController.text.trim(),
         );
-        
+
         await service.updateCarol(updatedCarol);
-        
+
         setState(() {
           _carol = updatedCarol;
         });
-        
+
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              duration: const Duration(milliseconds: 1500),
               content: const Text('Carol updated successfully'),
               backgroundColor: ChristmasColors.christmasGreen,
             ),
@@ -542,15 +553,17 @@ ${description.isNotEmpty ? 'Issue Description:\n$description\n\n' : ''}Submitted
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error updating carol: $e')),
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                duration: const Duration(milliseconds: 1500),
+                content: Text('Error updating carol: $e')),
           );
         }
       }
     }
   }
 
-  Future<void> _confirmDelete(BuildContext context, ChristmasCarolsService service) async {
+  Future<void> _confirmDelete(
+      BuildContext context, ChristmasCarolsService service) async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -576,17 +589,19 @@ ${description.isNotEmpty ? 'Issue Description:\n$description\n\n' : ''}Submitted
     if (confirmed == true && mounted) {
       try {
         await service.deleteCarol(_carol.id, carol: _carol);
-        
+
         if (mounted) {
           Navigator.pop(context); // Go back to list
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Carol deleted')),
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                duration: const Duration(milliseconds: 1500),
+                content: Text('Carol deleted')),
           );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Error deleting carol: $e')),
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                duration: const Duration(milliseconds: 1500),
+                content: Text('Error deleting carol: $e')),
           );
         }
       }
@@ -633,4 +648,3 @@ class _MetadataChip extends StatelessWidget {
     );
   }
 }
-

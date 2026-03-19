@@ -8,7 +8,7 @@ import 'package:hymns_latest/theme/christmas_theme.dart';
 import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 
 /// Dialog for adding a new Christmas Carol.
-/// 
+///
 /// Features:
 /// - Church name and song title input
 /// - Lyrics text input OR PDF upload (at least one required)
@@ -17,7 +17,7 @@ import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 /// - File validation (PDF only, max 10MB)
 class AddCarolDialog extends StatefulWidget {
   final String? prefilledChurchName;
-  
+
   const AddCarolDialog({super.key, this.prefilledChurchName});
 
   @override
@@ -30,7 +30,7 @@ class _AddCarolDialogState extends State<AddCarolDialog> {
   final _songNumberController = TextEditingController();
   late final TextEditingController _churchController;
   final _lyricsController = TextEditingController();
-  
+
   String _selectedScale = 'C Major';
   int _transpose = 0;
   bool _hasChords = true;
@@ -43,7 +43,8 @@ class _AddCarolDialogState extends State<AddCarolDialog> {
   @override
   void initState() {
     super.initState();
-    _churchController = TextEditingController(text: widget.prefilledChurchName ?? '');
+    _churchController =
+        TextEditingController(text: widget.prefilledChurchName ?? '');
   }
 
   @override
@@ -67,11 +68,11 @@ class _AddCarolDialogState extends State<AddCarolDialog> {
 
       if (result != null && result.files.isNotEmpty) {
         final file = result.files.first;
-        
+
         // Validate file size
         if (file.size > _maxPdfSizeBytes) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              duration: const Duration(milliseconds: 1500),
               content: Text('PDF file must be less than 10MB'),
               backgroundColor: Colors.red,
             ),
@@ -88,8 +89,9 @@ class _AddCarolDialogState extends State<AddCarolDialog> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error picking file: $e')),
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+              duration: const Duration(milliseconds: 1500),
+              content: Text('Error picking file: $e')),
         );
       }
     }
@@ -111,8 +113,8 @@ class _AddCarolDialogState extends State<AddCarolDialog> {
 
     if (!hasLyrics && !hasPdf) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          duration: const Duration(milliseconds: 1500),
           content: Text('Please provide either lyrics or a PDF file'),
           backgroundColor: Colors.orange,
         ),
@@ -130,11 +132,11 @@ class _AddCarolDialogState extends State<AddCarolDialog> {
 
     try {
       await HapticFeedbackManager.lightClick();
-      
+
       final carol = await carolsService.addCarol(
         title: _titleController.text.trim(),
-        songNumber: _songNumberController.text.trim().isEmpty 
-            ? null 
+        songNumber: _songNumberController.text.trim().isEmpty
+            ? null
             : _songNumberController.text.trim(),
         churchName: _churchController.text.trim(),
         lyrics: hasLyrics ? _lyricsController.text.trim() : null,
@@ -150,8 +152,8 @@ class _AddCarolDialogState extends State<AddCarolDialog> {
     } catch (e) {
       if (mounted) {
         setState(() => _isSubmitting = false);
-        scaffoldMessenger.showSnackBar(
-          SnackBar(
+        scaffoldMessenger.showSnackBar(SnackBar(
+            duration: const Duration(milliseconds: 1500),
             content: Text('Error adding carol: $e'),
             backgroundColor: Colors.red,
           ),
@@ -177,7 +179,8 @@ class _AddCarolDialogState extends State<AddCarolDialog> {
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 color: ChristmasColors.christmasRed.withOpacity(0.1),
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(24)),
               ),
               child: Row(
                 children: [
@@ -329,7 +332,8 @@ class _AddCarolDialogState extends State<AddCarolDialog> {
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
                                     IconButton(
-                                      icon: const Icon(Icons.remove_circle_outline),
+                                      icon: const Icon(
+                                          Icons.remove_circle_outline),
                                       onPressed: _transpose > -12
                                           ? () => setState(() => _transpose--)
                                           : null,
@@ -337,13 +341,16 @@ class _AddCarolDialogState extends State<AddCarolDialog> {
                                     Text(
                                       _transpose == 0
                                           ? '0'
-                                          : (_transpose > 0 ? '+$_transpose' : '$_transpose'),
+                                          : (_transpose > 0
+                                              ? '+$_transpose'
+                                              : '$_transpose'),
                                       style: textTheme.titleMedium?.copyWith(
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                     IconButton(
-                                      icon: const Icon(Icons.add_circle_outline),
+                                      icon:
+                                          const Icon(Icons.add_circle_outline),
                                       onPressed: _transpose < 12
                                           ? () => setState(() => _transpose++)
                                           : null,
@@ -355,11 +362,12 @@ class _AddCarolDialogState extends State<AddCarolDialog> {
                           ],
                         ),
                       if (_hasChords) const SizedBox(height: 16),
-                      
+
                       // Has Chords checkbox
                       CheckboxListTile(
                         title: const Text('Contains chord notation'),
-                        subtitle: const Text('Uncheck if the PDF/lyrics has no chords'),
+                        subtitle: const Text(
+                            'Uncheck if the PDF/lyrics has no chords'),
                         value: _hasChords,
                         onChanged: (value) {
                           setState(() => _hasChords = value ?? true);
@@ -368,7 +376,6 @@ class _AddCarolDialogState extends State<AddCarolDialog> {
                         contentPadding: EdgeInsets.zero,
                       ),
                       const SizedBox(height: 16),
-
 
                       // Divider with text
                       Row(
@@ -458,7 +465,9 @@ class _AddCarolDialogState extends State<AddCarolDialog> {
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
                   TextButton(
-                    onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+                    onPressed: _isSubmitting
+                        ? null
+                        : () => Navigator.of(context).pop(),
                     child: const Text('Cancel'),
                   ),
                   const SizedBox(width: 12),
@@ -489,4 +498,3 @@ class _AddCarolDialogState extends State<AddCarolDialog> {
     );
   }
 }
-

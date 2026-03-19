@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'theme_state.dart';
 import 'widgets/sidebar.dart';
@@ -25,6 +24,7 @@ import 'package:hymns_latest/services/christmas_carols_service.dart';
 import 'package:hymns_latest/services/christmas_mode_service.dart';
 import 'package:hymns_latest/services/supabase_service.dart';
 import 'package:hymns_latest/theme/christmas_theme.dart';
+import 'package:hymns_latest/utils/app_logger.dart';
 import 'package:hymns_latest/utils/haptic_feedback_manager.dart';
 import 'package:hymns_latest/widgets/welcome_changelog_dialog.dart';
 
@@ -46,9 +46,21 @@ class LightSwipePagePhysics extends PageScrollPhysics {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Suppress AuthApiException(403 user_not_found) after account deletion.
+  // Catches both stream errors and any uncaught async errors.
+  PlatformDispatcher.instance.onError = (error, stack) {
+    if (SupabaseService.isPostDeleteAuthError(error)) {
+      AppLogger.fine(
+          'Auth', 'Suppressed expected 403/user_not_found post-deletion.');
+      return true;
+    }
+    return false;
+  };
+
+  // Firebase: web needs options; mobile uses default. Run dotenv in parallel on mobile to speed startup.
   try {
     if (kIsWeb) {
-      FirebaseOptions firebaseOptions = const FirebaseOptions(
+      const firebaseOptions = FirebaseOptions(
         apiKey: "AIzaSyDxevY9bYbwnMKCCyAqCXo5emtBbE4_keY",
         authDomain: "hymnappnoti.firebaseapp.com",
         projectId: "hymnappnoti",
@@ -57,30 +69,30 @@ void main() async {
         appId: "1:162340486626:web:6ea1b8331cdcb4b3e54dbb",
       );
       await Firebase.initializeApp(options: firebaseOptions);
+      await dotenv.load(fileName: '.env');
     } else {
-      await Firebase.initializeApp();
+      await Future.wait([
+        Firebase.initializeApp(),
+        dotenv.load(fileName: '.env'),
+      ]);
     }
   } catch (e) {
-    debugPrint('Firebase initialization error: $e');
-    // Continue app initialization even if Firebase fails
+    AppLogger.error('Main', 'Firebase or env init failed', e);
   }
 
-  // Initialize Supabase
+  // Initialize Supabase (required for auth/backend)
   try {
-    await dotenv.load(fileName: '.env');
     final url =
         dotenv.env['SUPABASE_URL'] ?? dotenv.env['SUPABASE_PROJECT_URL'] ?? '';
     final anon = dotenv.env['SUPABASE_ANON_KEY'] ?? '';
     if (url.isNotEmpty && anon.isNotEmpty) {
       await SupabaseService().init(url: url, anonKey: anon);
     } else {
-      debugPrint(
-          'Supabase credentials not found in .env file. App will run in offline mode.');
+      AppLogger.info(
+          'Main', 'Supabase credentials not in .env; app will run offline.');
     }
   } catch (e, stackTrace) {
-    debugPrint('Supabase init error: $e');
-    debugPrint('Stack trace: $stackTrace');
-    // Continue app initialization even if Supabase fails
+    AppLogger.error('Main', 'Supabase init failed', e, stackTrace);
   }
 
   runApp(
@@ -218,13 +230,14 @@ class _MainScreenState extends State<MainScreen>
     _animationController = AnimationController(
         vsync: this, duration: const Duration(milliseconds: 300));
     _pageController = PageController(initialPage: _selectedIndex);
-    // Delay update check until after first frame so the activity is fully
-    // in the foreground — prevents REQUIRE_FOREGROUND_ACTIVITY error.
-    WidgetsBinding.instance.addPostFrameCallback((_) => checkForUpdate());
-    _initOneSignalWithCount();
-    _checkFirstRunAndShowCase();
+    // Defer heavy work to after first frame so the UI paints sooner (reduces "Skipped N frames").
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      checkForUpdate();
+      _initOneSignalWithCount();
+      _checkFirstRunAndShowCase();
+      _checkAndShowWelcomeChangelog();
+    });
     _listenToSupabaseAuth();
-    _checkAndShowWelcomeChangelog();
   }
 
   Future<void> _checkAndShowWelcomeChangelog() async {
@@ -255,6 +268,9 @@ class _MainScreenState extends State<MainScreen>
   }
 
   Future<void> checkForUpdate() async {
+    // In-app update only works for Play Store installs (release builds).
+    // Skip entirely in debug to avoid the kotlin.Unit native plugin crash.
+    if (!kReleaseMode) return;
     try {
       final info = await InAppUpdate.checkForUpdate();
       if (mounted &&
@@ -262,9 +278,7 @@ class _MainScreenState extends State<MainScreen>
         update();
       }
     } catch (e) {
-      // Silently fail - in-app updates only work for Play Store installs
-      // Don't show error to user as this is expected for debug builds
-      debugPrint('In-app update check failed (expected for debug builds): $e');
+      AppLogger.fine('Main', 'In-app update check skipped or failed: $e');
     }
   }
 
@@ -272,10 +286,10 @@ class _MainScreenState extends State<MainScreen>
     try {
       await InAppUpdate.startFlexibleUpdate();
       InAppUpdate.completeFlexibleUpdate().then((_) {}).catchError((e) {
-        debugPrint('Flexible update completion failed: $e');
+        AppLogger.warning('Main', 'Flexible update completion failed: $e');
       });
     } catch (e) {
-      debugPrint('Flexible update start failed: $e');
+      AppLogger.warning('Main', 'Flexible update start failed: $e');
     }
   }
 
@@ -304,12 +318,21 @@ class _MainScreenState extends State<MainScreen>
   }
 
   void _listenToSupabaseAuth() {
-    _authSub = SupabaseService().authStream.listen((state) async {
-      if (!mounted) return;
-      if (state.event == AuthChangeEvent.passwordRecovery) {
-        _showResetPasswordDialog();
-      }
-    });
+    _authSub = SupabaseService().authStream.listen(
+      (state) async {
+        if (!mounted) return;
+        if (state.event == AuthChangeEvent.passwordRecovery) {
+          _showResetPasswordDialog();
+        }
+      },
+      onError: (error, stackTrace) {
+        if (SupabaseService.isPostDeleteAuthError(error)) {
+          AppLogger.fine('Auth', 'Suppressed 403 from auth stream.');
+          return;
+        }
+        Error.throwWithStackTrace(error, stackTrace);
+      },
+    );
   }
 
   void _showResetPasswordDialog() {
@@ -348,12 +371,14 @@ class _MainScreenState extends State<MainScreen>
                 final p2 = pass2.text;
                 if (p1.length < 6) {
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      duration: const Duration(milliseconds: 1500),
                       content: Text('Password must be at least 6 characters')));
                   return;
                 }
                 if (p1 != p2) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Passwords do not match')));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      duration: const Duration(milliseconds: 1500),
+                      content: Text('Passwords do not match')));
                   return;
                 }
                 try {
@@ -362,11 +387,13 @@ class _MainScreenState extends State<MainScreen>
                   if (!mounted) return;
                   Navigator.pop(ctx);
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                      duration: const Duration(milliseconds: 1500),
                       content: Text('Password updated successfully')));
                 } catch (e) {
                   if (!mounted) return;
-                  ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Update failed: $e')));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                      duration: const Duration(milliseconds: 1500),
+                      content: Text('Update failed: $e')));
                 }
               },
               child: const Text('Save'),
@@ -392,7 +419,9 @@ class _MainScreenState extends State<MainScreen>
   }
 
   Future<void> _initOneSignalWithCount() async {
-    OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+    // Verbose logs only in debug; reduces log noise in release (and the WebView/BT warning is from OneSignal's in-app message UI, not our code).
+    OneSignal.Debug.setLogLevel(
+        kReleaseMode ? OSLogLevel.warn : OSLogLevel.verbose);
     OneSignal.initialize("29f2a6ba-3f56-4ffe-8075-3b70d7440b13");
 
     SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -411,8 +440,8 @@ class _MainScreenState extends State<MainScreen>
     // 2. If permission is denied AND we've already prompted twice or more, do not prompt again.
     if (nativePermissionStatus == OSNotificationPermission.denied &&
         promptCount >= 2) {
-      debugPrint(
-          "User has denied notification permissions multiple times. Not prompting again.");
+      AppLogger.fine('OneSignal',
+          'Notification permission denied repeatedly; not prompting again.');
       return;
     }
 
@@ -429,19 +458,17 @@ class _MainScreenState extends State<MainScreen>
       });
     }
 
-    // -- iOS settings --
     OneSignal.Notifications.addForegroundWillDisplayListener((event) {
-      print("FOREGROUND WILL DISPLAY LISTENER: Notification Received");
+      AppLogger.fine('OneSignal', 'Foreground notification received');
     });
 
     OneSignal.Notifications.addClickListener((event) {
-      print(
-          'NOTIFICATION CLICK LISTENER: ${jsonEncode(event.notification.jsonRepresentation())}');
+      AppLogger.fine('OneSignal',
+          'Notification clicked: ${event.notification.notificationId}');
     });
 
-    // iOS-only event listener for notification permissions
     OneSignal.Notifications.addPermissionObserver((state) {
-      print("Notification permission status: ${state.toString()}");
+      AppLogger.fine('OneSignal', 'Permission status: $state');
     });
 
     // -- Android settings --

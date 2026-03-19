@@ -65,12 +65,18 @@ class _SearchBarState extends State<SearchBar> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    final defaultTextStyle = theme.textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface);
+    final defaultTextStyle =
+        theme.textTheme.bodyLarge?.copyWith(color: colorScheme.onSurface);
     final effectiveTextStyle = widget.textStyle ?? defaultTextStyle;
-    final effectiveHintStyle = widget.hintStyle ?? theme.textTheme.bodyLarge?.copyWith(color: colorScheme.onSurfaceVariant);
-    final effectiveBackgroundColor = widget.backgroundColor ?? colorScheme.surfaceVariant.withOpacity(0.9);
-    final effectiveSearchIconColor = widget.searchIconColor ?? colorScheme.onSurfaceVariant;
-    final effectiveClearIconColor = widget.clearIconColor ?? colorScheme.onSurfaceVariant;
+    final effectiveHintStyle = widget.hintStyle ??
+        theme.textTheme.bodyLarge
+            ?.copyWith(color: colorScheme.onSurfaceVariant);
+    final effectiveBackgroundColor =
+        widget.backgroundColor ?? colorScheme.surfaceVariant.withOpacity(0.9);
+    final effectiveSearchIconColor =
+        widget.searchIconColor ?? colorScheme.onSurfaceVariant;
+    final effectiveClearIconColor =
+        widget.clearIconColor ?? colorScheme.onSurfaceVariant;
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
@@ -80,7 +86,9 @@ class _SearchBarState extends State<SearchBar> {
         color: effectiveBackgroundColor,
         borderRadius: BorderRadius.circular(16.0),
         border: Border.all(
-          color: widget.focusNode.hasFocus ? colorScheme.primary : colorScheme.outlineVariant,
+          color: widget.focusNode.hasFocus
+              ? colorScheme.primary
+              : colorScheme.outlineVariant,
           width: widget.focusNode.hasFocus ? 2.0 : 1.0,
         ),
         boxShadow: [
@@ -98,7 +106,8 @@ class _SearchBarState extends State<SearchBar> {
           children: [
             Padding(
               padding: const EdgeInsets.only(left: 12.0, right: 6.0),
-              child: Icon(Icons.search, color: effectiveSearchIconColor, size: 26),
+              child:
+                  Icon(Icons.search, color: effectiveSearchIconColor, size: 26),
             ),
             Expanded(
               child: TextField(
@@ -110,7 +119,8 @@ class _SearchBarState extends State<SearchBar> {
                   hintText: widget.hintText,
                   hintStyle: effectiveHintStyle,
                   isDense: true,
-                  contentPadding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 0.0),
+                  contentPadding: const EdgeInsets.symmetric(
+                      vertical: 12.0, horizontal: 0.0),
                 ),
                 style: effectiveTextStyle?.copyWith(fontSize: 16),
               ),
@@ -124,7 +134,8 @@ class _SearchBarState extends State<SearchBar> {
                     _textController.clear();
                     widget.onQueryCleared();
                   },
-                  child: Icon(Icons.clear, color: effectiveClearIconColor, size: 20),
+                  child: Icon(Icons.clear,
+                      color: effectiveClearIconColor, size: 20),
                 ),
               ),
           ],

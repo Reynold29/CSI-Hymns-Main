@@ -19,7 +19,8 @@ class DynamicCategoryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final showHymns = hymnNumbers != null && hymnNumbers!.isNotEmpty;
-    final showKeerthanes = keerthaneNumbers != null && keerthaneNumbers!.isNotEmpty;
+    final showKeerthanes =
+        keerthaneNumbers != null && keerthaneNumbers!.isNotEmpty;
 
     final tabs = <Tab>[];
     final views = <Widget>[];
@@ -38,7 +39,8 @@ class DynamicCategoryScreen extends StatelessWidget {
       length: tabs.length,
       child: Scaffold(
         appBar: AppBar(
-          title: Text('$category ${showHymns && showKeerthanes ? "Hymns & Keerthanes" : showHymns ? "Hymns" : "Keerthanes"}'),
+          title: Text(
+              '$category ${showHymns && showKeerthanes ? "Hymns & Keerthanes" : showHymns ? "Hymns" : "Keerthanes"}'),
           bottom: TabBar(tabs: tabs),
         ),
         body: TabBarView(children: views),
@@ -56,7 +58,8 @@ class DynamicCategoryScreen extends StatelessWidget {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else {
           final hymns = snapshot.data!;
-          final filtered = hymns.where((h) => hymnNumbers!.contains(h.number)).toList();
+          final filtered =
+              hymns.where((h) => hymnNumbers!.contains(h.number)).toList();
           return ListView.builder(
             itemCount: filtered.length,
             itemBuilder: (context, index) {
@@ -71,7 +74,8 @@ class DynamicCategoryScreen extends StatelessWidget {
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => HymnDetailScreen(hymn: hymn)),
+                    MaterialPageRoute(
+                        builder: (_) => HymnDetailScreen(hymn: hymn)),
                   );
                 },
               );
@@ -92,7 +96,8 @@ class DynamicCategoryScreen extends StatelessWidget {
           return Center(child: Text('Error: ${snapshot.error}'));
         } else {
           final keers = snapshot.data!;
-          final filtered = keers.where((k) => keerthaneNumbers!.contains(k.number)).toList();
+          final filtered =
+              keers.where((k) => keerthaneNumbers!.contains(k.number)).toList();
           return ListView.builder(
             itemCount: filtered.length,
             itemBuilder: (context, index) {
@@ -103,11 +108,14 @@ class DynamicCategoryScreen extends StatelessWidget {
                   height: 40,
                   child: Image.asset('lib/assets/icons/keerthane.png'),
                 ),
-                title: Text("Keerthane ${keerthane.number} - ${keerthane.title}"),
+                title:
+                    Text("Keerthane ${keerthane.number} - ${keerthane.title}"),
                 onTap: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (_) => KeerthaneDetailScreen(keerthane: keerthane)),
+                    MaterialPageRoute(
+                        builder: (_) =>
+                            KeerthaneDetailScreen(keerthane: keerthane)),
                   );
                 },
               );

@@ -16,7 +16,8 @@ class ChangelogEntry {
       title: json['title'] as String,
       version: json['version'] as String,
       date: json['date'] as String,
-      changes: (json['changes'] as List).map((change) => change as String).toList(),
+      changes:
+          (json['changes'] as List).map((change) => change as String).toList(),
     );
   }
 }

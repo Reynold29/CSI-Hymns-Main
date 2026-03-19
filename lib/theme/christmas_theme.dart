@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 /// Christmas theme colors and decorations for the app.
-/// 
+///
 /// When Christmas mode is enabled, these colors are used throughout
 /// the app for a festive appearance.
 class ChristmasColors {
@@ -12,19 +12,19 @@ class ChristmasColors {
   static const Color snowWhite = Color(0xFFF8F8FF); // Ghost white
   static const Color hollyGreen = Color(0xFF006400); // Dark green
   static const Color candyCaneRed = Color(0xFFDC143C); // Crimson
-  
+
   // Accent colors
   static const Color ornamentBlue = Color(0xFF4169E1); // Royal blue
   static const Color starGold = Color(0xFFDAA520); // Goldenrod
   static const Color icicleBlue = Color(0xFFB0E0E6); // Powder blue
   static const Color berryRed = Color(0xFF8B0000); // Dark red
-  
+
   // Surface colors for light theme
   static const Color lightSurface = Color(0xFFFFFAFA); // Snow
   static const Color lightSurfaceContainer = Color(0xFFF5F5F5);
   static const Color lightBackground = Color(0xFFFFF8F0); // Warm white
-  
-  // Surface colors for dark theme  
+
+  // Surface colors for dark theme
   static const Color darkSurface = Color(0xFF1A1A2E); // Deep navy
   static const Color darkSurfaceContainer = Color(0xFF16213E);
   static const Color darkBackground = Color(0xFF0F0F1A); // Very dark blue
@@ -114,10 +114,12 @@ class ChristmasThemeExtension extends ThemeExtension<ChristmasThemeExtension> {
     return ChristmasThemeExtension(
       snowflakeColor: Color.lerp(snowflakeColor, other.snowflakeColor, t)!,
       ornamentPrimary: Color.lerp(ornamentPrimary, other.ornamentPrimary, t)!,
-      ornamentSecondary: Color.lerp(ornamentSecondary, other.ornamentSecondary, t)!,
+      ornamentSecondary:
+          Color.lerp(ornamentSecondary, other.ornamentSecondary, t)!,
       garlandColor: Color.lerp(garlandColor, other.garlandColor, t)!,
       starColor: Color.lerp(starColor, other.starColor, t)!,
-      backgroundGradient: t < 0.5 ? backgroundGradient : other.backgroundGradient,
+      backgroundGradient:
+          t < 0.5 ? backgroundGradient : other.backgroundGradient,
       showSnowflakes: t < 0.5 ? showSnowflakes : other.showSnowflakes,
     );
   }
@@ -159,7 +161,8 @@ ThemeData createChristmasDarkTheme({bool blackThemeEnabled = false}) {
   return ThemeData(
     useMaterial3: true,
     fontFamily: 'plusJakartaSans',
-    scaffoldBackgroundColor: blackThemeEnabled ? Colors.black : ChristmasColors.darkBackground,
+    scaffoldBackgroundColor:
+        blackThemeEnabled ? Colors.black : ChristmasColors.darkBackground,
     colorScheme: ColorScheme.fromSeed(
       seedColor: ChristmasColors.christmasRed,
       brightness: Brightness.dark,
@@ -181,9 +184,9 @@ ThemeData createChristmasDarkTheme({bool blackThemeEnabled = false}) {
     appBarTheme: AppBarTheme(
       centerTitle: true,
       elevation: 0,
-      backgroundColor: blackThemeEnabled ? Colors.black : ChristmasColors.darkSurface,
+      backgroundColor:
+          blackThemeEnabled ? Colors.black : ChristmasColors.darkSurface,
     ),
     extensions: [ChristmasThemeExtension.dark],
   );
 }
-

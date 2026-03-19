@@ -62,13 +62,13 @@ class _ChristmasLandingViewState extends State<ChristmasLandingView>
   void _showFestiveToast(BuildContext context) {
     final overlay = Overlay.of(context);
     late OverlayEntry overlayEntry;
-    
+
     overlayEntry = OverlayEntry(
       builder: (context) => _FestiveToastOverlay(
         onDismiss: () => overlayEntry.remove(),
       ),
     );
-    
+
     overlay.insert(overlayEntry);
   }
 
@@ -76,7 +76,7 @@ class _ChristmasLandingViewState extends State<ChristmasLandingView>
   Widget build(BuildContext context) {
     final textTheme = Theme.of(context).textTheme;
     final size = MediaQuery.of(context).size;
-    
+
     // Dynamic horizontal padding based on screen width
     final horizontalPadding = size.width > 600 ? 32.0 : 16.0;
 
@@ -121,7 +121,8 @@ class _ChristmasLandingViewState extends State<ChristmasLandingView>
                 // Header
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.fromLTRB(horizontalPadding, 24, horizontalPadding, 20),
+                    padding: EdgeInsets.fromLTRB(
+                        horizontalPadding, 24, horizontalPadding, 20),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -133,10 +134,12 @@ class _ChristmasLandingViewState extends State<ChristmasLandingView>
                                 color: const Color(0xFFB22222).withOpacity(0.2),
                                 borderRadius: BorderRadius.circular(16),
                                 border: Border.all(
-                                  color: const Color(0xFFB22222).withOpacity(0.3),
+                                  color:
+                                      const Color(0xFFB22222).withOpacity(0.3),
                                 ),
                               ),
-                              child: const Text('🎄', style: TextStyle(fontSize: 28)),
+                              child: const Text('🎄',
+                                  style: TextStyle(fontSize: 28)),
                             ),
                             const SizedBox(width: 16),
                             Expanded(
@@ -179,12 +182,16 @@ class _ChristmasLandingViewState extends State<ChristmasLandingView>
                         title: 'Hymns',
                         subtitle: 'Traditional hymns from the CSI hymn book',
                         emoji: '🎵',
-                        gradientColors: const [Color(0xFF2E7D32), Color(0xFF1B5E20)],
+                        gradientColors: const [
+                          Color(0xFF2E7D32),
+                          Color(0xFF1B5E20)
+                        ],
                         onTap: () {
                           HapticFeedbackManager.lightClick();
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const HymnsScreen()),
+                            MaterialPageRoute(
+                                builder: (_) => const HymnsScreen()),
                           );
                         },
                       ),
@@ -195,12 +202,16 @@ class _ChristmasLandingViewState extends State<ChristmasLandingView>
                         title: 'Keerthane',
                         subtitle: 'Kannada devotional songs and lyrics',
                         emoji: '🎶',
-                        gradientColors: const [Color(0xFF1976D2), Color(0xFF0D47A1)],
+                        gradientColors: const [
+                          Color(0xFF1976D2),
+                          Color(0xFF0D47A1)
+                        ],
                         onTap: () {
                           HapticFeedbackManager.lightClick();
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const KeerthaneScreen()),
+                            MaterialPageRoute(
+                                builder: (_) => const KeerthaneScreen()),
                           );
                         },
                       ),
@@ -211,13 +222,17 @@ class _ChristmasLandingViewState extends State<ChristmasLandingView>
                         title: 'Christmas Carols',
                         subtitle: 'Celebrate the season with festive songs',
                         emoji: '🎄',
-                        gradientColors: const [Color(0xFFC62828), Color(0xFF8E0000)],
+                        gradientColors: const [
+                          Color(0xFFC62828),
+                          Color(0xFF8E0000)
+                        ],
                         isHighlighted: true,
                         onTap: () {
                           HapticFeedbackManager.lightClick();
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (_) => const ChristmasCarolsScreen()),
+                            MaterialPageRoute(
+                                builder: (_) => const ChristmasCarolsScreen()),
                           );
                         },
                       ),
@@ -229,7 +244,8 @@ class _ChristmasLandingViewState extends State<ChristmasLandingView>
                 // Decorative footer - Easter egg!
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 8),
+                    padding: EdgeInsets.symmetric(
+                        horizontal: horizontalPadding, vertical: 8),
                     child: Center(
                       child: GestureDetector(
                         onTap: () {
@@ -237,7 +253,8 @@ class _ChristmasLandingViewState extends State<ChristmasLandingView>
                           _showFestiveToast(context);
                         },
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 8),
                           decoration: BoxDecoration(
                             color: Colors.white.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(20),
@@ -359,7 +376,8 @@ class _CategoryCard extends StatelessWidget {
                         if (isHighlighted) ...[
                           const SizedBox(width: 8),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(10),
@@ -422,7 +440,8 @@ class SnowfallPainter extends CustomPainter {
     required this.snowflakeColor,
     this.snowflakeCount = 50,
   }) {
-    if (_cachedSnowflakes.isEmpty || _cachedSnowflakes.length != snowflakeCount) {
+    if (_cachedSnowflakes.isEmpty ||
+        _cachedSnowflakes.length != snowflakeCount) {
       _generateSnowflakes();
     }
   }
@@ -452,7 +471,9 @@ class SnowfallPainter extends CustomPainter {
         ..style = PaintingStyle.fill;
 
       final y = ((flake.y + progress * flake.speed) % 1.0) * size.height;
-      final x = (flake.x + math.sin(progress * math.pi * 2 + flake.y * 10) * flake.drift) * size.width;
+      final x = (flake.x +
+              math.sin(progress * math.pi * 2 + flake.y * 10) * flake.drift) *
+          size.width;
 
       canvas.drawCircle(
         Offset(x, y),
@@ -506,12 +527,12 @@ class _FestiveToastOverlayState extends State<_FestiveToastOverlay>
   @override
   void initState() {
     super.initState();
-    
+
     _slideController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 400),
     );
-    
+
     _shimmerController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1500),
@@ -564,7 +585,8 @@ class _FestiveToastOverlayState extends State<_FestiveToastOverlay>
                 _slideController.reverse().then((_) => widget.onDismiss());
               },
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   color: const Color(0xFF1B5E20).withOpacity(0.9),
                   borderRadius: BorderRadius.circular(24),
@@ -589,10 +611,14 @@ class _FestiveToastOverlayState extends State<_FestiveToastOverlay>
                       children: [
                         // Bouncy dove
                         Transform.translate(
-                          offset: Offset(0, math.sin(_shimmerController.value * math.pi * 2) * 2),
+                          offset: Offset(
+                              0,
+                              math.sin(_shimmerController.value * math.pi * 2) *
+                                  2),
                           child: const Text(
                             '🕊️',
-                            style: TextStyle(fontSize: 16, decoration: TextDecoration.none),
+                            style: TextStyle(
+                                fontSize: 16, decoration: TextDecoration.none),
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -606,9 +632,11 @@ class _FestiveToastOverlayState extends State<_FestiveToastOverlay>
                                 Colors.white,
                               ],
                               stops: [
-                                (_shimmerController.value - 0.3).clamp(0.0, 1.0),
+                                (_shimmerController.value - 0.3)
+                                    .clamp(0.0, 1.0),
                                 _shimmerController.value.clamp(0.0, 1.0),
-                                (_shimmerController.value + 0.3).clamp(0.0, 1.0),
+                                (_shimmerController.value + 0.3)
+                                    .clamp(0.0, 1.0),
                               ],
                             ).createShader(bounds);
                           },
@@ -626,10 +654,13 @@ class _FestiveToastOverlayState extends State<_FestiveToastOverlay>
                         const SizedBox(width: 8),
                         // Bouncy star
                         Transform.scale(
-                          scale: 0.9 + math.sin(_shimmerController.value * math.pi * 2) * 0.15,
+                          scale: 0.9 +
+                              math.sin(_shimmerController.value * math.pi * 2) *
+                                  0.15,
                           child: const Text(
                             '✨',
-                            style: TextStyle(fontSize: 14, decoration: TextDecoration.none),
+                            style: TextStyle(
+                                fontSize: 14, decoration: TextDecoration.none),
                           ),
                         ),
                       ],

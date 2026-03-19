@@ -72,7 +72,8 @@ class TicketsService {
     String? deviceId = prefs.getString('device_id');
     if (deviceId == null || deviceId.isEmpty) {
       // Generate a UUID for device ID
-      deviceId = 'device_${DateTime.now().millisecondsSinceEpoch}_${prefs.hashCode}';
+      deviceId =
+          'device_${DateTime.now().millisecondsSinceEpoch}_${prefs.hashCode}';
       await prefs.setString('device_id', deviceId);
     }
     return deviceId;
@@ -85,9 +86,9 @@ class TicketsService {
       if (client == null) return [];
 
       final user = client.auth.currentUser;
-      
+
       List<Map<String, dynamic>> tickets;
-      
+
       if (user != null) {
         // Registered user - fetch by user_id
         final response = await client
@@ -95,7 +96,7 @@ class TicketsService {
             .select()
             .eq('user_id', user.id)
             .order('created_at', ascending: false);
-        
+
         tickets = List<Map<String, dynamic>>.from(response);
       } else {
         // Unregistered user - fetch by device_id
@@ -105,7 +106,7 @@ class TicketsService {
             .select()
             .eq('device_id', deviceId)
             .order('created_at', ascending: false);
-        
+
         tickets = List<Map<String, dynamic>>.from(response);
       }
 
@@ -120,20 +121,21 @@ class TicketsService {
   Future<void> syncAllTicketStatuses() async {
     try {
       final jiraService = JiraService();
-      
+
       // First, try to match any pending tickets (from email submissions)
       await jiraService.matchPendingTickets();
-      
+
       // Reload tickets after matching (in case some were updated)
       final updatedTickets = await getMyTickets();
-      
+
       // Then sync statuses for all tickets
       for (final ticket in updatedTickets) {
         // Skip pending tickets that haven't been matched yet
-        if (ticket.jiraStatus == 'Email Sent' && ticket.ticketKey.startsWith('PENDING-')) {
+        if (ticket.jiraStatus == 'Email Sent' &&
+            ticket.ticketKey.startsWith('PENDING-')) {
           continue;
         }
-        
+
         await jiraService.syncTicketStatus(ticket.ticketKey);
         // Small delay to avoid rate limiting
         await Future.delayed(const Duration(milliseconds: 500));

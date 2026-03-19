@@ -27,9 +27,15 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     super.initState();
     _loadFavorites();
     _tabController = TabController(length: 2, vsync: this);
-    _authSubscription = SupabaseService().authStream.listen((_) {
-      if (mounted) _loadFavorites();
-    });
+    _authSubscription = SupabaseService().authStream.listen(
+      (_) {
+        if (mounted) _loadFavorites();
+      },
+      onError: (error, stackTrace) {
+        if (SupabaseService.isPostDeleteAuthError(error)) return;
+        Error.throwWithStackTrace(error, stackTrace);
+      },
+    );
   }
 
   @override
@@ -45,13 +51,21 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     if (user != null) {
       try {
         final remote = await SupabaseService().fetchFavorites();
-        final remoteHymnIds = remote.where((m) => m['item_type'] == 'hymn').map<int>((m) => (m['item_number'] as num).toInt()).toList();
-        final remoteKeerthaneIds = remote.where((m) => m['item_type'] == 'keerthane').map<int>((m) => (m['item_number'] as num).toInt()).toList();
+        final remoteHymnIds = remote
+            .where((m) => m['item_type'] == 'hymn')
+            .map<int>((m) => (m['item_number'] as num).toInt())
+            .toList();
+        final remoteKeerthaneIds = remote
+            .where((m) => m['item_type'] == 'keerthane')
+            .map<int>((m) => (m['item_number'] as num).toInt())
+            .toList();
 
         // Do NOT merge local into remote. Remote is source of truth per account.
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setStringList('favoriteHymnIds', remoteHymnIds.map((e) => e.toString()).toList());
-        await prefs.setStringList('favoriteKeerthaneIds', remoteKeerthaneIds.map((e) => e.toString()).toList());
+        await prefs.setStringList(
+            'favoriteHymnIds', remoteHymnIds.map((e) => e.toString()).toList());
+        await prefs.setStringList('favoriteKeerthaneIds',
+            remoteKeerthaneIds.map((e) => e.toString()).toList());
         await prefs.setString('favorites_owner_auth_uid', user.id);
         favoriteIdsMap['favoriteHymnIds'] = remoteHymnIds;
         favoriteIdsMap['favoriteKeerthaneIds'] = remoteKeerthaneIds;
@@ -59,8 +73,8 @@ class _FavoritesScreenState extends State<FavoritesScreen>
     }
     final hymns =
         await _fetchHymnsByIds(favoriteIdsMap['favoriteHymnIds'] ?? []);
-    final keerthane =
-        await _fetchKeerthaneByIds(favoriteIdsMap['favoriteKeerthaneIds'] ?? []);
+    final keerthane = await _fetchKeerthaneByIds(
+        favoriteIdsMap['favoriteKeerthaneIds'] ?? []);
     if (!mounted) return;
     setState(() {
       _favoriteHymns = hymns;
@@ -71,8 +85,16 @@ class _FavoritesScreenState extends State<FavoritesScreen>
   Future<Map<String, List<int>>> _retrieveFavorites() async {
     final prefs = await SharedPreferences.getInstance();
     return {
-      'favoriteHymnIds': prefs.getStringList('favoriteHymnIds')?.map((idStr) => int.parse(idStr)).toList() ?? [],
-      'favoriteKeerthaneIds': prefs.getStringList('favoriteKeerthaneIds')?.map((idStr) => int.parse(idStr)).toList() ?? [],
+      'favoriteHymnIds': prefs
+              .getStringList('favoriteHymnIds')
+              ?.map((idStr) => int.parse(idStr))
+              .toList() ??
+          [],
+      'favoriteKeerthaneIds': prefs
+              .getStringList('favoriteKeerthaneIds')
+              ?.map((idStr) => int.parse(idStr))
+              .toList() ??
+          [],
     };
   }
 
@@ -83,12 +105,16 @@ class _FavoritesScreenState extends State<FavoritesScreen>
 
   Future<List<Keerthane>> _fetchKeerthaneByIds(List<int> ids) async {
     final List<Keerthane> allKeerthane = await loadKeerthane();
-    return allKeerthane.where((keerthane) => ids.contains(keerthane.number)).toList();
+    return allKeerthane
+        .where((keerthane) => ids.contains(keerthane.number))
+        .toList();
   }
 
-  Future<void> _removeFromFavorites(dynamic item, {required String hymnType}) async {
+  Future<void> _removeFromFavorites(dynamic item,
+      {required String hymnType}) async {
     final prefs = await SharedPreferences.getInstance();
-    final String key = hymnType == 'hymn' ? 'favoriteHymnIds' : 'favoriteKeerthaneIds';
+    final String key =
+        hymnType == 'hymn' ? 'favoriteHymnIds' : 'favoriteKeerthaneIds';
     final storedIds = prefs.getStringList(key) ?? [];
 
     storedIds.remove(item.number.toString());
@@ -166,12 +192,14 @@ class _FavoritesScreenState extends State<FavoritesScreen>
                         onTap: () => Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => KeerthaneDetailScreen(keerthane: keerthane),
+                            builder: (_) =>
+                                KeerthaneDetailScreen(keerthane: keerthane),
                           ),
                         ),
                         child: ListTile(
                           title: Text(keerthane.title),
-                          subtitle: Text('Keerthane Number: ${keerthane.number}'),
+                          subtitle:
+                              Text('Keerthane Number: ${keerthane.number}'),
                           trailing: PopupMenuButton<int>(
                             itemBuilder: (context) => [
                               const PopupMenuItem(
@@ -181,7 +209,8 @@ class _FavoritesScreenState extends State<FavoritesScreen>
                             ],
                             onSelected: (value) {
                               if (value == 1) {
-                                _removeFromFavorites(keerthane, hymnType: 'keerthane');
+                                _removeFromFavorites(keerthane,
+                                    hymnType: 'keerthane');
                               }
                             },
                           ),

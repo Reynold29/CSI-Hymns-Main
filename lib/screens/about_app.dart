@@ -23,8 +23,9 @@ class AboutApp extends StatelessWidget {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20.0),
         child: GestureDetector(
-          onTap: () async { 
-            const url = 'https://play.google.com/store/apps/details?id=com.reyzie.hymns';
+          onTap: () async {
+            const url =
+                'https://play.google.com/store/apps/details?id=com.reyzie.hymns';
             if (await canLaunchUrl(Uri.parse(url))) {
               await launchUrl(Uri.parse(url));
             }
@@ -57,11 +58,12 @@ class AboutApp extends StatelessWidget {
               const SizedBox(height: 2),
               GestureDetector(
                 onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const AboutDeveloper()),
-                );
-              },
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const AboutDeveloper()),
+                  );
+                },
                 child: const Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -76,7 +78,8 @@ class AboutApp extends StatelessWidget {
                     SizedBox(height: 6),
                     Text(
                       'Reynold  (@Reynold29)',
-                      style: TextStyle(fontSize: 15, fontFamily: 'plusJakartaSans'),
+                      style: TextStyle(
+                          fontSize: 15, fontFamily: 'plusJakartaSans'),
                     ),
                     SizedBox(height: 25),
                     _ContributeSection(),
@@ -102,7 +105,7 @@ class _ContributeSection extends StatelessWidget {
       throw 'Could not launch $url';
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -112,30 +115,32 @@ class _ContributeSection extends StatelessWidget {
         const SizedBox(height: 20),
         const Text(
           'Contribute',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'plusJakartaSans'),
+          style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'plusJakartaSans'),
         ),
         const SizedBox(height: 6),
         const Text(
           "This app is Open Source!  Contribute to the project's code and let's enhance it !   ;) ",
           style: TextStyle(fontSize: 15, fontFamily: 'plusJakartaSans'),
         ),
-        const SizedBox(height: 14), 
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly, 
-          children: [
-            ElevatedButton.icon( 
-              icon: const FaIcon(FontAwesomeIcons.github),
-              label: const Text('GitHub'), 
-              onPressed: () => _launchURL('https://github.com/Reynold29/CSI-Hymns-and-Lyrics/'), 
-            ),
-            const SizedBox(width: 5), 
-            ElevatedButton.icon(
-              icon: const FaIcon(FontAwesomeIcons.googlePlay),
-              label: const Text('PlayStore'), 
-              onPressed: () => _launchURL('https://play.google.com/store/apps/details?id=com.reyzie.hymns'), 
-            ),
-          ]
-        ),
+        const SizedBox(height: 14),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+          ElevatedButton.icon(
+            icon: const FaIcon(FontAwesomeIcons.github),
+            label: const Text('GitHub'),
+            onPressed: () => _launchURL(
+                'https://github.com/Reynold29/CSI-Hymns-and-Lyrics/'),
+          ),
+          const SizedBox(width: 5),
+          ElevatedButton.icon(
+            icon: const FaIcon(FontAwesomeIcons.googlePlay),
+            label: const Text('PlayStore'),
+            onPressed: () => _launchURL(
+                'https://play.google.com/store/apps/details?id=com.reyzie.hymns'),
+          ),
+        ]),
         const SizedBox(height: 25),
         const _Support(),
       ],
@@ -154,7 +159,7 @@ class _Support extends StatelessWidget {
       throw 'Could not launch $url';
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -164,30 +169,31 @@ class _Support extends StatelessWidget {
         const SizedBox(height: 20),
         const Text(
           'Support',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'plusJakartaSans'),
+          style: TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              fontFamily: 'plusJakartaSans'),
         ),
         const SizedBox(height: 6),
         const Text(
           "Get Support Here and also find out how we Prioritize User Privacy and Data!",
           style: TextStyle(fontSize: 15, fontFamily: 'plusJakartaSans'),
         ),
-        const SizedBox(height: 12), 
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            ElevatedButton.icon(
-              icon: const FaIcon(FontAwesomeIcons.telegram),
-              label: const Text('Telegram'), 
-              onPressed: () => _launchURL('https://t.me/Reynold29'), 
-            ),
-            const SizedBox(width: 5),
-            ElevatedButton.icon(
-              icon: const FaIcon(FontAwesomeIcons.question),
-              label: const Text('Privacy Policy'), 
-              onPressed: () => _launchURL('https://sites.google.com/view/csi-hymns-privacy-policy/home'), 
-            ),
-          ]
-        ),
+        const SizedBox(height: 12),
+        Row(mainAxisAlignment: MainAxisAlignment.spaceEvenly, children: [
+          ElevatedButton.icon(
+            icon: const FaIcon(FontAwesomeIcons.telegram),
+            label: const Text('Telegram'),
+            onPressed: () => _launchURL('https://t.me/Reynold29'),
+          ),
+          const SizedBox(width: 5),
+          ElevatedButton.icon(
+            icon: const FaIcon(FontAwesomeIcons.question),
+            label: const Text('Privacy Policy'),
+            onPressed: () => _launchURL(
+                'https://sites.google.com/view/csi-hymns-privacy-policy/home'),
+          ),
+        ]),
       ],
     );
   }

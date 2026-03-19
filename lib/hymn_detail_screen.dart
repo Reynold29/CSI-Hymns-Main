@@ -59,7 +59,8 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
   void initState() {
     super.initState();
     _checkIsFavorite();
-    _playerStateSubscription = _audioPlayer.playerStateStream.listen((playerState) {
+    _playerStateSubscription =
+        _audioPlayer.playerStateStream.listen((playerState) {
       setState(() {
         _isPlaying = playerState.playing;
         if (playerState.processingState == ProcessingState.completed) {
@@ -79,7 +80,8 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
     });
 
     String hymnNumber = widget.hymn.number.toString();
-    String audioUrl = 'https://raw.githubusercontent.com/reynold29/midi-files/main/Hymns/Hymn_$hymnNumber.ogg';
+    String audioUrl =
+        'https://raw.githubusercontent.com/reynold29/midi-files/main/Hymns/Hymn_$hymnNumber.ogg';
 
     try {
       await _audioPlayer.setAudioSource(AudioSource.uri(Uri.parse(audioUrl)));
@@ -114,24 +116,31 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
   }
 
   Future<void> _toggleFavorite() async {
-    if (_isFavorite) {
-      await _removeFromFavorites(widget.hymn);
-    } else {
+    final bool willBeFavorite = !_isFavorite;
+
+    if (willBeFavorite) {
       await _saveToFavorites(widget.hymn);
+    } else {
+      await _removeFromFavorites(widget.hymn);
     }
 
     await HapticFeedbackManager.mediumClick();
-    await _checkIsFavorite();
+    await _checkIsFavorite(); // This updates _isFavorite locally
 
+    // Sync to Supabase
     final user = SupabaseService().currentUser;
     if (user != null) {
       try {
-        if (_isFavorite) {
-          await SupabaseService().addFavorite(itemNumber: widget.hymn.number, itemType: 'hymn');
+        if (willBeFavorite) {
+          await SupabaseService()
+              .addFavorite(itemNumber: widget.hymn.number, itemType: 'hymn');
         } else {
-          await SupabaseService().removeFavorite(itemNumber: widget.hymn.number, itemType: 'hymn');
+          await SupabaseService()
+              .removeFavorite(itemNumber: widget.hymn.number, itemType: 'hymn');
         }
-      } catch (_) {}
+      } catch (e) {
+        debugPrint('Error syncing favorite to Supabase: $e');
+      }
     }
   }
 
@@ -156,10 +165,10 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
 
   void _showFeedbackDialog() async {
     await HapticFeedbackManager.lightClick();
-    
+
     final jiraService = JiraService();
     final descriptionController = TextEditingController();
-    
+
     // Dialog with optional text field
     final action = await showDialog<String>(
       context: context,
@@ -196,12 +205,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
             TextButton(
               child: const Text('Close'),
               onPressed: () {
-                // Create ticket in background and close
                 Navigator.pop(context, 'close');
-                _createTicketInBackground(
-                  jiraService,
-                  descriptionController.text.trim(),
-                );
               },
             ),
             FilledButton(
@@ -214,7 +218,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
         );
       },
     );
-    
+
     if (action == 'report' && mounted) {
       // Close dialog immediately and create ticket
       await _createTicketAndShowSnackBar(
@@ -223,57 +227,25 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
       );
     }
   }
-  
-  Future<void> _createTicketInBackground(
-    JiraService jiraService,
-    String? description,
-  ) async {
-    try {
-      final packageInfo = await PackageInfo.fromPlatform();
-      final appVersion = '${packageInfo.version}+${packageInfo.buildNumber}';
-      
-      final result = await jiraService.createTicket(
-        songType: 'Hymn',
-        songNumber: widget.hymn.number,
-        songTitle: widget.hymn.title,
-        description: description?.isEmpty ?? true ? null : description,
-        appVersion: appVersion,
-      );
-      
-      if (result.success && mounted) {
-        _showTicketResultDialog(
-          isSuccess: true,
-          ticketKey: result.ticketKey ?? 'Ticket',
-          ticketUrl: result.ticketUrl,
-        );
-      } else if (!result.success && mounted) {
-        _showTicketResultDialog(
-          isSuccess: false,
-          errorMessage: result.errorMessage ?? 'Failed to create ticket',
-        );
-      }
-    } catch (e) {
-      debugPrint('Error creating ticket in background: $e');
-    }
-  }
-  
+
   Future<void> _createTicketAndShowSnackBar(
     JiraService jiraService,
     String? description,
   ) async {
     // Show loading dialog
     if (!mounted) return;
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const _TicketCreationDialog(status: _TicketStatus.loading),
+      builder: (context) =>
+          const _TicketCreationDialog(status: _TicketStatus.loading),
     );
-    
+
     try {
       final packageInfo = await PackageInfo.fromPlatform();
       final appVersion = '${packageInfo.version}+${packageInfo.buildNumber}';
-      
+
       final result = await jiraService.createTicket(
         songType: 'Hymn',
         songNumber: widget.hymn.number,
@@ -281,12 +253,12 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
         description: description?.isEmpty ?? true ? null : description,
         appVersion: appVersion,
       );
-      
+
       if (!mounted) return;
-      
+
       // Close loading dialog and show result
       Navigator.pop(context);
-      
+
       if (result.success) {
         _showTicketResultDialog(
           isSuccess: true,
@@ -308,7 +280,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
       );
     }
   }
-  
+
   void _showTicketResultDialog({
     required bool isSuccess,
     String? ticketKey,
@@ -316,7 +288,7 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
     String? errorMessage,
   }) {
     if (!mounted) return;
-    
+
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -331,14 +303,14 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                 Navigator.pop(context);
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (context) => const TicketsScreen()),
+                  MaterialPageRoute(
+                      builder: (context) => const TicketsScreen()),
                 );
               }
             : null,
       ),
     );
   }
-  
 
   Future<void> _saveToFavorites(Hymn hymn) async {
     final prefs = await SharedPreferences.getInstance();
@@ -363,7 +335,8 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
   Future<List<int>> _retrieveFavorites() async {
     final prefs = await SharedPreferences.getInstance();
     final storedData = prefs.getStringList('favoriteHymnIds');
-    final favoriteIds = storedData?.map((idStr) => int.parse(idStr)).toList() ?? [];
+    final favoriteIds =
+        storedData?.map((idStr) => int.parse(idStr)).toList() ?? [];
     return favoriteIds;
   }
 
@@ -465,7 +438,8 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
               builder: (context, constraints) {
                 return SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 16),
+                  padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding, vertical: 16),
                   child: ConstrainedBox(
                     constraints: BoxConstraints(
                       minHeight: constraints.maxHeight,
@@ -477,15 +451,15 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                         // Title, Favorite, Signature, and Language Row
                         _buildTitleAndLanguageRow(isSmallScreen, colorScheme),
                         const Divider(height: 24),
-                        
+
                         // Controls Row - Dynamic
                         _buildControlsRow(context, isSmallScreen, colorScheme),
-                        
+
                         const SizedBox(height: 20),
-                        
+
                         // Lyrics Content
                         _buildLyricsContent(),
-                        
+
                         // Extra padding for mini player
                         SizedBox(height: _isMiniPlayerVisible ? 100.0 : 24.0),
                       ],
@@ -495,14 +469,14 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
               },
             ),
           ),
-          if (_isMiniPlayerVisible)
-            _buildMiniAudioPlayer(context),
+          if (_isMiniPlayerVisible) _buildMiniAudioPlayer(context),
         ],
       ),
     );
   }
 
-  Widget _buildTitleAndLanguageRow(bool isSmallScreen, ColorScheme colorScheme) {
+  Widget _buildTitleAndLanguageRow(
+      bool isSmallScreen, ColorScheme colorScheme) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -559,7 +533,6 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
       ],
     );
   }
-  
 
   Widget _buildLanguageSelector(bool isSmallScreen, ColorScheme colorScheme) {
     return Row(
@@ -579,7 +552,8 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
               });
             }
           },
-          visualDensity: isSmallScreen ? VisualDensity.compact : VisualDensity.standard,
+          visualDensity:
+              isSmallScreen ? VisualDensity.compact : VisualDensity.standard,
         ),
         const SizedBox(width: 8),
         ChoiceChip(
@@ -602,16 +576,18 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
               });
             }
           },
-          visualDensity: isSmallScreen ? VisualDensity.compact : VisualDensity.standard,
+          visualDensity:
+              isSmallScreen ? VisualDensity.compact : VisualDensity.standard,
         ),
       ],
     );
   }
 
-  Widget _buildControlsRow(BuildContext context, bool isSmallScreen, ColorScheme colorScheme) {
+  Widget _buildControlsRow(
+      BuildContext context, bool isSmallScreen, ColorScheme colorScheme) {
     final buttonSize = isSmallScreen ? 32.0 : 38.0;
     final iconSize = isSmallScreen ? 16.0 : 20.0;
-    
+
     return Row(
       children: [
         // Font controls
@@ -625,7 +601,8 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primaryContainer,
                   foregroundColor: colorScheme.onPrimaryContainer,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
                   padding: EdgeInsets.zero,
                 ),
                 onPressed: _decrementFontSize,
@@ -649,7 +626,8 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primaryContainer,
                   foregroundColor: colorScheme.onPrimaryContainer,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8)),
                   padding: EdgeInsets.zero,
                 ),
                 onPressed: _incrementFontSize,
@@ -658,16 +636,19 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
             ),
           ],
         ),
-        
+
         const Spacer(),
-        
+
         // Add to category button
         FilledButton.icon(
           style: FilledButton.styleFrom(
             minimumSize: Size(isSmallScreen ? 70 : 92, isSmallScreen ? 32 : 36),
-            padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 8 : 12, vertical: isSmallScreen ? 6 : 10),
+            padding: EdgeInsets.symmetric(
+                horizontal: isSmallScreen ? 8 : 12,
+                vertical: isSmallScreen ? 6 : 10),
             shape: const StadiumBorder(),
-            textStyle: TextStyle(fontWeight: FontWeight.w700, fontSize: isSmallScreen ? 12 : 14),
+            textStyle: TextStyle(
+                fontWeight: FontWeight.w700, fontSize: isSmallScreen ? 12 : 14),
           ),
           onPressed: () async {
             await HapticFeedbackManager.lightClick();
@@ -676,9 +657,9 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
           icon: Icon(Icons.playlist_add, size: isSmallScreen ? 14 : 18),
           label: const Text('Add'),
         ),
-        
+
         const SizedBox(width: 6),
-        
+
         // Audio and Report buttons - Rightmost
         SizedBox(
           width: isSmallScreen ? 38 : 44,
@@ -700,7 +681,9 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                     ),
                   )
                 : Icon(
-                    _isMiniPlayerVisible ? Icons.volume_up_rounded : Icons.music_note_rounded,
+                    _isMiniPlayerVisible
+                        ? Icons.volume_up_rounded
+                        : Icons.music_note_rounded,
                     size: isSmallScreen ? 18 : 22,
                   ),
           ),
@@ -716,7 +699,8 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
             backgroundColor: colorScheme.tertiaryContainer,
             foregroundColor: colorScheme.onTertiaryContainer,
             elevation: 2.5,
-            child: Icon(Icons.bug_report_rounded, size: isSmallScreen ? 18 : 22),
+            child:
+                Icon(Icons.bug_report_rounded, size: isSmallScreen ? 18 : 22),
           ),
         ),
       ],
@@ -749,10 +733,15 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
         context: context,
         builder: (c) => AlertDialog(
           title: const Text('Create a category first'),
-          content: TextField(controller: ctrl, decoration: const InputDecoration(hintText: 'Category name')),
+          content: TextField(
+              controller: ctrl,
+              decoration: const InputDecoration(hintText: 'Category name')),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
-            FilledButton(onPressed: () => Navigator.pop(c, ctrl.text.trim()), child: const Text('Create')),
+            TextButton(
+                onPressed: () => Navigator.pop(c), child: const Text('Cancel')),
+            FilledButton(
+                onPressed: () => Navigator.pop(c, ctrl.text.trim()),
+                child: const Text('Create')),
           ],
         ),
       );
@@ -764,15 +753,22 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
           context: context,
           builder: (c) => AlertDialog(
             title: const Text('Limit reached'),
-            content: const Text('Guests can create up to 5 categories locally. Sign in to create more.'),
-            actions: [TextButton(onPressed: () => Navigator.pop(c), child: const Text('OK'))],
+            content: const Text(
+                'Guests can create up to 5 categories locally. Sign in to create more.'),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(c), child: const Text('OK'))
+            ],
           ),
         );
         return;
       }
-      await service.addSongToCategoryUnified(categoryId: newId, songId: widget.hymn.number, songType: 'hymn');
+      await service.addSongToCategoryUnified(
+          categoryId: newId, songId: widget.hymn.number, songType: 'hymn');
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Added to new category')));
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            duration: const Duration(milliseconds: 1500),
+            content: Text('Added to new category')));
       }
       return;
     }
@@ -802,7 +798,9 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
             ),
           ),
           actions: [
-            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Cancel')),
+            TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel')),
             TextButton(
               onPressed: () async {
                 final nameCtrl = TextEditingController();
@@ -810,10 +808,18 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                   context: context,
                   builder: (context) => AlertDialog(
                     title: const Text('New category'),
-                    content: TextField(controller: nameCtrl, decoration: const InputDecoration(hintText: 'Category name')),
+                    content: TextField(
+                        controller: nameCtrl,
+                        decoration:
+                            const InputDecoration(hintText: 'Category name')),
                     actions: [
-                      TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-                      FilledButton(onPressed: () => Navigator.pop(context, nameCtrl.text.trim()), child: const Text('Create')),
+                      TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('Cancel')),
+                      FilledButton(
+                          onPressed: () =>
+                              Navigator.pop(context, nameCtrl.text.trim()),
+                          child: const Text('Create')),
                     ],
                   ),
                 );
@@ -831,7 +837,10 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
               onPressed: selectedId == null
                   ? null
                   : () async {
-                      await service.addSongToCategoryUnified(categoryId: selectedId!, songId: widget.hymn.number, songType: 'hymn');
+                      await service.addSongToCategoryUnified(
+                          categoryId: selectedId!,
+                          songId: widget.hymn.number,
+                          songType: 'hymn');
                       if (mounted) Navigator.pop(context, true);
                     },
               child: const Text('Add'),
@@ -841,7 +850,9 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
       ),
     );
     if (res == true && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Added to category')));
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          duration: const Duration(milliseconds: 1500),
+          content: Text('Added to category')));
     }
   }
 
@@ -851,7 +862,8 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
     final isSmallScreen = screenWidth < 360;
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 12 : 16, vertical: 8),
+      padding: EdgeInsets.symmetric(
+          horizontal: isSmallScreen ? 12 : 16, vertical: 8),
       decoration: BoxDecoration(
         color: colorScheme.surfaceContainerHighest,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
@@ -883,7 +895,9 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.close, color: colorScheme.onSurfaceVariant, size: isSmallScreen ? 20 : 24),
+                  icon: Icon(Icons.close,
+                      color: colorScheme.onSurfaceVariant,
+                      size: isSmallScreen ? 20 : 24),
                   onPressed: _toggleMiniPlayerVisibility,
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -904,8 +918,10 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                   children: [
                     SliderTheme(
                       data: SliderTheme.of(context).copyWith(
-                        thumbShape: RoundSliderThumbShape(enabledThumbRadius: isSmallScreen ? 5 : 6),
-                        overlayShape: RoundSliderOverlayShape(overlayRadius: isSmallScreen ? 10 : 12),
+                        thumbShape: RoundSliderThumbShape(
+                            enabledThumbRadius: isSmallScreen ? 5 : 6),
+                        overlayShape: RoundSliderOverlayShape(
+                            overlayRadius: isSmallScreen ? 10 : 12),
                         activeTrackColor: colorScheme.primary,
                         inactiveTrackColor: colorScheme.surfaceContainerHigh,
                         thumbColor: colorScheme.primary,
@@ -917,7 +933,8 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                         max: sliderMax,
                         min: 0.0,
                         onChanged: (value) {
-                          final newPosition = Duration(milliseconds: value.toInt());
+                          final newPosition =
+                              Duration(milliseconds: value.toInt());
                           _audioPlayer.seek(newPosition);
                         },
                       ),
@@ -929,11 +946,15 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                         children: [
                           Text(
                             _formatDuration(position ?? Duration.zero),
-                            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: isSmallScreen ? 10 : 12),
+                            style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: isSmallScreen ? 10 : 12),
                           ),
                           Text(
                             _formatDuration(duration ?? Duration.zero),
-                            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: isSmallScreen ? 10 : 12),
+                            style: TextStyle(
+                                color: colorScheme.onSurfaceVariant,
+                                fontSize: isSmallScreen ? 10 : 12),
                           ),
                         ],
                       ),
@@ -946,11 +967,14 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
-                  icon: Icon(Icons.replay_5_rounded, color: colorScheme.onSurfaceVariant, size: isSmallScreen ? 22 : 28),
+                  icon: Icon(Icons.replay_5_rounded,
+                      color: colorScheme.onSurfaceVariant,
+                      size: isSmallScreen ? 22 : 28),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () {
-                    Duration newPosition = _audioPlayer.position - _skipDuration;
+                    Duration newPosition =
+                        _audioPlayer.position - _skipDuration;
                     if (newPosition < Duration.zero) {
                       newPosition = Duration.zero;
                     }
@@ -960,7 +984,9 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                 const SizedBox(width: 8),
                 IconButton(
                   icon: Icon(
-                    _isPlaying ? Icons.pause_circle_filled_rounded : Icons.play_circle_filled_rounded,
+                    _isPlaying
+                        ? Icons.pause_circle_filled_rounded
+                        : Icons.play_circle_filled_rounded,
                     color: colorScheme.primary,
                     size: isSmallScreen ? 36 : 42,
                   ),
@@ -970,13 +996,16 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                 ),
                 const SizedBox(width: 8),
                 IconButton(
-                  icon: Icon(Icons.forward_5_rounded, color: colorScheme.onSurfaceVariant, size: isSmallScreen ? 22 : 28),
+                  icon: Icon(Icons.forward_5_rounded,
+                      color: colorScheme.onSurfaceVariant,
+                      size: isSmallScreen ? 22 : 28),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   onPressed: () async {
                     final currentPosition = _audioPlayer.position;
                     final newPosition = currentPosition + _skipDuration;
-                    if (newPosition > (_audioPlayer.duration ?? Duration.zero)) {
+                    if (newPosition >
+                        (_audioPlayer.duration ?? Duration.zero)) {
                       _audioPlayer.stop();
                     } else {
                       _audioPlayer.seek(newPosition);
@@ -987,7 +1016,9 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                 IconButton(
                   icon: FaIcon(
                     FontAwesomeIcons.repeat,
-                    color: _isLooping ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                    color: _isLooping
+                        ? colorScheme.primary
+                        : colorScheme.onSurfaceVariant,
                     size: isSmallScreen ? 16 : 20,
                   ),
                   padding: EdgeInsets.zero,
@@ -997,17 +1028,26 @@ class _HymnDetailScreenState extends State<HymnDetailScreen> {
                 ),
                 const SizedBox(width: 4),
                 PopupMenuButton<double>(
-                  icon: Icon(Icons.speed_rounded, color: colorScheme.onSurfaceVariant, size: isSmallScreen ? 22 : 28),
+                  icon: Icon(Icons.speed_rounded,
+                      color: colorScheme.onSurfaceVariant,
+                      size: isSmallScreen ? 22 : 28),
                   padding: EdgeInsets.zero,
                   onSelected: _setPlaybackSpeed,
                   color: colorScheme.surfaceContainer,
-                  itemBuilder: (BuildContext context) => <PopupMenuEntry<double>>[
-                    const PopupMenuItem<double>(value: 0.5, child: Text('0.5x')),
-                    const PopupMenuItem<double>(value: 0.75, child: Text('0.75x')),
-                    const PopupMenuItem<double>(value: 1.0, child: Text('Normal')),
-                    const PopupMenuItem<double>(value: 1.25, child: Text('1.25x')),
-                    const PopupMenuItem<double>(value: 1.5, child: Text('1.5x')),
-                    const PopupMenuItem<double>(value: 2.0, child: Text('2.0x')),
+                  itemBuilder: (BuildContext context) =>
+                      <PopupMenuEntry<double>>[
+                    const PopupMenuItem<double>(
+                        value: 0.5, child: Text('0.5x')),
+                    const PopupMenuItem<double>(
+                        value: 0.75, child: Text('0.75x')),
+                    const PopupMenuItem<double>(
+                        value: 1.0, child: Text('Normal')),
+                    const PopupMenuItem<double>(
+                        value: 1.25, child: Text('1.25x')),
+                    const PopupMenuItem<double>(
+                        value: 1.5, child: Text('1.5x')),
+                    const PopupMenuItem<double>(
+                        value: 2.0, child: Text('2.0x')),
                   ],
                 ),
               ],

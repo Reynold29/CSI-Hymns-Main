@@ -1,34 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/scheduler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 /// Service that manages the Christmas mode feature flag.
-/// 
+///
 /// The flag can be controlled via:
 /// 1. Remote config from Supabase (preferred)
 /// 2. Local SharedPreferences fallback
 /// 3. Manual override for testing
-/// 
+///
 /// When `isChristmasTime` is true, the app shows Christmas-themed UI
 /// with category cards for Common Hymns and Christmas Carols.
 class ChristmasModeService with ChangeNotifier {
   static const String _localKey = 'is_christmas_time';
   static const String _remoteConfigTable = 'app_config';
-  
+
   bool _isChristmasTime = false;
-  bool _isLoading = true;
+  bool _isLoading = true; // true until deferred _loadChristmasMode completes
   bool _hasError = false;
-  
+
   bool get isChristmasTime => _isChristmasTime;
   bool get isLoading => _isLoading;
   bool get hasError => _hasError;
 
   ChristmasModeService() {
-    _init();
-  }
-
-  Future<void> _init() async {
-    await _loadChristmasMode();
+    // Defer remote fetch to after first frame so first paint is not blocked.
+    SchedulerBinding.instance.addPostFrameCallback((_) => _loadChristmasMode());
   }
 
   Future<void> _loadChristmasMode() async {
@@ -73,7 +71,8 @@ class ChristmasModeService with ChangeNotifier {
         final value = response['value'];
         if (value is bool) return value;
         if (value is int) return value == 1;
-        if (value is String) return value == '1' || value.toLowerCase() == 'true';
+        if (value is String)
+          return value == '1' || value.toLowerCase() == 'true';
       }
       return null;
     } catch (e) {
@@ -124,4 +123,3 @@ class ChristmasModeService with ChangeNotifier {
     await setChristmasMode(!_isChristmasTime);
   }
 }
-

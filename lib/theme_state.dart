@@ -20,7 +20,8 @@ class ThemeState with ChangeNotifier {
 
   Future<void> _loadThemeSettings() async {
     final prefs = await SharedPreferences.getInstance();
-    final themeModeIndex = prefs.getInt(_themeModeKey) ?? ThemeMode.system.index;
+    final themeModeIndex =
+        prefs.getInt(_themeModeKey) ?? ThemeMode.system.index;
     _themeMode = ThemeMode.values[themeModeIndex];
     _blackThemeEnabled = prefs.getBool(_blackThemeEnabledKey) ?? false;
     final colorValue = prefs.getInt(_seedColorKey) ?? Colors.blue.value;

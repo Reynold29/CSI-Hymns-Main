@@ -55,9 +55,10 @@ android {
 
    signingConfigs {
         release {
-            if (System.getenv("CI") != null) {
+            def ciKeystore = file("${rootProject.buildDir}/keystore.jks")
+            if (System.getenv("CI") != null && ciKeystore.exists()) {
                 // For CI builds, use environment variables injected by GitHub Actions
-                storeFile file("${rootProject.buildDir}/keystore.jks")
+                storeFile ciKeystore
                 storePassword System.getenv("KEYSTORE_PASSWORD")
                 keyAlias System.getenv("KEY_ALIAS")
                 keyPassword System.getenv("KEY_PASSWORD")

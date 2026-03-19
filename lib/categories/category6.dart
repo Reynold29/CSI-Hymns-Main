@@ -8,7 +8,7 @@ class Category6Screen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text("More Categories")),
-      body: const Center( 
+      body: const Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -16,7 +16,7 @@ class Category6Screen extends StatelessWidget {
             SizedBox(height: 16),
             Text(
               "More Categories Coming Soon!",
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold), 
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
           ],
         ),

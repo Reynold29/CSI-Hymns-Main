@@ -1,6 +1,18 @@
 [
     {
         "title": "New Public Stable Version Released!",
+        "version": "4.2.1-stable",
+        "date": "12-03-2026",
+        "changes": [
+            "New Praise and Worship App LIVE on Stores. Check from the sidebar",
+            "NEW Implementation of Jira Ticketing System for lyric correction requests [Phase 1 and 2 (FIX)]",
+            "Fixed the UI Overflow Issues",
+            "Fixed Hymns Loading Issue on some devices",
+            "For more info on changes, visit https://github.com/Reynold29/CSI-Hymns-and-Lyrics/commits/main/"
+        ]
+    },
+    {
+        "title": "New Public Stable Version Released!",
         "version": "4.2.0-stable",
         "date": "23-02-2026",
         "changes": [
